@@ -11,27 +11,77 @@ from core.graph_handle import GraphHandle
 
 import time
 
+
+from environment.cluster import Cluster
+from environment.node import Node
+from environment.network import Network
+
 def main():
-    user = User()
-    inceptor = Inceptor()
-    scrutinizer = Scrutinizer()
-    choreographer = Choreographer()
-    optimizer = Optimizer()
-    greenifier = Greenifier()
+    # Initialize network
+    network = Network(latency=0.1, bandwidth=100)
 
-    user.start_listening()
-    inceptor.start_listening()
-    scrutinizer.start_listening()
-    choreographer.start_listening()
-    optimizer.start_listening()
-    greenifier.start_listening()
+    # Initialize cluster
+    cluster = Cluster(network)
 
-    time.sleep(1)  # Allow listeners to initialize
+    # Create nodes with varying resources
+    node_specs = [
+        {'node_id': 'node1', 'resources': {'cpu': 4, 'memory': 8}},
+        {'node_id': 'node2', 'resources': {'cpu': 2, 'memory': 4}},
+        {'node_id': 'node3', 'resources': {'cpu': 8, 'memory': 16}},
+    ]
 
-    bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"), GraphHandle("output"))
-    user.emit_message(bgo_request.to_message(), "*")
+    # Add nodes to the cluster
+    for spec in node_specs:
+        node = Node(spec['node_id'], spec['resources'], network)
+        network.register_node(node)
+        cluster.add_node(node)
 
-    time.sleep(2)  # Allow time for messages to be processed
+    # Define tasks
+    tasks = [
+        {'id': 'task1', 'complexity': 10},
+        {'id': 'task2', 'complexity': 20},
+        {'id': 'task3', 'complexity': 5},
+    ]
 
-if __name__ == "__main__":
+    # Assign tasks to the cluster
+    for task in tasks:
+        cluster.assign_task(task)
+
+    # Monitor cluster status
+    for _ in range(5):
+        cluster.monitor_cluster()
+        time.sleep(2)
+
+    # Shutdown nodes
+    for node_id in list(cluster.nodes.keys()):
+        cluster.remove_node(node_id)
+
+if __name__ == '__main__':
     main()
+    
+    
+
+# def main():
+#     user = User()
+#     inceptor = Inceptor()
+#     scrutinizer = Scrutinizer()
+#     choreographer = Choreographer()
+#     optimizer = Optimizer()
+#     greenifier = Greenifier()
+
+#     user.start_listening()
+#     inceptor.start_listening()
+#     scrutinizer.start_listening()
+#     choreographer.start_listening()
+#     optimizer.start_listening()
+#     greenifier.start_listening()
+
+#     time.sleep(1)  # Allow listeners to initialize
+
+#     bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"), GraphHandle("output"))
+#     user.emit_message(bgo_request.to_message(), "*")
+
+#     time.sleep(2)  # Allow time for messages to be processed
+
+# if __name__ == "__main__":
+#     main()
