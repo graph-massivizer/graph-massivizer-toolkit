@@ -2,6 +2,7 @@
 
 import threading
 import time
+from commons.terminal import Terminal
 
 class Node(threading.Thread):
     def __init__(self, node_id, resources, network):
@@ -12,6 +13,7 @@ class Node(threading.Thread):
         self.status = 'idle'
         self.task_queue = []
         self.running = True
+        self.terminal = Terminal.get_instance()
 
     def run(self):
         while self.running:
@@ -21,13 +23,12 @@ class Node(threading.Thread):
                 self.process_task(task)
             else:
                 self.status = 'idle'
-            time.sleep(1)  # Simulate time between checks
+            time.sleep(1)
 
     def process_task(self, task):
-        # Simulate task processing based on task complexity and node resources
         processing_time = task['complexity'] / self.resources['cpu']
         time.sleep(processing_time)
-        print(f"Node {self.node_id} completed task {task['id']}")
+        self.terminal.log(f"Node {self.node_id} completed task {task['id']}", level='INFO')
         self.report_completion(task)
 
     def report_completion(self, task):
@@ -51,3 +52,7 @@ class Node(threading.Thread):
             'status': self.status,
             'task_queue_length': len(self.task_queue)
         }
+
+    def receive_message(self, message):
+        # Handle received messages if necessary
+        pass
