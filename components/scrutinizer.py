@@ -1,5 +1,0 @@
-from .base_component import BaseComponent
-
-class Scrutinizer(BaseComponent):
-    def __init__(self):
-        super().__init__("scrutinizer")

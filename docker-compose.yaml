@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  master:
+    build:
+      context: .
+      dockerfile: ./components/master/Dockerfile
+    container_name: master
+    depends_on:
+      - runtime
+      - metafactory
+    networks:
+      - cluster_net
+
+  runtime:
+    build:
+      context: .
+      dockerfile: ./components/runtime/Dockerfile
+    container_name: runtime
+    depends_on:
+      - metafactory
+    networks:
+      - cluster_net
+
+  client:
+    build:
+      context: .
+      dockerfile: ./components/client/Dockerfile
+    container_name: client
+    depends_on:
+      - master
+    networks:
+      - cluster_net
+
+  metafactory:
+    build:
+      context: .
+      dockerfile: ./components/metafactory/Dockerfile
+    container_name: metafactory
+    networks:
+      - cluster_net
+
+networks:
+  cluster_net:
+    driver: bridge

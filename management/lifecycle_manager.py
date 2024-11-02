@@ -44,10 +44,10 @@ class LifecycleManager:
         self.network = Network(latency=0.1, bandwidth=100)
         self.cluster = Cluster(self.network)
         node_specs = [
+            {'node_id': 'master', 'resources': {'cpu': 4, 'memory': 8}},
             {'node_id': 'node1', 'resources': {'cpu': 4, 'memory': 8}},
             {'node_id': 'node2', 'resources': {'cpu': 4, 'memory': 8}},
             {'node_id': 'node3', 'resources': {'cpu': 4, 'memory': 8}},
-            {'node_id': 'node4', 'resources': {'cpu': 4, 'memory': 8}},
         ]
         for spec in node_specs:
             node = Node(spec['node_id'], spec['resources'], self.network)

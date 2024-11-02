@@ -16,7 +16,7 @@ class Terminal:
             self.message_queue = queue.Queue()
             self.running = False
             self.thread = threading.Thread(target=self._process_messages, daemon=True)
-            init(autoreset=True)  # Initialize colorama
+            init(autoreset=True)
             Terminal._instance = self
 
     @staticmethod
@@ -33,7 +33,7 @@ class Terminal:
 
     def stop(self):
         self.running = False
-        self.message_queue.put(None)  # Sentinel to unblock the queue
+        self.message_queue.put(None)
         self.thread.join()
 
     def log(self, message, level='INFO'):
@@ -43,13 +43,12 @@ class Terminal:
         while True:
             item = self.message_queue.get()
             if item is None:
-                break  # Exit the loop if None is received
+                break
             level, message = item
             self._output_message(level, message)
             self.message_queue.task_done()
 
     def _output_message(self, level, message):
-        # Define colors based on level
         level_colors = {
             'DEBUG': Fore.BLUE,
             'INFO': Fore.GREEN,
