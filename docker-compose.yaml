@@ -5,10 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./components/master/Dockerfile
-    container_name: master
-    depends_on:
-      - runtime
-      - metafactory
+    image: master_image
     networks:
       - cluster_net
 
@@ -16,9 +13,7 @@ services:
     build:
       context: .
       dockerfile: ./components/runtime/Dockerfile
-    container_name: runtime
-    depends_on:
-      - metafactory
+    image: runtime_image
     networks:
       - cluster_net
 
@@ -26,9 +21,7 @@ services:
     build:
       context: .
       dockerfile: ./components/client/Dockerfile
-    container_name: client
-    depends_on:
-      - master
+    image: client_image
     networks:
       - cluster_net
 
@@ -36,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: ./components/metafactory/Dockerfile
-    container_name: metafactory
+    image: metafactory_image
     networks:
       - cluster_net
 

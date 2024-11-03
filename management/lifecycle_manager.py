@@ -44,10 +44,10 @@ class LifecycleManager:
         self.network = Network(latency=0.1, bandwidth=100)
         self.cluster = Cluster(self.network)
         node_specs = [
-            {'node_id': 'master', 'resources': {'cpu': 4, 'memory': 8}},
-            {'node_id': 'node1', 'resources': {'cpu': 4, 'memory': 8}},
-            {'node_id': 'node2', 'resources': {'cpu': 4, 'memory': 8}},
-            {'node_id': 'node3', 'resources': {'cpu': 4, 'memory': 8}},
+            {'node_id': 'master-node', 'resources': {'cpu': 4, 'memory': 8}},
+            {'node_id': 'runtime-node', 'resources': {'cpu': 4, 'memory': 8}},
+            {'node_id': 'metafactory-node', 'resources': {'cpu': 4, 'memory': 8}},
+            {'node_id': 'client-node', 'resources': {'cpu': 4, 'memory': 8}},
         ]
         for spec in node_specs:
             node = Node(spec['node_id'], spec['resources'], self.network)
@@ -56,21 +56,32 @@ class LifecycleManager:
 
     def on_components_deployment(self):
         self.terminal.log("State: ComponentsDeployment", level='INFO')
-        # Implement component deployment logic here
+        # Deploy components to nodes
+        for node_id, service_name in [
+            ('master-node', 'master'),
+            ('runtime-node', 'runtime'),
+            ('metafactory-node', 'metafactory'),
+            ('client-node', 'client')
+        ]:
+            node = self.cluster.nodes.get(node_id)
+            if node:
+                node.deploy_container(service_name)
+            else:
+                self.terminal.log(f"Node {node_id} not found for deployment.", level='ERROR')
 
     def on_job_reception(self):
         self.terminal.log("State: JobReception", level='INFO')
-        # Simulate job reception
-        self.job = {
-            'id': 'job1',
-            'tasks': [
-                {'id': 'task1', 'complexity': 10},
-                {'id': 'task2', 'complexity': 20},
-                {'id': 'task3', 'complexity': 15},
-                {'id': 'task4', 'complexity': 5},
-            ]
-        }
-        self.terminal.log(f"Received job: {self.job['id']}", level='INFO')
+        # # Simulate job reception
+        # self.job = {
+        #     'id': 'job1',
+        #     'tasks': [
+        #         {'id': 'task1', 'complexity': 10},
+        #         {'id': 'task2', 'complexity': 20},
+        #         {'id': 'task3', 'complexity': 15},
+        #         {'id': 'task4', 'complexity': 5},
+        #     ]
+        # }
+        # self.terminal.log(f"Received job: {self.job['id']}", level='INFO')
 
     def on_job_optimization(self):
         self.terminal.log("State: JobOptimization", level='INFO')
@@ -90,15 +101,15 @@ class LifecycleManager:
 
     def on_job_execution(self):
         self.terminal.log("State: JobExecution", level='INFO')
-        # Assign tasks to the cluster
-        for task in self.job['tasks']:
-            self.cluster.assign_task(task)
-        # Monitor execution
-        import time
-        while not self.cluster.all_tasks_completed():
-            self.cluster.monitor_cluster()
-            time.sleep(2)
-        self.terminal.log("Job execution completed.", level='INFO')
+        # # Assign tasks to the cluster
+        # for task in self.job['tasks']:
+        #     self.cluster.assign_task(task)
+        # # Monitor execution
+        # import time
+        # while not self.cluster.all_tasks_completed():
+        #     self.cluster.monitor_cluster()
+        #     time.sleep(2)
+        # self.terminal.log("Job execution completed.", level='INFO')
 
     def on_termination(self):
         self.terminal.log("State: Termination", level='INFO')

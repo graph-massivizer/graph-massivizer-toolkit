@@ -19,19 +19,6 @@ class Cluster:
             del self.nodes[node_id]
             print(f"Node {node_id} removed from cluster.")
 
-    def assign_task(self, task):
-        # Simple scheduling: assign to the node with the shortest queue
-        selected_node = min(
-            self.nodes.values(),
-            key=lambda n: len(n.task_queue) if n.status != 'offline' else float('inf')
-        )
-        selected_node.add_task(task)
-        print(f"Assigned task {task['id']} to node {selected_node.node_id}")
-
-    def receive_message(self, message):
-        if message['type'] == 'task_completion':
-            print(f"Cluster received completion of task {message['task_id']} from node {message['node_id']}")
-
     def monitor_cluster(self):
         for node in self.nodes.values():
             status = node.report_status()
