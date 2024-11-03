@@ -71,17 +71,6 @@ class LifecycleManager:
 
     def on_job_reception(self):
         self.terminal.log("State: JobReception", level='INFO')
-        # # Simulate job reception
-        # self.job = {
-        #     'id': 'job1',
-        #     'tasks': [
-        #         {'id': 'task1', 'complexity': 10},
-        #         {'id': 'task2', 'complexity': 20},
-        #         {'id': 'task3', 'complexity': 15},
-        #         {'id': 'task4', 'complexity': 5},
-        #     ]
-        # }
-        # self.terminal.log(f"Received job: {self.job['id']}", level='INFO')
 
     def on_job_optimization(self):
         self.terminal.log("State: JobOptimization", level='INFO')

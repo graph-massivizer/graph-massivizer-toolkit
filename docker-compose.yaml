@@ -24,6 +24,8 @@ services:
     image: client_image
     networks:
       - cluster_net
+    ports:
+      - "5001:5000" 
 
   metafactory:
     build:

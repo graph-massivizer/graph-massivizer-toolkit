@@ -24,13 +24,23 @@ class Node(threading.Thread):
 
     def deploy_container(self, service_name):
         container_name = f"{service_name}_{self.node_id}"
-        image_name = f"{service_name}_image"
+        image_name = f"{service_name}_image"  # Ensure this matches the image name in docker-compose.yml
         try:
+            # Check if a container with the same name already exists and remove it
+            try:
+                existing_container = self.docker_client.containers.get(container_name)
+                self.terminal.log(f"Existing container {container_name} found. Removing it.", level='INFO')
+                existing_container.stop()
+                existing_container.remove()
+            except docker.errors.NotFound:
+                pass  # No existing container, proceed
+
+            # Start the container on 'cluster_net'
             container = self.docker_client.containers.run(
                 image_name,
                 detach=True,
                 name=container_name,
-                network='architecture-stubs_cluster_net',
+                network='cluster_net',  # Correct network name
                 environment={'NODE_ID': self.node_id},
                 labels={'node': self.node_id}
             )
@@ -56,5 +66,4 @@ class Node(threading.Thread):
         }
 
     def receive_message(self, message):
-        # Implement as needed for non-task-related messages
         pass
