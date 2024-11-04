@@ -11,7 +11,14 @@ from core.graph_handle import GraphHandle
 
 import time
 
-def main():
+def choreographer_coordinator():
+    # user-BGO->choreographer
+    # choreographer-(what implementations do we have for that particular function?)->scrutinizer/BGO repository
+    # choreographer -I(what versions do we have to load?)->Inceptor
+    # choreographer -O(what is the cost of execution and target hardware for the available graphs and function implementations? Use types to determine compatibility between the function and the whole/sampled/summarized graph)->
+    # (assumptions regarding the possible inputs and the range of output we get from Optimizer: we expect the optimizer to answer with a list of possible scrutinizer implementations and associated inceptor particular handles
+    # choreographer-(what is the hardware holistically that should be considered)->Greenifier
+    # choreographer executes the physical execution graph
     user = User()
     inceptor = Inceptor()
     scrutinizer = Scrutinizer()
@@ -28,10 +35,20 @@ def main():
 
     time.sleep(1)  # Allow listeners to initialize
 
-    bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"), GraphHandle("output"))
-    user.emit_message(bgo_request.to_message(), "*")
+    bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"),
+                      GraphHandle("output"))
+    user.emit_message(bgo_request.to_message(), "choreographer")
+    choreographer.emit_message(Message("x", "what implementations do we have for shortest-path"), "scrutinizer")
+    choreographer.emit_message(Message("x", "what graph versions do we have to load?"), "inceptor")
+    choreographer.emit_message(Message("x", "what is the cost of execution and target hardware for the available graphs and function implementations?"), "optimizer")
+    choreographer.emit_message(Message("x",
+                                       "what is the hardware holistically that should be considered?"), "greenifier")
 
     time.sleep(2)  # Allow time for messages to be processed
+
+
+def main():
+    choreographer_coordinator()
 
 if __name__ == "__main__":
     main()
