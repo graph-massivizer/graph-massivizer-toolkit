@@ -2,19 +2,19 @@ import json
 
 class Message:
     def __init__(self, message_type, payload):
-        self.type = message_type
+        self.message_type = message_type
         self.payload = payload
 
     def to_dict(self):
         return {
-            "type": self.type,
+            "message_type": self.message_type,
             "payload": self.payload
         }
 
     @classmethod
     def from_dict(cls, data):
         return cls(
-            message_type=data["type"],
+            message_type=data["message_type"],
             payload=data["payload"]
         )
 

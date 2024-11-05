@@ -4,7 +4,7 @@ class Hardware:
         self.architecture = architecture
 
     def __repr__(self):
-        return f"Hardware(type={self.type}, architecture={self.architecture})"
+        return f"Hardware(type={self.hardware_type}, architecture={self.architecture})"
 
     def to_dict(self):
         return {

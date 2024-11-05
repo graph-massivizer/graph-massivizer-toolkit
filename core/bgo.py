@@ -29,14 +29,11 @@ class BGO():
             "output": self.output.to_dict(),
             "hardware": self.hardware.to_dict()
         }
-        return Message("BGO", payload)
+        return Message(self.name, payload)
 
     @classmethod
     def from_message(cls, message):
         return cls.from_dict(message.payload)
-
-    def process_graph(self):
-        print(f"{self.name} is processing the graph with gf={self.gf} on {self.hardware}")
 
     def set_input(self, graph_data):
         self.input = GraphHandle(graph_data)

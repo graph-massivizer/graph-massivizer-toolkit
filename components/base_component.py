@@ -29,19 +29,15 @@ class BaseComponent:
         def listen():
             while True:
                 sender, message = BaseComponent.topics[self.name].get()
-                process_message(sender, message)
+                self.process_message(sender, message)
                 BaseComponent.topics[self.name].task_done()
 
 
         def listen_wildcard():
             while True:
                 sender, message = BaseComponent.topics["{}_*".format(self.name)].get()
-                process_message(sender, message)
+                self.process_message(sender, message)
                 BaseComponent.topics["{}_*".format(self.name)].task_done()
-            
-        def process_message(sender, message):
-            #TODO deserialize and do something
-            print(f"{self.name} received message from {sender} on {self.name}: {message}")
 
         
         listener_thread = threading.Thread(target=listen, daemon=True)
@@ -49,4 +45,6 @@ class BaseComponent:
         print(f"{self.name} is listening on topic '{self.name}'")
         listener_thread_wildcard = threading.Thread(target=listen_wildcard, daemon=True)
         listener_thread_wildcard.start()
-        
+
+    def process_message(self, sender, message):
+        print(f"{self.name} received message from {sender} on {self.name}: {message}")

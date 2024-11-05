@@ -35,14 +35,17 @@ def choreographer_coordinator():
 
     time.sleep(1)  # Allow listeners to initialize
 
-    bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"),
-                      GraphHandle("output"))
+    bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"), GraphHandle("output"))
     user.emit_message(bgo_request.to_message(), "choreographer")
-    choreographer.emit_message(Message("x", "what implementations do we have for shortest-path"), "scrutinizer")
-    choreographer.emit_message(Message("x", "what graph versions do we have to load?"), "inceptor")
-    choreographer.emit_message(Message("x", "what is the cost of execution and target hardware for the available graphs and function implementations?"), "optimizer")
-    choreographer.emit_message(Message("x",
-                                       "what is the hardware holistically that should be considered?"), "greenifier")
+
+
+    # choreographer.emit_message(Message("x", "what implementations do we have for shortest-path"), "scrutinizer")
+    #
+    #
+    # choreographer.emit_message(Message("x", "what graph versions do we have to load?"), "inceptor")
+    # choreographer.emit_message(Message("x", "what is the cost of execution and target hardware for the available graphs and function implementations?"), "optimizer")
+    # choreographer.emit_message(Message("x",
+    #                                    "what is the hardware holistically that should be considered?"), "greenifier")
 
     time.sleep(2)  # Allow time for messages to be processed
 
