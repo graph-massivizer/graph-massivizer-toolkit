@@ -8,6 +8,9 @@ services:
     image: master_image
     networks:
       - cluster_net
+    ports:
+      - "5002:5000"  # Existing API endpoint
+      - "5001:5001"  # New port for the web interface 
 
   runtime:
     build:
@@ -16,16 +19,6 @@ services:
     image: runtime_image
     networks:
       - cluster_net
-
-  client:
-    build:
-      context: .
-      dockerfile: ./components/client/Dockerfile
-    image: client_image
-    networks:
-      - cluster_net
-    ports:
-      - "5001:5000" 
 
   metafactory:
     build:

@@ -1,1 +1,4 @@
 colorama
+Flask
+igraph
+flask-cors

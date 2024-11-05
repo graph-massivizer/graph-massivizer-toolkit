@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DAG Manipulation Interface</title>
+    <style>
+        /* (Same styling as before) */
+        /* ... */
+    </style>
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h1>DAG Manipulation Interface</h1>
+    
+    <div class="controls">
+        <label for="bgo-category">BGO Category:</label>
+        <select id="bgo-category">
+            <option value="load">Load</option>
+            <option value="store">Store</option>
+            <option value="process">Process</option>
+        </select>
+        
+        <label for="bgo-type">BGO Type:</label>
+        <select id="bgo-type">
+            <!-- Populated dynamically -->
+        </select>
+        
+        <button id="add-node-btn">Add Node</button>
+        <button id="submit-dag-btn">Submit DAG</button> 
+    </div>
+    
+    <div id="editor"></div>
+    
+    <h2>Current DAG</h2>
+    <h3>Nodes</h3>
+    <ul id="node-list">
+        {% for node in dag.nodes %}
+            <li>{{ node.id }} ({{ node.category }})</li>
+        {% endfor %}
+    </ul>
+    
+    <h3>Edges</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>From</th>
+                <th>To</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for edge in dag.edges %}
+                <tr>
+                    <td>{{ edge.source }}</td>
+                    <td>{{ edge.target }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    
+    <div id="context-menu">
+        <ul>
+            <!-- Populated dynamically -->
+        </ul>
+    </div>
+    
+    <script>
+        // Initialize DAG data from Flask
+        let dag = {{ dag|tojson }};
+        
+        // Define BGO types categorized into load, store, process
+        const bgoTypes = {
+            'load': ['LoadData', 'FetchRecords', 'ImportCSV'],
+            'store': ['StoreData', 'ExportRecords', 'SaveJSON'],
+            'process': ['ProcessData', 'TransformRecords', 'AggregateData']
+        };
+        
+        // Populate BGO Type dropdown based on selected category
+        const categorySelect = document.getElementById('bgo-category');
+        const typeSelect = document.getElementById('bgo-type');
+        
+        categorySelect.addEventListener('change', (e) => {
+            const category = e.target.value;
+            typeSelect.innerHTML = ''; // Clear existing options
+            bgoTypes[category].forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                typeSelect.appendChild(option);
+            });
+        });
+        
+        // Initialize BGO types on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const event = new Event('change');
+            categorySelect.dispatchEvent(event);
+        });
+        
+        // Set up SVG dimensions
+        const editorDiv = document.getElementById('editor');
+        const width = editorDiv.clientWidth || 800;
+        const height = editorDiv.clientHeight || 600;
+        
+        // Create SVG element
+        const svg = d3.select("#editor").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        
+        // Initialize simulation with forces
+        const simulation = d3.forceSimulation(dag.nodes)
+            .force("link", d3.forceLink(dag.edges).id(d => d.id).distance(150))
+            .force("charge", d3.forceManyBody().strength(-500))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(50));
+        
+        // Draw links (edges)
+        let link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(dag.edges)
+            .enter().append("line")
+            .attr("class", "link")
+            .on("contextmenu", function(event, d) {
+                event.preventDefault();
+                showContextMenu(event.pageX, event.pageY, 'edge', d);
+            });
+        
+        // Draw nodes
+        let node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(dag.nodes)
+            .enter().append("circle")
+            .attr("class", d => `node ${d.category}`)
+            .attr("r", 20)
+            .on("click", (event, d) => {
+                if (!selectedNode) {
+                    selectedNode = d;
+                    d3.select(event.currentTarget).classed("selected", true);
+                } else {
+                    if (selectedNode.id !== d.id) {
+                        // Add edge from selectedNode to clicked node
+                        const newEdge = {source: selectedNode.id, target: d.id};
+                        // Prevent duplicate edges and self-loop
+                        if (!dag.edges.some(edge => edge.source === newEdge.source && edge.target === newEdge.target)) {
+                            dag.edges.push(newEdge);
+                            link = link.data(dag.edges)
+                                .enter().append("line")
+                                .attr("class", "link")
+                                .on("contextmenu", function(event, d) {
+                                    event.preventDefault();
+                                    showContextMenu(event.pageX, event.pageY, 'edge', d);
+                                });
+                            
+                            simulation.force("link").links(dag.edges);
+                            simulation.alpha(1).restart();
+                            
+                            // Update edges table in HTML
+                            const tbody = document.querySelector('table tbody') || (() => {
+                                const tbody = document.createElement('tbody');
+                                document.querySelector('table').appendChild(tbody);
+                                return tbody;
+                            })();
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${newEdge.source}</td><td>${newEdge.target}</td>`;
+                            tbody.appendChild(tr);
+                            
+                            // Log and update backend
+                            terminal.log(`Edge from ${newEdge.source} to ${newEdge.target} added to DAG.`, 'INFO');
+                            updateBackend();
+                        }
+                    }
+                    // Reset selection
+                    d3.selectAll(".node").classed("selected", false);
+                    selectedNode = null;
+                }
+            })
+            .on("contextmenu", function(event, d) {
+                event.preventDefault();
+                showContextMenu(event.pageX, event.pageY, 'node', d);
+            })
+            .call(drag(simulation));
+        
+        // Add labels to nodes
+        let labels = svg.append("g")
+            .attr("class", "labels")
+            .selectAll("text")
+            .data(dag.nodes)
+            .enter().append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", ".35em")
+            .text(d => d.id);
+        
+        // Handle double-click for node label editing
+        node.on("dblclick", (event, d) => {
+            const newLabel = prompt("Enter new label for the node:", d.id);
+            if (newLabel && newLabel.trim() !== "") {
+                const oldId = d.id;
+                d.id = newLabel.trim();
+                
+                // Update DAG nodes
+                dag.nodes = dag.nodes.map(node => node.id === oldId ? {...node, id: d.id} : node);
+                
+                // Update DAG edges
+                dag.edges = dag.edges.map(edge => {
+                    if (edge.source === oldId) edge.source = d.id;
+                    if (edge.target === oldId) edge.target = d.id;
+                    return edge;
+                });
+                
+                // Update labels in visualization
+                labels.text(d => d.id);
+                
+                // Restart simulation to adjust layout
+                simulation.alpha(1).restart();
+                
+                // Update nodes list in HTML
+                const nodeList = document.getElementById('node-list');
+                Array.from(nodeList.children).forEach(li => {
+                    if (li.textContent.startsWith(oldId)) {
+                        li.textContent = `${d.id} (${d.category})`;
+                    }
+                });
+                
+                // Log and update backend
+                terminal.log(`Node ${oldId} renamed to ${d.id}.`, 'INFO');
+                updateBackend();
+            }
+        });
+        
+        // Drag functions
+        function drag(simulation) {
+        
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            return d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended);
+        }
+        
+        // Handle simulation tick
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+            
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+            
+            labels
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+        });
+        
+        // Add Node Button Functionality
+        document.getElementById('add-node-btn').addEventListener('click', () => {
+            const category = document.getElementById('bgo-category').value;
+            const type = document.getElementById('bgo-type').value;
+            const nodeId = `${type}-${dag.nodes.length + 1}`;
+            
+            // Add node to DAG
+            const newNode = {id: nodeId, category: category};
+            dag.nodes.push(newNode);
+            
+            // Add node to visualization
+            node = node.data(dag.nodes)
+                .enter().append("circle")
+                .attr("class", d => `node ${d.category}`)
+                .attr("r", 20)
+                .on("click", (event, d) => {
+                    if (!selectedNode) {
+                        selectedNode = d;
+                        d3.select(event.currentTarget).classed("selected", true);
+                    } else {
+                        if (selectedNode.id !== d.id) {
+                            // Add edge from selectedNode to clicked node
+                            const newEdge = {source: selectedNode.id, target: d.id};
+                            // Prevent duplicate edges and self-loop
+                            if (!dag.edges.some(edge => edge.source === newEdge.source && edge.target === newEdge.target)) {
+                                dag.edges.push(newEdge);
+                                link = link.data(dag.edges)
+                                    .enter().append("line")
+                                    .attr("class", "link")
+                                    .on("contextmenu", function(event, d) {
+                                        event.preventDefault();
+                                        showContextMenu(event.pageX, event.pageY, 'edge', d);
+                                    });
+                                
+                                simulation.force("link").links(dag.edges);
+                                simulation.alpha(1).restart();
+                                
+                                // Update edges table in HTML
+                                const tbody = document.querySelector('table tbody') || (() => {
+                                    const tbody = document.createElement('tbody');
+                                    document.querySelector('table').appendChild(tbody);
+                                    return tbody;
+                                })();
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `<td>${newEdge.source}</td><td>${newEdge.target}</td>`;
+                                tbody.appendChild(tr);
+                                
+                                // Log and update backend
+                                terminal.log(`Edge from ${newEdge.source} to ${newEdge.target} added to DAG.`, 'INFO');
+                                updateBackend();
+                            }
+                        }
+                        // Reset selection
+                        d3.selectAll(".node").classed("selected", false);
+                        selectedNode = null;
+                    }
+                })
+                .on("contextmenu", function(event, d) {
+                    event.preventDefault();
+                    showContextMenu(event.pageX, event.pageY, 'node', d);
+                })
+                .call(drag(simulation));
+            
+            // Add label for the new node
+            labels = labels.data(dag.nodes)
+                .enter().append("text")
+                .attr("text-anchor", "middle")
+                .attr("dy", ".35em")
+                .text(d => d.id);
+            
+            // Restart simulation
+            simulation.nodes(dag.nodes);
+            simulation.alpha(1).restart();
+            
+            // Update node list in HTML
+            const nodeList = document.getElementById('node-list');
+            const li = document.createElement('li');
+            li.textContent = `${newNode.id} (${newNode.category})`;
+            nodeList.appendChild(li);
+            
+            // Log and update backend
+            terminal.log(`Node ${newNode.id} added to DAG.`, 'INFO');
+            updateBackend();
+        });
+        
+        // Submit DAG Button Functionality
+        document.getElementById('submit-dag-btn').addEventListener('click', () => {
+            // Convert DAG to JSON
+            const dagData = {
+                nodes: dag.nodes,
+                edges: dag.edges
+            };
+            
+            // Send DAG to master via API
+            fetch('http://localhost:5002/api/submit_dag', { // Changed to master API endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dagData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('DAG submitted successfully!');
+                    terminal.log('DAG submitted to master.', 'INFO');
+                } else {
+                    alert(`Failed to submit DAG: ${data.message}`);
+                    terminal.log(`Failed to submit DAG: ${data.message}`, 'ERROR');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the DAG.');
+                terminal.log(`Error submitting DAG: ${error}`, 'ERROR');
+            });
+        });
+        
+        // Selected node for edge creation
+        let selectedNode = null;
+        
+        // Handle DAG updates from frontend to backend
+        function updateBackend() {
+            fetch('/web/update_dag', {  // Updated endpoint to master’s web route
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dag),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('DAG updated successfully.');
+                } else {
+                    console.error('Error updating DAG:', data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+        
+        // Terminal logging simulation (Replace with actual terminal instance if available)
+        const terminal = {
+            log: (message, level='INFO') => {
+                console.log(`[${level}] ${message}`);
+            }
+        };
+        
+        /* ============================
+           Custom Context Menu Functions
+        ============================= */
+        
+        const contextMenu = document.getElementById('context-menu');
+        const contextMenuList = contextMenu.querySelector('ul');
+        
+        /**
+         * Displays the custom context menu at the specified (x, y) coordinates.
+         * @param {number} x - The x-coordinate where the menu should appear.
+         * @param {number} y - The y-coordinate where the menu should appear.
+         * @param {string} type - The type of element ('node' or 'edge') that was right-clicked.
+         * @param {object} data - The data associated with the clicked element.
+         */
+        function showContextMenu(x, y, type, data) {
+            // Clear existing menu items
+            contextMenuList.innerHTML = '';
+            
+            if (type === 'node') {
+                // Add menu items for node
+                addMenuItem('Remove Node', () => removeNode(data));
+                addMenuItem('Add Edge from this Node', () => initiateAddEdge(data));
+            } else if (type === 'edge') {
+                // Add menu items for edge
+                addMenuItem('Remove Edge', () => removeEdge(data));
+            }
+            
+            // Position the menu
+            contextMenu.style.top = `${y}px`;
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.display = 'block';
+        }
+        
+        /**
+         * Hides the custom context menu.
+         */
+        function hideContextMenu() {
+            contextMenu.style.display = 'none';
+        }
+        
+        /**
+         * Adds a menu item to the context menu.
+         * @param {string} text - The display text of the menu item.
+         * @param {function} action - The function to execute when the menu item is clicked.
+         */
+        function addMenuItem(text, action) {
+            const li = document.createElement('li');
+            li.textContent = text;
+            li.addEventListener('click', () => {
+                action();
+                hideContextMenu();
+            });
+            contextMenuList.appendChild(li);
+        }
+        
+        /**
+         * Removes a node and all its connected edges from the DAG and the visualization.
+         * @param {object} nodeData - The data of the node to remove.
+         */
+        function removeNode(nodeData) {
+            const nodeId = nodeData.id;
+            // Remove node from DAG
+            dag.nodes = dag.nodes.filter(node => node.id !== nodeId);
+            // Remove connected edges
+            dag.edges = dag.edges.filter(edge => edge.source !== nodeId && edge.target !== nodeId);
+            
+            // Remove node and connected links from visualization
+            node.filter(d => d.id === nodeId).remove();
+            link.filter(d => d.source.id === nodeId || d.target.id === nodeId).remove();
+            labels.filter(d => d.id === nodeId).remove();
+            
+            // Update simulation
+            simulation.nodes(dag.nodes);
+            simulation.force("link").links(dag.edges);
+            simulation.alpha(1).restart();
+            
+            // Update nodes list in HTML
+            const nodeList = document.getElementById('node-list');
+            Array.from(nodeList.children).forEach(li => {
+                if (li.textContent.startsWith(nodeId)) {
+                    li.remove();
+                }
+            });
+            
+            // Update edges table in HTML
+            const tbody = document.querySelector('table tbody');
+            Array.from(tbody.children).forEach(tr => {
+                const from = tr.children[0].textContent;
+                const to = tr.children[1].textContent;
+                if (from === nodeId || to === nodeId) {
+                    tr.remove();
+                }
+            });
+            
+            // Log and update backend
+            terminal.log(`Node ${nodeId} and its connected edges removed from DAG.`, 'INFO');
+            updateBackend();
+        }
+        
+        /**
+         * Removes an edge from the DAG and the visualization.
+         * @param {object} edgeData - The data of the edge to remove.
+         */
+        function removeEdge(edgeData) {
+            const sourceId = edgeData.source.id;
+            const targetId = edgeData.target.id;
+            // Remove edge from DAG
+            dag.edges = dag.edges.filter(edge => !(edge.source === sourceId && edge.target === targetId));
+            
+            // Remove edge from visualization
+            link.filter(d => d.source.id === sourceId && d.target.id === targetId).remove();
+            
+            // Update edges table in HTML
+            const tbody = document.querySelector('table tbody');
+            Array.from(tbody.children).forEach(tr => {
+                const from = tr.children[0].textContent;
+                const to = tr.children[1].textContent;
+                if (from === sourceId && to === targetId) {
+                    tr.remove();
+                }
+            });
+            
+            // Log and update backend
+            terminal.log(`Edge from ${sourceId} to ${targetId} removed from DAG.`, 'INFO');
+            updateBackend();
+        }
+        
+        /**
+         * Initiates the process to add an edge from a selected node.
+         * @param {object} sourceNodeData - The data of the source node.
+         */
+        function initiateAddEdge(sourceNodeData) {
+            selectedNode = sourceNodeData;
+            // Highlight the selected node
+            d3.selectAll(".node").classed("selected", false);
+            node.filter(d => d.id === sourceNodeData.id).classed("selected", true);
+            terminal.log(`Selected node ${sourceNodeData.id} as source for new edge. Click on target node to create edge.`, 'INFO');
+        }
+        
+        /**
+         * Hides the context menu when the user clicks outside of it, scrolls, or resizes the window.
+         */
+        window.addEventListener('click', hideContextMenu);
+        window.addEventListener('scroll', hideContextMenu);
+        window.addEventListener('resize', hideContextMenu);
+        
+    </script>
+</body>
+</html>
