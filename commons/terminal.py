@@ -1,4 +1,6 @@
 # commons/terminal.py
+# TODO this needs to be a service (maybe part of the master)
+
 
 import threading
 import queue
