@@ -20,7 +20,7 @@ terminal = Terminal.get_instance()
 GRAPH_STORAGE_DIR = 'stored_graphs'
 os.makedirs(GRAPH_STORAGE_DIR, exist_ok=True)
 
-from management.lifecycle_manager import LifecycleManager
+from simulation.lifecycle_manager import LifecycleManager
 
 lifecycle_manager = LifecycleManager()
 

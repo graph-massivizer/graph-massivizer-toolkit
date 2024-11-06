@@ -1,6 +1,6 @@
 # main.py
 
-from management.lifecycle_manager import LifecycleManager
+from simulation.lifecycle_manager import LifecycleManager
 from commons.terminal import Terminal
 
 def main():
