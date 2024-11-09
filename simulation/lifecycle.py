@@ -23,6 +23,7 @@ class SimulationLifecycle:
     def initialize_environment(self):
         if self.state == LifecycleState.INITIALIZED:
             print("Initializing environment...")
+            # Initialize the environment and deploy Zookeeper
             self.transition(LifecycleState.ENVIRONMENT_SETUP)
         else:
             print("Cannot initialize environment from current state.")
@@ -34,6 +35,8 @@ class SimulationLifecycle:
             for i in range(10):
                 node = Node(node_id=f"node-{i}", resources={}, network=network)
                 cluster.add_node(node)
+            # Deploy Zookeeper on one of the nodes
+            cluster.nodes["node-0"].deploy_zookeeper()  # Assuming node-0 will host Zookeeper
             self.transition(LifecycleState.CLUSTER_CREATED)
         else:
             print("Cannot create cluster from current state.")
