@@ -1,7 +1,7 @@
 # components/master/greenifier.py
 
 from threading import Thread
-from commons.terminal import Terminal
+from core.commons.terminal import Terminal
 import time
 
 class Greenifier(Thread):

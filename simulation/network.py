@@ -1,5 +1,3 @@
-# environment/network.py
-
 import docker
 
 class Network:

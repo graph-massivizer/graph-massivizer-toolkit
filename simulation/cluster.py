@@ -1,5 +1,3 @@
-# environment/cluster.py
-
 class Cluster:
     def __init__(self, network):
         self.nodes = {}
