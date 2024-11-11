@@ -1,21 +1,21 @@
+import uuid
+
 from .graph_handle import GraphHandle
-from .hardware import Hardware
 from .message import Message
 
 class BGO():
-    def __init__(self, input: GraphHandle, gf, hardware: Hardware, output: GraphHandle):
+    def __init__(self, input: GraphHandle, gf, output: GraphHandle):
         self.name = "BGO"
+        self.uuid = str(uuid.uuid4())
         self.input = input
         self.output = output
         self.gf = gf
-        self.hardware = hardware
 
     @classmethod
     def from_dict(cls, data):
         instance = cls(
             gf=data["gf"],
-            hardware_type=data["hardware"]["type"],
-            architecture=data["hardware"]["architecture"]
+            uuid=data["uuid"]
         )
         instance.input = GraphHandle(data["input"]["graph_data"])
         instance.output = GraphHandle(data["output"]["graph_data"])
@@ -24,10 +24,10 @@ class BGO():
     def to_message(self):
         payload = {
             "name": self.name,
+            "uuid": self.uuid,
             "gf": self.gf,
             "input": self.input.to_dict(),
-            "output": self.output.to_dict(),
-            "hardware": self.hardware.to_dict()
+            "output": self.output.to_dict()
         }
         return Message(self.name, payload)
 

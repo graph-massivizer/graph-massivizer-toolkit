@@ -3,21 +3,24 @@ from .hardware import Hardware
 from .message import Message
 
 class BGOInpRes():
-    def __init__(self, gf):
+    def __init__(self, uuid, gh):
         self.name = "BGO-inp-res"
-        self.gf = gf
+        self.uuid = uuid
+        self.gh = gh
 
     @classmethod
     def from_dict(cls, data):
         instance = cls(
-            gf=data["gf"],
+            uuid=data["uuid"],
+            gf=data["gh"],
         )
         return instance
 
     def to_message(self):
         payload = {
             "name": self.name,
-            "gf": self.gf,
+            "uuid": self.uuid,
+            "gh": self.gh,
         }
         return Message(self.name, payload)
 

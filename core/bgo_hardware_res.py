@@ -1,18 +1,16 @@
 from .message import Message
 
-class BGOImplRes():
-    def __init__(self, uuid, gf, implementations):
-        self.name = "BGO-impl-res"
+class BGOHardwareResponse():
+    def __init__(self, uuid, hardware):
+        self.name = "BGO-hardware-res"
         self.uuid = uuid
-        self.gf = gf
-        self.implementations = implementations
+        self.hardware = hardware
 
     @classmethod
     def from_dict(cls, data):
         instance = cls(
             uuid=data["uuid"],
-            gf=data["gf"],
-            implementations=data["implementations"],
+            hardware=data["hardware"],
         )
         return instance
 
@@ -20,8 +18,7 @@ class BGOImplRes():
         payload = {
             "name": self.name,
             "uuid": self.uuid,
-            "gf": self.gf,
-            "implementations": self.implementations,
+            "hardware": self.hardware
         }
         return Message(self.name, payload)
 

@@ -10,7 +10,7 @@ class BaseComponent:
         self.local_queue = Queue()
 
     def emit_message(self, message, topic):
-        print(BaseComponent.topics.keys())
+        # print(BaseComponent.topics.keys())
         if topic == "*":
             topics = [x for x in BaseComponent.topics.keys() if x.endswith("_*")]
         else:
@@ -19,7 +19,7 @@ class BaseComponent:
             if t not in BaseComponent.topics:
                 BaseComponent.topics[t] = Queue()
             BaseComponent.topics[t].put((self.name, message.to_json()))
-            print(f"{self.name} emitted message to {t}: {message.to_json()}")
+            #print(f"{self.name} emitted message to {t}: {message.to_json()}")
 
     def start_listening(self):
         if self.name not in BaseComponent.topics:

@@ -35,8 +35,15 @@ def choreographer_coordinator():
 
     time.sleep(1)  # Allow listeners to initialize
 
-    bgo_request = BGO(GraphHandle("input"), "shortest-path", Hardware(hardware_type="GPU", architecture="NVIDIA A100"), GraphHandle("output"))
-    user.emit_message(bgo_request.to_message(), "choreographer")
+    # Choreographer receives the workflow
+    #Workflow(input, [operations: list or dag]) -> (output by convention)
+    # operations: typing about input requirements
+
+    #Choreographer provides a topology of devices
+    
+    # Hardware(hardware_type="GPU", architecture="NVIDIA A100"),
+    bgo_request = BGO(GraphHandle("input"), "shortest-path", GraphHandle("output"))
+    user.emit_message(bgo_request.to_message(), "*")
 
 
     # choreographer.emit_message(Message("x", "what implementations do we have for shortest-path"), "scrutinizer")

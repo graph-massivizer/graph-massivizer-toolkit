@@ -1,18 +1,16 @@
 from .message import Message
 
-class BGOImplRes():
-    def __init__(self, uuid, gf, implementations):
-        self.name = "BGO-impl-res"
+class BGOGreenResponse():
+    def __init__(self, uuid, physical_execution_plans):
+        self.name = "BGO-green-res"
         self.uuid = uuid
-        self.gf = gf
-        self.implementations = implementations
+        self.physical_execution_plans = physical_execution_plans
 
     @classmethod
     def from_dict(cls, data):
         instance = cls(
             uuid=data["uuid"],
-            gf=data["gf"],
-            implementations=data["implementations"],
+            physical_execution_plans=data["physical_execution_plans"],
         )
         return instance
 
@@ -20,8 +18,7 @@ class BGOImplRes():
         payload = {
             "name": self.name,
             "uuid": self.uuid,
-            "gf": self.gf,
-            "implementations": self.implementations,
+            "physical_execution_plans": self.physical_execution_plans
         }
         return Message(self.name, payload)
 

@@ -6,14 +6,16 @@ class Inceptor(BaseComponent):
         super().__init__("inceptor")
 
     def process_message(self, sender, message):
-        super().process_message(sender, message)
+        print("Inceptor"+message)
         msg = json.loads(message)
-        if (msg['message_type'] == "BGO-inp-req"):
-            input_type = msg['payload']['gh']
-            implementations = self.get_graphs(input_type)
-            request = BGOInpRes(implementations)
-            self.emit_message(request.to_message(), "choreographer")
+        payload = msg["payload"]
+        if(msg['message_type'] == "BGO"):
+            super().process_message(sender, message)
+            graph_id = payload['input']
+            implementations = self.get_graphs(graph_id)
+            request = BGOInpRes(payload['uuid'], implementations)
+            self.emit_message(request.to_message(), "*")
 
-    def get_graphs(self, bgo_type):
+    def get_graphs(self, graph_id):
         # TODO: add URL
         return [{'input_type':'summary-graph'}, {'input_type':'sampled-graph'}, {'input_type':'whole-graph'}]

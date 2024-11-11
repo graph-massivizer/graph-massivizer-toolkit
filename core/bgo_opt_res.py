@@ -1,18 +1,18 @@
+from .graph_handle import GraphHandle
+from .hardware import Hardware
 from .message import Message
 
-class BGOImplRes():
-    def __init__(self, uuid, gf, implementations):
-        self.name = "BGO-impl-res"
+class BGOOptRes():
+    def __init__(self, uuid, cost_estimates):
+        self.name = "BGO-opt-res"
         self.uuid = uuid
-        self.gf = gf
-        self.implementations = implementations
+        self.cost_estimates = cost_estimates
 
     @classmethod
     def from_dict(cls, data):
         instance = cls(
             uuid=data["uuid"],
-            gf=data["gf"],
-            implementations=data["implementations"],
+            cost_estimates=data["cost_estimates"],
         )
         return instance
 
@@ -20,11 +20,11 @@ class BGOImplRes():
         payload = {
             "name": self.name,
             "uuid": self.uuid,
-            "gf": self.gf,
-            "implementations": self.implementations,
+            "cost_estimates": self.cost_estimates,
         }
         return Message(self.name, payload)
 
     @classmethod
     def from_message(cls, message):
         return cls.from_dict(message.payload)
+
