@@ -1,5 +1,3 @@
-# environment/node.py
-
 import threading
 import time
 import docker
@@ -94,3 +92,31 @@ class Node(threading.Thread):
 
     def receive_message(self, message):
         pass
+    
+    def deploy_workload_manager(self):
+        """Deploy the Workload Manager instance in Docker."""
+        container_name = f"workload_manager_{self.node_id}"
+        image_name = "workload_manager_image"  # Ensure this image is built
+        try:
+            # Remove existing container if it exists
+            try:
+                existing_container = self.docker_client.containers.get(container_name)
+                existing_container.stop()
+                existing_container.remove()
+            except docker.errors.NotFound:
+                pass
+            container = self.docker_client.containers.run(
+                image_name,
+                detach=True,
+                name=container_name,
+                network='cluster_net',
+                environment={
+                    'ZOOKEEPER_HOST': 'zookeeper_node-0',  # Zookeeper hostname
+                    'NODE_ID': self.node_id
+                },
+                labels={'node': self.node_id}
+            )
+            self.containers.append(container)
+            print(f"Workload Manager started on {self.node_id} with container {container.name}")
+        except Exception as e:
+            print(f"Error starting Workload Manager on node {self.node_id}: {e}")
