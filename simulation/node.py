@@ -12,6 +12,9 @@ class Node(threading.Thread):
         self.running = True
         self.docker_client = docker.from_env()
         self.containers = []
+        self.zookeeper_host = 'zookeeper_node-0:2181'  # Update with actual ZooKeeper host
+        self.zk = KazooClient(hosts=self.zookeeper_host)
+        self.zk.start()
 
     def run(self):
         while self.running:
@@ -120,3 +123,46 @@ class Node(threading.Thread):
             print(f"Workload Manager started on {self.node_id} with container {container.name}")
         except Exception as e:
             print(f"Error starting Workload Manager on node {self.node_id}: {e}")
+            
+    def register_task_manager(self):
+        machine_info = self.collect_machine_info()
+        node_path = f'/taskmanagers/{machine_info["uid"]}'
+        data = json.dumps(machine_info).encode('utf-8')
+        if self.zk.exists(node_path):
+            self.zk.set(node_path, data)
+        else:
+            self.zk.create(node_path, data)
+        print(f"TaskManager {machine_info['uid']} registered with ZooKeeper.")
+
+    def collect_machine_info(self):
+        # Replace with actual methods to collect machine info
+        machine_info = {
+            'uid': str(uuid.uuid4()),
+            'address': socket.gethostbyname(socket.gethostname()),
+            'host_name': socket.gethostname(),
+            'data_port': 5000,
+            'control_port': 5001,
+            'cpu_cores': 4,
+            'size_of_ram': 8 * 1024 * 1024 * 1024,  # 8 GB
+            'size_of_hdd': 256 * 1024 * 1024 * 1024  # 256 GB
+        }
+        return machine_info
+
+    def shutdown(self):
+        self.running = False
+        self.status = 'offline'
+        for container in self.containers:
+            container.stop()
+            container.remove()
+        self.containers.clear()
+        self.zk.stop()
+
+    def report_status(self):
+        return {
+            'node_id': self.node_id,
+            'status': self.status,
+            'containers': [c.name for c in self.containers]
+        }
+
+    def receive_message(self, message):
+        pass
