@@ -1,7 +1,5 @@
 import uuid
 from typing import List, Optional
-from core.common.utils import InetHelper
-import socket
 
 class MachineDescriptor:
     def __init__(self, address: str, host_name: str, data_port: int, control_port: int, hardware):
@@ -16,6 +14,16 @@ class MachineDescriptor:
         self.hardware = hardware
         self.data_address = (address, data_port)
         self.control_address = (address, control_port)
+
+    def to_dict(self):
+        return {
+            'uid': str(self.uid),
+            'address': self.address,
+            'host_name': self.host_name,
+            'data_port': self.data_port,
+            'control_port': self.control_port,
+            'hardware': self.hardware.to_dict()
+        }
 
     def __repr__(self):
         return (f"MachineDescriptor(uid={self.uid}, address={self.address}, host_name={self.host_name}, "
@@ -33,6 +41,14 @@ class HardwareDescriptor:
         self.size_of_ram = size_of_ram
         self.hdd = hdd
 
+    def to_dict(self):
+        return {
+            'uid': str(self.uid),
+            'cpu_cores': self.cpu_cores,
+            'size_of_ram': self.size_of_ram,
+            'hdd': self.hdd.to_dict()
+        }
+
     def __repr__(self):
         return (f"HardwareDescriptor(uid={self.uid}, cpu_cores={self.cpu_cores}, "
                 f"size_of_ram={self.size_of_ram}, hdd={self.hdd})")
@@ -44,6 +60,12 @@ class HDDDescriptor:
 
         self.uid = uuid.uuid4()
         self.size_of_hdd = size_of_hdd
+
+    def to_dict(self):
+        return {
+            'uid': str(self.uid),
+            'size_of_hdd': self.size_of_hdd
+        }
 
     def __repr__(self):
         return f"HDDDescriptor(uid={self.uid}, size_of_hdd={self.size_of_hdd})"
