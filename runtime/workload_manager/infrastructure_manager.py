@@ -5,9 +5,10 @@
 
 import threading
 import logging
+import json
 from kazoo.client import KazooClient
 from kazoo.protocol.states import WatchedEvent, EventType
-from core.descriptors import MachineDescriptor
+from core.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
 import uuid
 
 class InfrastructureManager:
@@ -26,28 +27,25 @@ class InfrastructureManager:
         self.zk = KazooClient(hosts=self.zookeeper_host)
         self.zk.start()
 
-        # Initialize Zookeeper directories
         self.init_zookeeper_directories()
 
-        # Store the workload manager machine descriptor in Zookeeper
+        self.machine_descriptors = {}  # Store MachineDescriptors
         self.store_machine_descriptor()
+        self.store_environment_model_in_zookeeper()
 
-        # Get existing TaskManager nodes and watch for changes
-        self.zk.DataWatch('/taskmanagers', self.zookeeper_task_manager_watcher)
+        # Watch for changes in task managers
+        self.zk.ChildrenWatch('/taskmanagers', self.zookeeper_task_manager_watcher)
 
-        # Initialize the input split manager (not implemented here)
         self.input_split_manager = None  # Placeholder for actual implementation
 
     def init_zookeeper_directories(self):
-        # Ensure that the necessary Zookeeper directories exist
-        paths = ['/workloadmanager', '/taskmanagers']
+        paths = ['/workloadmanager', '/taskmanagers', '/environment']
         for path in paths:
             if not self.zk.exists(path):
                 self.zk.create(path)
                 self.logger.debug(f"Created Zookeeper path: {path}")
 
     def store_machine_descriptor(self):
-        # Serialize the machine descriptor and store it in Zookeeper
         data = str(self.wm_machine_descriptor).encode('utf-8')
         wm_path = '/workloadmanager'
         if not self.zk.exists(wm_path):
@@ -56,39 +54,61 @@ class InfrastructureManager:
             self.zk.set(wm_path, data)
         self.logger.debug("Stored workload manager machine descriptor in Zookeeper.")
 
-    def zookeeper_task_manager_watcher(self, data, stat, event):
-        if event is not None and event.type == EventType.CHILD:
-            self.logger.debug(f"Received Zookeeper event: {event}")
-            with self.node_info_lock:
-                # Fetch current task managers
-                task_manager_nodes = self.zk.get_children('/taskmanagers')
+    def update_machine_descriptors(self, machine_info):
+        machine_id = machine_info['uid']
+        hardware = HardwareDescriptor(
+            cpu_cores=machine_info['cpu_cores'],
+            size_of_ram=machine_info['size_of_ram'],
+            hdd=HDDDescriptor(size_of_hdd=machine_info['size_of_hdd'])
+        )
+        machine_descriptor = MachineDescriptor(
+            address=machine_info['address'],
+            host_name=machine_info['host_name'],
+            data_port=machine_info['data_port'],
+            control_port=machine_info['control_port'],
+            hardware=hardware
+        )
+        self.machine_descriptors[machine_id] = machine_descriptor
+        self.logger.debug(f"Updated machine descriptor for {machine_id}.")
 
-                # Update tm_machine_map and available_execution_units_map accordingly
-                # For simplicity, we'll just log the changes
-                self.logger.debug(f"Task Manager nodes: {task_manager_nodes}")
-                # Implementation of adding/removing machines goes here
+    def serialize_environment_model(self):
+        # Convert descriptors to dictionaries
+        model_data = json.dumps({
+            machine_id: descriptor.to_dict() for machine_id, descriptor in self.machine_descriptors.items()
+        })
+        return model_data.encode('utf-8')  # Convert to bytes for ZooKeeper
+
+    def store_environment_model_in_zookeeper(self):
+        model_data = self.serialize_environment_model()
+        model_path = '/environment/machines'
+        if self.zk.exists(model_path):
+            self.zk.set(model_path, model_data)
+        else:
+            self.zk.create(model_path, model_data)
+        self.logger.debug("Environment model updated in ZooKeeper.")
+
+    def zookeeper_task_manager_watcher(self, task_manager_nodes):
+        with self.node_info_lock:
+            self.logger.debug(f"Task Manager nodes: {task_manager_nodes}")
+            # Update machine descriptors based on task manager nodes
+            for node in task_manager_nodes:
+                node_path = f'/taskmanagers/{node}'
+                data, stat = self.zk.get(node_path)
+                if data:
+                    machine_info = json.loads(data.decode('utf-8'))
+                    self.update_machine_descriptors(machine_info)
+            self.store_environment_model_in_zookeeper()
 
     def get_machine(self, location_preference=None):
         with self.node_info_lock:
             worker_machines = list(self.tm_machine_map.values())
-            # Implement logic to select a machine based on location preference and availability
-            # For now, return a machine in round-robin fashion
             if not worker_machines:
                 raise Exception("No available machines.")
             self.machine_idx = (self.machine_idx + 1) % len(worker_machines)
             selected_machine = worker_machines[self.machine_idx]
-            # Update available execution units
             self.available_execution_units_map[selected_machine.uid] -= 1
             return selected_machine
 
     def shutdown_infrastructure_manager(self):
         self.zk.stop()
         self.logger.info("Shutdown infrastructure manager.")
-
-    # Additional methods to implement:
-    # - reclaim_execution_units
-    # - register_hdfs_source
-    # - get_next_input_split_for_hdfs_source
-    # - get_number_of_machines
-    # - get_machines_with_input_split
-    # These methods depend on your specific implementation details.
