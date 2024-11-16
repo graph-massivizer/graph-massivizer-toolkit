@@ -1,6 +1,8 @@
 import threading
 import time
 import docker
+import socket
+from kazoo.client import KazooClient
 
 class Node(threading.Thread):
     def __init__(self, node_id, resources, network):
@@ -12,9 +14,8 @@ class Node(threading.Thread):
         self.running = True
         self.docker_client = docker.from_env()
         self.containers = []
-        self.zookeeper_host = 'zookeeper_node-0:2181'  # Update with actual ZooKeeper host
-        self.zk = KazooClient(hosts=self.zookeeper_host)
-        self.zk.start()
+        self.zookeeper_host = 'zookeeper:2181'
+        self.zk = None
 
     def run(self):
         while self.running:
@@ -62,7 +63,12 @@ class Node(threading.Thread):
                 image_name,
                 detach=True,
                 name=container_name,
-                network='cluster_net',
+                hostname='zookeeper',
+                networks={
+                    'cluster_net': {
+                    'aliases': ['zookeeper']
+                    }
+                },
                 environment={
                     'ZOOKEEPER_CLIENT_PORT': '2181',
                     'ZOOKEEPER_TICK_TIME': '2000',
@@ -77,6 +83,31 @@ class Node(threading.Thread):
 
         except Exception as e:
             print(f"Error starting Zookeeper container on node {self.node_id}: {e}")
+            
+    def start_zk_client(self):
+        try:
+            self.zk = KazooClient(hosts=self.zookeeper_host)
+            self.zk.start()
+        except Exception as e:
+            print(f"Error connecting to ZooKeeper from node {self.node_id}: {e}")
+            raise
+            
+    def wait_for_zookeeper(self):
+        command = "echo ruok | nc zookeeper 2181"
+        try:
+            output = self.docker_client.containers.run(
+                "alpine:latest",
+                command=command,
+                network='cluster_net',
+                remove=True
+            )
+            if b'imok' in output:
+                print("ZooKeeper is ready.")
+                return
+        except Exception:
+            pass
+        print("Waiting for ZooKeeper to become ready...")
+        time.sleep(2)
 
     def shutdown(self):
         self.running = False

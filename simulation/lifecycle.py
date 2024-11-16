@@ -34,11 +34,23 @@ class SimulationLifecycle:
             print("Creating cluster with 10 nodes...")
             cluster = Cluster(network)
             self.cluster = cluster
+            
+            # First, create node-0 and deploy ZooKeeper
+            node_0 = Node(node_id="node-0", resources={}, network=network)
+            cluster.add_node(node_0)
+            node_0.deploy_zookeeper()
+            node_0.wait_for_zookeeper()
+            
+            # Start ZooKeeper client on node-0
+            # node_0.start_zk_client()
+            
+            # Create the remaining 9 nodes
             for i in range(10):
                 node = Node(node_id=f"node-{i}", resources={}, network=network)
                 cluster.add_node(node)
-            # Deploy Zookeeper on one of the nodes
-            cluster.nodes["node-0"].deploy_zookeeper()
+                # Start ZooKeeper client on each node
+                node.start_zk_client()
+                
             self.transition(LifecycleState.CLUSTER_CREATED)
         else:
             print("Cannot create cluster from current state.")
