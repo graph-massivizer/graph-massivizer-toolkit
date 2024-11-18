@@ -139,11 +139,18 @@ class Node(threading.Thread):
                 existing_container.remove()
             except docker.errors.NotFound:
                 pass
+            
+            endpoint_config = docker.types.EndpointConfig(aliases=[f"workload_manager"])
+            networking_config = docker.types.NetworkingConfig({
+                'cluster_net': endpoint_config
+            })
+            
+            
             container = self.docker_client.containers.run(
                 image_name,
                 detach=True,
                 name=container_name,
-                network='cluster_net',
+                networking_config=networking_config,
                 environment={
                     'ZOOKEEPER_HOST': 'zookeeper_node-0',  # Zookeeper hostname
                     'NODE_ID': self.node_id

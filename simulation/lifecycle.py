@@ -48,8 +48,6 @@ class SimulationLifecycle:
             for i in range(10):
                 node = Node(node_id=f"node-{i}", resources={}, network=network)
                 cluster.add_node(node)
-                # Start ZooKeeper client on each node
-                node.start_zk_client()
                 
             self.transition(LifecycleState.CLUSTER_CREATED)
         else:
