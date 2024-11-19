@@ -5,19 +5,49 @@
 # - Monitors cluster utilization and resource usage.
 
 import os
-from kazoo.client import KazooClient
 import logging
+from kazoo.client import KazooClient
+from infrastructure_manager import InfrastructureManager
+from core.descriptors.descriptor_factory import create_machine_descriptor
+# Import any necessary configuration classes or functions
 
 logging.basicConfig(level=logging.INFO)
 
 def main():
     try:
-        zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
-        zk = KazooClient(hosts=zookeeper_host)
-        zk.start()
+        # Initialize logging
+        logger = logging.getLogger('WorkloadManager')
+        logger.info("Starting Workload Manager...")
+
+        # Get ZooKeeper host from environment variables
+        zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'zookeeper:2181')
+
+        # Initialize configuration
+        config = {}  # Replace with actual configuration if available
+
+        # Create the workload manager's machine descriptor
+        wm_machine_descriptor = create_machine_descriptor(config)
+
+        # Instantiate the InfrastructureManager
+        infrastructure_manager = InfrastructureManager(
+            workload_manager=None,  # Replace with actual workload manager instance if available
+            zookeeper_host=zookeeper_host,
+            wm_machine_descriptor=wm_machine_descriptor,
+            config=config
+        )
+
+        # The InfrastructureManager will handle storing the environment model into ZooKeeper
+
+        # Keep the main thread alive if necessary
+        while True:
+            pass  # Replace with actual workload manager logic
+
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-    zk.stop()
+    finally:
+        # Ensure that the infrastructure manager shuts down properly
+        if 'infrastructure_manager' in locals():
+            infrastructure_manager.shutdown_infrastructure_manager()
 
 if __name__ == '__main__':
     main()
