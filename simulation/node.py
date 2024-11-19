@@ -51,24 +51,18 @@ class Node(threading.Thread):
 
         try:
             try:
-                # Stop and remove existing container if it exists
                 existing_container = self.docker_client.containers.get(container_name)
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
                 pass  # No existing container, proceed
 
-            # Deploy a new Zookeeper container
-            container = self.docker_client.containers.run(
+            # Create the container without networking_config
+            container = self.docker_client.containers.create(
                 image_name,
-                detach=True,
                 name=container_name,
                 hostname='zookeeper',
-                networks={
-                    'cluster_net': {
-                    'aliases': ['zookeeper']
-                    }
-                },
+                detach=True,
                 environment={
                     'ZOOKEEPER_CLIENT_PORT': '2181',
                     'ZOOKEEPER_TICK_TIME': '2000',
@@ -78,6 +72,14 @@ class Node(threading.Thread):
                 ports={'2181/tcp': 2181},  # Expose port 2181 for client connections
                 labels={'node': self.node_id}
             )
+
+            # Connect the container to the network with an alias
+            network = self.docker_client.networks.get('cluster_net')
+            network.connect(container, aliases=['zookeeper'])
+
+            # Start the container
+            container.start()
+
             self.containers.append(container)
             print(f"Zookeeper instance started on {self.node_id} with container {container.name}")
 
@@ -132,31 +134,29 @@ class Node(threading.Thread):
         container_name = f"workload_manager_{self.node_id}"
         image_name = "workload_manager_image"  # Ensure this image is built
         try:
-            # Remove existing container if it exists
             try:
                 existing_container = self.docker_client.containers.get(container_name)
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
                 pass
-            
-            endpoint_config = docker.types.EndpointConfig(aliases=[f"workload_manager"])
-            networking_config = docker.types.NetworkingConfig({
-                'cluster_net': endpoint_config
-            })
-            
-            
-            container = self.docker_client.containers.run(
+
+            # Create the container without networking_config
+            container = self.docker_client.containers.create(
                 image_name,
-                detach=True,
                 name=container_name,
-                networking_config=networking_config,
+                detach=True,
                 environment={
-                    'ZOOKEEPER_HOST': 'zookeeper_node-0',  # Zookeeper hostname
+                    'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
                     'NODE_ID': self.node_id
                 },
                 labels={'node': self.node_id}
             )
+            # Connect the container to the network with an alias
+            network = self.docker_client.networks.get('cluster_net')
+            network.connect(container, aliases=['workload_manager'])
+            # Start the container
+            container.start()
             self.containers.append(container)
             print(f"Workload Manager started on {self.node_id} with container {container.name}")
         except Exception as e:

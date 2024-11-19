@@ -20,6 +20,7 @@ class SimulationLifecycle:
         self.state = new_state
         print(f"State transitioned to: {self.state}")
 
+    # TODO: This is probably not neccessary. See below 
     def initialize_environment(self):
         if self.state == LifecycleState.INITIALIZED:
             print("Initializing environment...")
@@ -45,7 +46,7 @@ class SimulationLifecycle:
             # node_0.start_zk_client()
             
             # Create the remaining 9 nodes
-            for i in range(10):
+            for i in range(1, 10):
                 node = Node(node_id=f"node-{i}", resources={}, network=network)
                 cluster.add_node(node)
                 
