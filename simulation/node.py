@@ -162,6 +162,39 @@ class Node(threading.Thread):
         except Exception as e:
             print(f"Error starting Workload Manager on node {self.node_id}: {e}")
             
+    def deploy_task_manager(self):
+        """Deploy the Task Manager instance in Docker."""
+        container_name = f"task_manager_{self.node_id}"
+        image_name = "task_manager_image"  # Ensure this image is built and available
+        try:
+            # Remove existing container if it exists
+            try:
+                existing_container = self.docker_client.containers.get(container_name)
+                existing_container.stop()
+                existing_container.remove()
+            except docker.errors.NotFound:
+                pass  # No existing container, proceed
+
+            # Create and start the container
+            container = self.docker_client.containers.create(
+                image_name,
+                name=container_name,
+                detach=True,
+                environment={
+                    'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
+                    'NODE_ID': self.node_id
+                },
+                labels={'node': self.node_id}
+            )
+            # Connect to the network
+            network = self.docker_client.networks.get('cluster_net')
+            network.connect(container, aliases=[f"task_manager_{self.node_id}"])
+            container.start()
+            self.containers.append(container)
+            print(f"Task Manager started on {self.node_id} with container {container.name}")
+        except Exception as e:
+            print(f"Error starting Task Manager on node {self.node_id}: {e}")
+            
     def register_task_manager(self):
         machine_info = self.collect_machine_info()
         node_path = f'/taskmanagers/{machine_info["uid"]}'
