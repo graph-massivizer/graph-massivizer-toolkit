@@ -60,6 +60,12 @@ class SimulationLifecycle:
             print("Starting workload manager on node-1...")
             cluster = self.cluster  # Use the stored cluster reference
             cluster.nodes["node-1"].deploy_workload_manager()
+            
+            print("Starting task managers on remaining nodes...")
+            for node_id, node in cluster.nodes.items():
+                if node_id not in ["node-0", "node-1"]:  # Skip node-0 (ZooKeeper) and node-1 (Workload Manager)
+                    node.deploy_task_manager()
+            
             print("Simulation is running...")
             self.transition(LifecycleState.RUNNING)
         else:
