@@ -1,6 +1,8 @@
+import threading
 from enum import Enum
 from simulation.cluster import Cluster
 from simulation.node import Node
+from monitoring.server import create_app
 
 class LifecycleState(Enum):
     INITIALIZED = 'INITIALIZED'
@@ -59,18 +61,17 @@ class SimulationLifecycle:
             
         
     def initialize_monitoring(self):
-        from flask import Flask
 
         # Create the Flask app with the simulation context
         self.app = create_app(self)
 
         # Run the Flask app in a separate thread
         def run_app():
-            self.app.run(host='0.0.0.0', port=5000)
+            self.app.run(host='0.0.0.0', port=5002)
 
         self.monitoring_thread = threading.Thread(target=run_app)
         self.monitoring_thread.start()
-        print("Monitoring web interface started on port 5000.")
+        print("Monitoring web interface started on port 5002.")
 
     def get_status(self):
         # Collect status from the cluster and nodes
