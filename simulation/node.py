@@ -20,6 +20,16 @@ class Node(threading.Thread):
     def run(self):
         while self.running:
             time.sleep(1)
+            
+    def report_status(self):
+            # Existing method
+        status = {
+            'node_id': self.node_id,
+            'status': self.status,
+            'containers': [c.name for c in self.containers]
+        }
+        # Optionally, you can add more detailed status information
+        return status
 
     def deploy_container(self, service_name):
         container_name = f"{service_name}_{self.node_id}"

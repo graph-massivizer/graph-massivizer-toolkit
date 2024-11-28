@@ -1,6 +1,8 @@
+import threading
 from enum import Enum
 from simulation.cluster import Cluster
 from simulation.node import Node
+from monitoring.server import create_app
 
 class LifecycleState(Enum):
     INITIALIZED = 'INITIALIZED'
@@ -50,9 +52,39 @@ class SimulationLifecycle:
                 node = Node(node_id=f"node-{i}", resources={}, network=network)
                 cluster.add_node(node)
                 
+            # Initialize monitoring component
+            self.initialize_monitoring()
+                
             self.transition(LifecycleState.CLUSTER_CREATED)
         else:
             print("Cannot create cluster from current state.")
+            
+        
+    def initialize_monitoring(self):
+
+        # Create the Flask app with the simulation context
+        self.app = create_app(self)
+
+        # Run the Flask app in a separate thread
+        def run_app():
+            self.app.run(host='0.0.0.0', port=5002)
+
+        self.monitoring_thread = threading.Thread(target=run_app)
+        self.monitoring_thread.start()
+        print("Monitoring web interface started on port 5002.")
+
+    def get_status(self):
+        # Collect status from the cluster and nodes
+        status = {
+            'state': self.state.value,
+            'nodes': []
+        }
+        if self.cluster:
+            for node in self.cluster.nodes.values():
+                node_status = node.report_status()
+                status['nodes'].append(node_status)
+        return status
+
             
     # TODO: workload_manager deployment should probably be moved to a seperate deplyment phase 
     def start_simulation(self):

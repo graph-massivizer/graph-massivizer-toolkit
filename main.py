@@ -11,6 +11,12 @@ def main():
     simulation.create_cluster(network)
     simulation.start_simulation()
     simulation.complete()
+    try:
+        while True:
+            pass  # Keep the main thread alive
+    except KeyboardInterrupt:
+        print("Shutting down simulation.")
+        simulation.complete()
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulation Dashboard</title>
+</head>
+<body>
+    <h1>Simulation Dashboard</h1>
+    <div id="status">
+        <!-- Status will be loaded here -->
+    </div>
+    <button onclick="startSimulation()">Start Simulation</button>
+    <button onclick="stopSimulation()">Stop Simulation</button>
+
+    <script>
+        function loadStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('status').innerText = JSON.stringify(data, null, 2);
+                });
+        }
+
+        function startSimulation() {
+            fetch('/api/control/start', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    loadStatus();
+                });
+        }
+
+        function stopSimulation() {
+            fetch('/api/control/stop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    loadStatus();
+                });
+        }
+
+        // Load status every 5 seconds
+        setInterval(loadStatus, 5000);
+        loadStatus();
+    </script>
+</body>
+</html>
