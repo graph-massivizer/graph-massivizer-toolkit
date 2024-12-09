@@ -1,0 +1,22 @@
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+participantgroup #orange **Data Sources**
+database Graph Database
+end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participantgroup #darkgrey Graph-Massivizer Tools
+participant Graph-Optimizer
+participant Graph-Greenifier
+end
+end
+
+ref over metaphactory, Graph-Optimizer: (4.1.1) get graphs for graphs handle
+
+ref over metaphactory, Graph-Optimizer: (4.1.2) get BGO implementations
+
+Graph-Optimizer->Graph-Optimizer :calculate_bgo_execution_cost_estimates
+Graph-Optimizer->Graph-Greenifier :bgo_execution_cost_estimates_event

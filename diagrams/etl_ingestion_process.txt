@@ -1,0 +1,27 @@
+participantgroup :0
+participant Inceptor_User
+
+participantgroup :0
+participant MessageBroker
+
+particpant 
+participantgroup #lightyellow **Data Sources**
+participant External_Data
+participant Graph_Database
+end
+
+particpant 
+participantgroup #lightgrey **Graph-Inceptor**
+participant ETL_Pipeline
+participant GraphMa
+end
+
+Inceptor_User->MessageBroker:ETL_ingest:broadcast(req_id, etl_id)
+MessageBroker->ETL_Pipeline:start()
+loop #2f2e7b #white
+ETL_Pipeline->External_Data:read()
+ETL_Pipeline->ETL_Pipeline:process()
+ETL_Pipeline->Graph_Database:write/update()
+end
+ETL_Pipeline-->MessageBroker:ack_finished:broadcast(req_id)
+MessageBroker-->Inceptor_User:ack_finished(req_id)

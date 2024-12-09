@@ -1,0 +1,29 @@
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+//participantgroup #orange **Data Sources**
+//database Graph Database
+//end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participantgroup #darkgrey Graph-Massivizer Tools
+participant Graph-Greenifier
+participant Graph-Choreographer
+end
+end
+
+participantgroup #pink **Infrastructure**
+participant Infrastructure Components #violet
+end
+
+Graph-Choreographer<-Graph-Greenifier:greenifier_execution_propositions_event
+
+Graph-Choreographer->Graph-Choreographer:select_greenifier_execution_propositions
+Graph-Choreographer->Graph-Choreographer:adapt_greenifier_execution_propositions
+Graph-Choreographer->Graph-Choreographer:schedule_physical_execution_plan
+
+ref over metaphactory, Graph-Choreographer: (4.1.2) get BGO implementations
+
+Graph-Choreographer->Infrastructure Components:deploy

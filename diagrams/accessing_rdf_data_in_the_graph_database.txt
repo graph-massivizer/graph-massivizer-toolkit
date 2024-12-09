@@ -1,0 +1,24 @@
+participantgroup :0
+participant Inceptor_User
+
+participantgroup :0
+participant MessageBroker
+
+particpant 
+participantgroup #lightyellow **Data Sources**
+participant External_Data
+participant Graph_Database
+end
+
+particpant 
+participantgroup #lightgrey **Graph-Inceptor**
+participant ETL_Pipeline
+participant GraphMa
+end
+
+Inceptor_User->MessageBroker:request:broadcast(req_id, graph_id)
+MessageBroker->GraphMa:request(req_id, graph_id)
+GraphMa->Graph_Database:possible_graphs_for_id(graph_id)
+Graph_Database-->GraphMa:possible_graphs_for_id(graph_id)
+GraphMa-->MessageBroker:graphs-for-id: broadcast(req_id, graphs_for_graph_id)
+MessageBroker-->Inceptor_User:graphs-for-id(req_id, graphs_for_graph_id)
