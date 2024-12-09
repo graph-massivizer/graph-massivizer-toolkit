@@ -1,0 +1,10 @@
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participantgroup #darkgrey **Graph-Massivizer Tools**
+participant Graph-Inceptor
+participant Graph-Scrutinizer
+participant Graph-Optimizer
+participant Graph-Greenifier
+participant Graph-Choreographer
+end
+end

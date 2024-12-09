@@ -1,0 +1,24 @@
+participantgroup #beige **User**
+participant User Tool
+end
+
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+participantgroup #orange **Data Sources**
+// participant Use Case Data Sources
+participant Graph Database
+end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participant Graph-Massivizer Tools #darkgrey
+end
+
+User Tool->metaphactory:getGraphHandle
+metaphactory->Graph Database:query
+User Tool->metaphactory:getBGODescriptors
+metaphactory->BGO Repository:query
+User Tool->User Tool:editWorkflow
+User Tool->metaphactory:submitWorkflow

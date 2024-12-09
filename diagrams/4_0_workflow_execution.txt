@@ -1,0 +1,24 @@
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participant Graph-Massivizer Tools #darkgrey
+end
+
+participantgroup #pink **Infrastructure**
+participant Edge
+participant HPC
+participant Cloud
+end
+
+metaphactory->Graph-Massivizer Tools:executeWorkflowEvent
+
+ref over BGO Repository, Graph-Massivizer Tools:(4.1) optimize workflow
+ref over BGO Repository, Graph-Massivizer Tools:(4.2) greenify workflow
+ref over BGO Repository, Graph-Massivizer Tools:(4.3) schedule workflow
+ref over BGO Repository, Cloud:(4.4) deploy workflow
+ref over BGO Repository, Cloud:(4.5) monitor execution of workflow
+
+Graph-Massivizer Tools->metaphactory:WorkflowResultEvent

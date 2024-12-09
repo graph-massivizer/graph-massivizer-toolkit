@@ -1,0 +1,31 @@
+participantgroup #beige **User**
+participant User Tool
+end
+
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+participantgroup #orange **Data Sources**
+database Use Case Data Sources
+database Graph Database
+end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participant Graph-Massivizer Tools #darkgrey
+end
+
+participantgroup #pink **Infrastructure**
+participant Edge
+participant HPC
+participant Cloud
+end
+
+ref over User Tool, BGO Repository: (1)  BGO registration
+
+ref over User Tool, Graph-Massivizer Tools: (2) data source registration
+
+ref over User Tool, BGO Repository: (3) user-defined workflow
+
+ref over metaphactory, Cloud: (4) workflow execution
