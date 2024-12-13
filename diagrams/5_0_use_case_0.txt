@@ -6,7 +6,6 @@ participantgroup #lightblue ** **
 participant metaphactory
 end
 
-
 participantgroup #orange *Data Sources*
 participant OpenAlex
 participant Graph Database
@@ -20,7 +19,6 @@ participant GraphMa
 end
 participant #black Graph-Scrutinizer #darkgrey
 end
-
 
 User->metaphactory:input_workflow
 

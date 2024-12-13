@@ -1,0 +1,31 @@
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+participantgroup #orange **Data Sources**
+database Use Case Data Sources
+database Graph Database
+end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+participantgroup #darkgrey **Graph-Inceptor**
+participant ETL Pipeline
+participant GraphMa
+end
+end
+
+group #lightgrey GraphMa
+group #white Source/traverse BGOs
+GraphMa->Graph Database:extract_graph_data
+GraphMa->Use Case Data Sources:read_use_case_data
+end
+group #white Intermediate BGOs
+GraphMa->GraphMa:filter_graph_data
+GraphMa->GraphMa:...
+GraphMa->GraphMa:convert_graph_data
+end
+group #white Terminal BGOs
+GraphMa->Graph Database:insert_graph_data
+GraphMa->Use Case Data Sources:write_graph_data
+end
+end

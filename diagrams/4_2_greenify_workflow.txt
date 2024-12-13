@@ -15,12 +15,16 @@ participant Graph-Choreographer
 end
 end
 
-Graph-Greenifier<-Graph-Optimizer :bgo_execution_cost_estimates_event
-Graph-Greenifier<-Graph-Choreographer :available_hardware_event
+Graph-Optimizer-:2>Graph-Choreographer :bgo_execution_cost_estimates
+
+group #lightgrey Graph-Greenifier
+
+Graph-Greenifier<#blue:2-Graph-Choreographer :green_execution_plans_request
+
 
 ref over metaphactory, Graph-Greenifier: (4.1.2) get BGO implementations
 
-Graph-Greenifier->Graph-Greenifier:generate_execution_plans
-Graph-Greenifier->Graph-Greenifier:simulate_to_estimate_execution_costs
-Graph-Greenifier->Graph-Greenifier:filter_plausible_physical_execution_plans
-Graph-Greenifier->Graph-Choreographer:greenifier_execution_propositions_event
+Graph-Greenifier->Graph-Greenifier:generate_green_execution_plans
+
+Graph-Greenifier-#red:2>Graph-Choreographer:greenifier_execution_propositions
+end

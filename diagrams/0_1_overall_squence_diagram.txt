@@ -24,8 +24,8 @@ end
 
 ref over User Tool, BGO Repository: (1)  BGO registration
 
-ref over User Tool, Graph-Massivizer Tools: (2) data source registration
+ref over User Tool, Graph-Massivizer Tools: (2) Data source registration
 
-ref over User Tool, BGO Repository: (3) user-defined workflow
+ref over User Tool, BGO Repository: (3) User-defined workflow
 
-ref over metaphactory, Cloud: (4) workflow execution
+ref over metaphactory, Cloud: (4) Workflow execution

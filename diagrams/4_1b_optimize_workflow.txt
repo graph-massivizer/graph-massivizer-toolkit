@@ -12,14 +12,16 @@ participant Graph-Massivizer Tools #darkgrey
 end
 end
 
-group #white (4.1.1) get graphs for graph handle
+group #lightgrey (4.1.1) Get graphs for graph handle
 Graph-Massivizer Tools->metaphactory:get_graphs_for_graph_handle
 metaphactory->Graph Database:query
+metaphactory<--Graph Database:query_result
 metaphactory-->Graph-Massivizer Tools:graphs_for_graph_handle
 end
 
-group #white (4.1.2) get bgo implementations
+group #lightgrey (4.1.2) Get bgo implementations
 Graph-Massivizer Tools->metaphactory:get_bgo_implementations
 metaphactory->BGO Repository:query
+metaphactory<--BGO Repository:query_result
 metaphactory-->Graph-Massivizer Tools:bgo_implementations
 end

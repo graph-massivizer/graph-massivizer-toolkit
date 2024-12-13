@@ -9,14 +9,19 @@ end
 participantgroup #lightgrey **Graph-Massivizer Toolkit**
 database BGO Repository
 participantgroup #darkgrey Graph-Massivizer Tools
+participant Graph-Choreographer
 participant Graph-Optimizer
-participant Graph-Greenifier
 end
 end
 
-ref over metaphactory, Graph-Optimizer: (4.1.1) get graphs for graphs handle
+metaphactory-:2>Graph-Choreographer:workflow_execution_request
 
-ref over metaphactory, Graph-Optimizer: (4.1.2) get BGO implementations
+group #lightgrey Graph-Optimizer
+Graph-Choreographer-#blue:2>Graph-Optimizer:bgo_execution_cost_estimates_request
 
+ref over metaphactory, Graph-Optimizer: (4.1.1) Get graphs for graphs handle
+
+ref over metaphactory, Graph-Optimizer: (4.1.2) Get BGO implementations
 Graph-Optimizer->Graph-Optimizer :calculate_bgo_execution_cost_estimates
-Graph-Optimizer->Graph-Greenifier :bgo_execution_cost_estimates_event
+Graph-Optimizer-#red:2>Graph-Choreographer :bgo_execution_cost_estimates
+end

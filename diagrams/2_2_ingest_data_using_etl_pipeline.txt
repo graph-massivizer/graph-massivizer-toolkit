@@ -16,10 +16,12 @@ end
 
 metaphactory->ETL Pipeline:start_ingestion
 
+group #lightgrey ETL Pipeline
 loop #white
 ETL Pipeline->Use Case Data Sources:read
 ETL Pipeline->ETL Pipeline:apply_mappings
 ETL Pipeline->Graph Database:insert
+end
 end
 
 ETL Pipeline->metaphactory:ingestion_status

@@ -18,12 +18,9 @@ participantgroup #pink **Infrastructure**
 participant Infrastructure Components #violet
 end
 
-Graph-Choreographer<-Graph-Greenifier:greenifier_execution_propositions_event
-
+group #lightgrey Graph-Choreographer
+Graph-Choreographer<#blue:2-Graph-Greenifier:greenifier_execution_propositions
 Graph-Choreographer->Graph-Choreographer:select_greenifier_execution_propositions
-Graph-Choreographer->Graph-Choreographer:adapt_greenifier_execution_propositions
 Graph-Choreographer->Graph-Choreographer:schedule_physical_execution_plan
-
-ref over metaphactory, Graph-Choreographer: (4.1.2) get BGO implementations
-
-Graph-Choreographer->Infrastructure Components:deploy
+Graph-Choreographer--#red:2>Infrastructure Components:<<deployment>>
+end
