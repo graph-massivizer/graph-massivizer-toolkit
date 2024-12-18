@@ -20,6 +20,5 @@ ref over metaphactory, Graph-Massivizer Tools:(4.2) Greenify workflow
 ref over metaphactory, Graph-Massivizer Tools:(4.3) Schedule workflow
 ref over BGO Repository, Cloud:(4.4) Deploy workflow
 ref over BGO Repository, Cloud:(4.5) Execute workflow
-ref over BGO Repository, Cloud:(4.6) Monitor execution of workflow
 
 Graph-Massivizer Tools-:2>metaphactory:workflow_execution_result

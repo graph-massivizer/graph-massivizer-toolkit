@@ -15,12 +15,12 @@ end
 end
 
 participantgroup #pink **Infrastructure**
-participant Infrastructure Components #violet
+participant Compute Nodes #violet
 end
 
 group #lightgrey Graph-Choreographer
 Graph-Choreographer<#blue:2-Graph-Greenifier:greenifier_execution_propositions
 Graph-Choreographer->Graph-Choreographer:select_greenifier_execution_propositions
 Graph-Choreographer->Graph-Choreographer:schedule_physical_execution_plan
-Graph-Choreographer--#red:2>Infrastructure Components:<<deployment>>
+Graph-Choreographer--#red:2>Compute Nodes:<<deployment>>
 end
