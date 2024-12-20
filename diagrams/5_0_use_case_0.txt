@@ -6,6 +6,7 @@ participantgroup #lightblue ** **
 participant metaphactory
 end
 
+
 participantgroup #orange *Data Sources*
 participant OpenAlex
 participant Graph Database
@@ -13,32 +14,30 @@ end
 
 participantgroup #lightgrey *Graph-Massivizer Toolkit*
 database BGO Repository
-participantgroup #darkgrey *Graph-Inceptor*
-participant ETL Pipeline
-participant GraphMa
-end
+participant #black Graph-Inceptor #darkgrey
 participant #black Graph-Scrutinizer #darkgrey
 end
+
 
 User->metaphactory:input_workflow
 
 metaphactory->BGO Repository:request_workflow
 
-group #white Graph-Inceptor
-group #white ETL Pipeline Loop
-ETL Pipeline->OpenAlex:read
-ETL Pipeline->ETL Pipeline:apply_mappings
-ETL Pipeline->Graph Database:insert
+group #white ETL Pipeline
+Graph-Inceptor->OpenAlex:read
+Graph-Inceptor->Graph-Inceptor:apply_mappings
+Graph-Inceptor->Graph Database:insert
 end
+
 group #white GraphMa
-GraphMa->Graph Database:extract_subgraphs
-GraphMa->Graph Database:insert_subgraphs
+Graph-Inceptor->Graph Database:extract_subgraphs
+Graph-Inceptor->Graph Database:insert_subgraphs
 end
-end
+
 
 group #white Graph-Scrutinizer
 Graph-Scrutinizer->Graph Database:load_subgraphs
-group #white Subgraph Loop
+group #white Subgraph
 Graph-Scrutinizer->Graph-Scrutinizer:breadth_first_search
 Graph-Scrutinizer->Graph-Scrutinizer:betweenness_centrality
 Graph-Scrutinizer->Graph-Scrutinizer:find_max

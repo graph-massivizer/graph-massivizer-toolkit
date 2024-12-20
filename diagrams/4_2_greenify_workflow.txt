@@ -15,11 +15,11 @@ participant Graph-Choreographer
 end
 end
 
-Graph-Optimizer-:2>Graph-Choreographer :bgo_execution_cost_estimates
+Graph-Optimizer-#blue:2>Graph-Choreographer :bgo_execution_cost_estimates
 
 group #lightgrey Graph-Greenifier
 
-Graph-Greenifier<#blue:2-Graph-Choreographer :green_execution_plans_request
+Graph-Greenifier<-Graph-Choreographer :green_execution_plans_request
 
 
 ref over metaphactory, Graph-Greenifier: (4.1.2) get BGO implementations
