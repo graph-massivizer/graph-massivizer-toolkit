@@ -22,10 +22,10 @@ participant HPC
 participant Cloud
 end
 
-ref over User Tool, BGO Repository: (1)  BGO registration
+ref over User Tool, BGO Repository:(1)  Register BGO
 
-ref over User Tool, Graph-Massivizer Tools: (2) Data source registration
+ref over User Tool, Graph-Massivizer Tools: (2) Register data source
 
-ref over User Tool, BGO Repository: (3) User-defined workflow
+ref over User Tool, BGO Repository: (3) Define BGO workflow
 
-ref over metaphactory, Cloud: (4) Workflow execution
+ref over metaphactory, Cloud: (4) Execute BGO workflow
