@@ -18,7 +18,7 @@ participant GraphMa
 end
 end
 
-ref over User Tool, Graph Database: (2.1) Register data source
+ref over User Tool, Graph Database: Register data source
 
-ref over metaphactory, ETL Pipeline: (2.2) Ingest data using ETL Pipeline
-ref over metaphactory, GraphMa: (2.3) Ingest data using GraphMa
+ref over metaphactory, ETL Pipeline: Ingest data with ETL Pipeline
+ref over metaphactory, GraphMa: Ingest data with GraphMa
