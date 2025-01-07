@@ -11,5 +11,5 @@ database BGO Repository
 participant Graph-Massivizer Tools #darkgrey
 end
 
-User Tool->metaphactory:register_bgo
-metaphactory->BGO Repository:insert
+User Tool->metaphactory:Register BGO
+metaphactory->BGO Repository:Store BGO
