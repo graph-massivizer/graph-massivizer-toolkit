@@ -11,5 +11,5 @@ database Use Case Data Sources
 database Graph Database
 end
 
-User Tool->metaphactory:register_data_source
-metaphactory->Graph Database:insert
+User Tool->metaphactory:Register data source
+metaphactory->Graph Database:Store graph data
