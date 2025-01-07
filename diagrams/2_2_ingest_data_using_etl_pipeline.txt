@@ -14,14 +14,14 @@ participant GraphMa
 end
 end
 
-metaphactory->ETL Pipeline:start_ingestion
+metaphactory->ETL Pipeline:Start ingestion
 
-group #lightgrey ETL Pipeline
+group #lightgrey Execute ETL Pipeline ingestion
 loop #white
-ETL Pipeline->Use Case Data Sources:read
-ETL Pipeline->ETL Pipeline:apply_mappings
-ETL Pipeline->Graph Database:insert
+ETL Pipeline->Use Case Data Sources:Read data source
+ETL Pipeline->ETL Pipeline:Apply mappings
+ETL Pipeline->Graph Database:Store graph data
 end
 end
 
-ETL Pipeline->metaphactory:ingestion_status
+ETL Pipeline->metaphactory:Return ingestion status
