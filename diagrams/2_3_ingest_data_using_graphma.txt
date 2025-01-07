@@ -14,18 +14,18 @@ participant GraphMa
 end
 end
 
-group #lightgrey GraphMa
+group #lightgrey Execute GraphMa ingestion
 group #white Source/traverse BGOs
-GraphMa->Graph Database:extract_graph_data
-GraphMa->Use Case Data Sources:read_use_case_data
+GraphMa->Graph Database:Read graph data
+GraphMa->Use Case Data Sources:Read data source
 end
 group #white Intermediate BGOs
-GraphMa->GraphMa:filter_graph_data
+GraphMa->GraphMa:Filter graph data
 GraphMa->GraphMa:...
-GraphMa->GraphMa:convert_graph_data
+GraphMa->GraphMa:Convert graph data
 end
 group #white Terminal BGOs
-GraphMa->Graph Database:insert_graph_data
-GraphMa->Use Case Data Sources:write_graph_data
+GraphMa->Graph Database:Store graph data
+GraphMa->Use Case Data Sources:Store graph data to file
 end
 end
