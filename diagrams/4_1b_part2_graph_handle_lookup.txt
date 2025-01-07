@@ -1,0 +1,20 @@
+participantgroup #lightblue **metaphactory**
+participant metaphactory
+end
+
+participantgroup #orange **Data Sources**
+database Graph Database
+end
+
+participantgroup #lightgrey **Graph-Massivizer Toolkit**
+database BGO Repository
+participant Graph-Massivizer Tools #darkgrey
+end
+end
+
+group #lightgrey Get graphs for graph handle
+Graph-Massivizer Tools->metaphactory:Lookup graphs for Graph Handle
+metaphactory->Graph Database:Query graph Database
+metaphactory<--Graph Database:Return graph
+metaphactory-->Graph-Massivizer Tools:Return graphs for Graph Handle
+end
