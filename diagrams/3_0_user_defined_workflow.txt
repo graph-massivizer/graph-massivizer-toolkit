@@ -16,9 +16,9 @@ database BGO Repository
 participant Graph-Massivizer Tools #darkgrey
 end
 
-User Tool->metaphactory:get_graph_handle
-metaphactory->Graph Database:query
-User Tool->metaphactory:get_bgo_descriptors
-metaphactory->BGO Repository:query
-User Tool->User Tool:edit_workflow
-User Tool->metaphactory:submit_workflow
+User Tool->metaphactory:Get graph handle
+metaphactory->Graph Database:Query graph handle
+User Tool->metaphactory:Get BGO descriptions
+metaphactory->BGO Repository:Query BGO descriptions
+User Tool->User Tool:Edit BGO workflow
+User Tool->metaphactory:Submit BGO workflow
