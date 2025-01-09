@@ -8,7 +8,7 @@ participant Graph-Choreographer
 end
 
 participantgroup #pink **Infrastructure**
-participantgroup #violet **Compute Node (n)**
+participantgroup #violet **Compute Nodes**
 participantgroup #darkgrey **Graph-Inceptor / Graph-Scrutinizer**
 participant BGO (1)
 participant BGO (...)
@@ -17,19 +17,19 @@ end
 end
 end
 
-group #lightgrey Graph-Choreographer
-loop for each BGO in the workflow
+group #lightgrey Execute BGO workflow
+loop For each BGO in the workflow
 //ref over Graph-Choreographer, BGO (n): (4.1.2) Get BGO implementations
-Graph-Choreographer->Graph-Choreographer:prepare_bgo_execution
-opt #yellow graph_handle_transfer
-Graph-Choreographer->BGO (n):transfer_data_to_bgo_node
+Graph-Choreographer->Graph-Choreographer:Prepare BGO execution
+opt #yellow Transfer graph handle
+Graph-Choreographer->BGO (n):Transfer data to BGO device
 end
-Graph-Choreographer->BGO (n): execute_bgo
-Graph-Choreographer<-BGO (n): bgo__result
-Graph-Choreographer->Graph-Choreographer:handle_result_prepare_next_bgo_execution
+Graph-Choreographer->BGO (n): Execute BGO
+Graph-Choreographer<-BGO (n): Retrieve BGO output data
+Graph-Choreographer->Graph-Choreographer:Process BGO output and prepare next execution
 
 //note over BGO (n):BGO implementations\nfrom Graph-Inceptor\nor Graph-Scrutinizer
 
 end
-Graph-Choreographer-#red:2>metaphactory:workflow_execution_result
+Graph-Choreographer-#red:2>metaphactory:Return BGO workflow output
 end
