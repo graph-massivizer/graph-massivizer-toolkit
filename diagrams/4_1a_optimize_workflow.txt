@@ -14,14 +14,14 @@ participant Graph-Optimizer
 end
 end
 
-metaphactory-#blue:2>Graph-Choreographer:workflow_execution_request
+metaphactory-#blue:2>Graph-Choreographer:Request BGO workflow execution
 
-group #lightgrey Graph-Optimizer
-Graph-Choreographer->Graph-Optimizer:bgo_execution_cost_estimates_request
+group #lightgrey Optimise BGO workflow
+Graph-Choreographer->Graph-Optimizer:Request BGO execution cost
 
-ref over metaphactory, Graph-Optimizer: (4.1.1) Get graphs for graphs handle
+ref over metaphactory, Graph-Optimizer: Lookup graphs for graphs handle
 
-ref over metaphactory, Graph-Optimizer: (4.1.2) Get BGO implementations
-Graph-Optimizer->Graph-Optimizer :calculate_bgo_execution_cost_estimates
-Graph-Optimizer-#red:2>Graph-Choreographer :bgo_execution_cost_estimates
+ref over metaphactory, Graph-Optimizer: Lookup BGO implementations
+Graph-Optimizer->Graph-Optimizer :Estimate BGO execution cost
+Graph-Optimizer-#red:2>Graph-Choreographer :Report BGO workflow execution cost
 end
