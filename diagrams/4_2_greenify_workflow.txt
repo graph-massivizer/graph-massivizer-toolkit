@@ -15,16 +15,23 @@ participant Graph-Choreographer
 end
 end
 
-Graph-Optimizer-#blue:2>Graph-Choreographer :bgo_execution_cost_estimates
+Graph-Optimizer-#blue:2>Graph-Choreographer :Report BGO workflow execution cost
 
-group #lightgrey Graph-Greenifier
+group #lightgrey Greenify BGO workflow
 
-Graph-Greenifier<-Graph-Choreographer :green_execution_plans_request
+Graph-Greenifier<-Graph-Choreographer :Request BGO execution metrics
 
 
-ref over metaphactory, Graph-Greenifier: (4.1.2) get BGO implementations
+ref over metaphactory, Graph-Greenifier: Lookup BGO implementations
 
-Graph-Greenifier->Graph-Greenifier:generate_green_execution_plans
+Graph-Greenifier->Graph-Greenifier: Lookup energy supply information
 
-Graph-Greenifier-#red:2>Graph-Choreographer:greenifier_execution_propositions
+Graph-Greenifier->Graph-Greenifier:Generate candidate execution plans
+
+Graph-Greenifier->Graph-Greenifier:Simulate candidate execution plans
+
+Graph-Greenifier->Graph-Greenifier:Assign sustainability labels
+
+Graph-Greenifier-#red:2>Graph-Choreographer:Propose green execution plans
+
 end
