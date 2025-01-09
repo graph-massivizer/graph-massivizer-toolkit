@@ -12,7 +12,7 @@ participant Graph-Massivizer Tools #darkgrey
 end
 end
 
-group #lightgrey Get graphs for graph handle
+group #lightgrey Lookup graphs for graph handle
 Graph-Massivizer Tools->metaphactory:Lookup graphs for Graph Handle
 metaphactory->Graph Database:Query graph Database
 metaphactory<--Graph Database:Return graph
