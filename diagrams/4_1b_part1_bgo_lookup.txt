@@ -13,7 +13,7 @@ end
 end
 
 
-group #lightgrey Get BGO implementations
+group #lightgrey Lookup BGO implementations
 Graph-Massivizer Tools->metaphactory:Lookup BGO implementations
 metaphactory->BGO Repository:Query BGO repository
 metaphactory<--BGO Repository:Return BGO
