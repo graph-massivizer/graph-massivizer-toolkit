@@ -13,12 +13,12 @@ participant HPC
 participant Cloud
 end
 
-metaphactory-:2>Graph-Massivizer Tools:workflow_execution_request
+metaphactory-:2>Graph-Massivizer Tools:Request BGO workflow execution
 
-ref over metaphactory, Graph-Massivizer Tools:(4.1) Optimize workflow
-ref over metaphactory, Graph-Massivizer Tools:(4.2) Greenify workflow
-ref over metaphactory, Graph-Massivizer Tools:(4.3) Schedule workflow
-ref over BGO Repository, Cloud:(4.4) Deploy workflow
-ref over BGO Repository, Cloud:(4.5) Execute workflow
+ref over metaphactory, Graph-Massivizer Tools:(4.1) Optimize BGO workflow
+ref over metaphactory, Graph-Massivizer Tools:(4.2) Greenify BGO workflow
+ref over metaphactory, Graph-Massivizer Tools:(4.3) Schedule BGO workflow
+ref over BGO Repository, Cloud:(4.4) Deploy BGO workflow
+ref over BGO Repository, Cloud:(4.5) Enact BGO workflow
 
-Graph-Massivizer Tools-:2>metaphactory:workflow_execution_result
+Graph-Massivizer Tools-:2>metaphactory:Return BGO workflow output data
