@@ -8,18 +8,17 @@ participant Graph-Choreographer
 end
 
 participantgroup #pink **Infrastructure**
-participantgroup #violet **Compute\n Node (n)**
-participant BGO (n)
-end
-end
+participant Compute Nodes #violet
 end
 
-group #lightgrey Graph-Choreographer
-loop for each BGO in the workflow
-ref over metaphactory, Graph-Choreographer: (4.1.2) Get BGO implementations
-Graph-Choreographer->Graph-Choreographer:prepare_deployment
-Graph-Choreographer-->*BGO (n):<<deploy>>
-note over BGO (n):BGO implementations\nfrom Graph-Inceptor\nor Graph-Scrutinizer
+group #lightgrey Deploy BGO workflow
+loop For each BGO in the workflow
+ref over metaphactory, Graph-Choreographer: Lookup BGO implementations
+Graph-Choreographer->Graph-Choreographer:Prepare BGO deployment
+Graph-Choreographer->Graph-Choreographer:Deploy BGO implementation
+
+ref over metaphactory, Compute Nodes: Execute BGO workflow
+
 end
-Graph-Choreographer--#red:2>BGO (n):<<execution>>
+
 end
