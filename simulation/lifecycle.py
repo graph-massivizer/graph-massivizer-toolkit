@@ -31,7 +31,7 @@ class SimulationLifecycle:
         else:
             print("Cannot initialize environment from current state.")
     
-    # TODO: zookeeper deployment should probably be moved to a seperate deplyment phase
+    # TODO: zookeeper deployment should probably be moved to a seperate deployment phase
     def create_cluster(self, network):
         if self.state == LifecycleState.ENVIRONMENT_SETUP:
             print("Creating cluster with 10 nodes...")
@@ -86,7 +86,7 @@ class SimulationLifecycle:
         return status
 
             
-    # TODO: workload_manager deployment should probably be moved to a seperate deplyment phase 
+    # TODO: workload_manager deployment should probably be moved to a seperate deployment phase 
     def start_simulation(self):
         if self.state == LifecycleState.CLUSTER_CREATED:
             print("Starting workload manager on node-1...")

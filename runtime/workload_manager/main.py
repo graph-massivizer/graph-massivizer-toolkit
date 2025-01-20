@@ -35,6 +35,8 @@ def main():
             wm_machine_descriptor=wm_machine_descriptor,
             config=config
         )
+        
+        # TODO Zookeeper listener for triggering workflow execution
 
         # The InfrastructureManager will handle storing the environment model into ZooKeeper
 
@@ -48,6 +50,24 @@ def main():
         # Ensure that the infrastructure manager shuts down properly
         if 'infrastructure_manager' in locals():
             infrastructure_manager.shutdown_infrastructure_manager()
+            
+def execute_dataflow_job(user_defined_json_DAG):
+    
+    # TODO Daniel
+    
+    # Statemachine to manage the lifecycle of the Workload Manager
+    
+    # Transformation PHASE 1 - 5
+    # parallelizer
+    # optimization_1
+    # optimization_2
+    # ??
+    # scheduler
+    
+    
+    # Phase 6 EXECUTION
+    
+    pass
 
 if __name__ == '__main__':
     main()

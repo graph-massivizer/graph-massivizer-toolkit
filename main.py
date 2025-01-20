@@ -2,6 +2,8 @@ from simulation.network import Network
 from simulation.lifecycle import SimulationLifecycle
 from simulation.cluster import Cluster
 
+#https://docs.google.com/drawings/d/1FC5paw_2A3nFBcIW7s99Pk1I_bSUXy_2Uma1LtBmQ_c/edit?usp=sharing
+
 def main():
     network = Network()  # Initialize the network
     simulation = SimulationLifecycle()  # Initialize the simulation lifecycle manager
