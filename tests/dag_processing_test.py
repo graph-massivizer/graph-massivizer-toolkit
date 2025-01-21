@@ -7,7 +7,6 @@ from unittest import TestCase
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
-from graphmassivizer.runtime.workload_manager.scheduler import Scheduler
 
 class DAGTest(TestCase):
 	"""
@@ -41,8 +40,6 @@ class DAGTest(TestCase):
 		
 		optimization2 = Optimizer_2.optimize(optimization1)
 		
-		scheduler = Scheduler(optimization2)
-		
-		print(f"Scheduled graph:\n{scheduler.DAG}")
+		print(f"Scheduled graph:\n{optimization2}")
 	
 
