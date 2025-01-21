@@ -1,5 +1,5 @@
-from .node import Node
-from .network import Network
+from graphmassivizer.simulation.node import Node
+from graphmassivizer.simulation.network import Network
 
 
 class Cluster:
