@@ -13,6 +13,7 @@ from core.descriptors.descriptor_factory import create_machine_descriptor
 
 logging.basicConfig(level=logging.INFO)
 
+
 def main() -> None:
     try:
         # Initialize logging

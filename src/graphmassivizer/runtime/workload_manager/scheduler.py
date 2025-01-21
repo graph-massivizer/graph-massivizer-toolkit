@@ -3,10 +3,11 @@
 import logging
 import random
 from collections import deque
-from typing import List, Dict, Optional
 
 # Now, define the Scheduler class
 from collections import deque
+
+
 class Scheduler:
     def __init__(self, infrastructure_manager: InfrastructureManager) -> None:
         if infrastructure_manager is None:
