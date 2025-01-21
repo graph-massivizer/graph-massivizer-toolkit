@@ -25,7 +25,7 @@ class TopologyTransition(Enum):
 
 
 class Topology:
-    def __init__(self, name, machine_id) -> None:
+    def __init__(self, name: str, machine_id: str) -> None:
         self.name = name
         self.machine_id = machine_id
         self.state = TopologyState.CREATED

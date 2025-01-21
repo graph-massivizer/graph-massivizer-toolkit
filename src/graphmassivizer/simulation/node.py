@@ -1,11 +1,16 @@
+import json
 import threading
 import time
+import uuid
 import docker
 import socket
+from docker.models.containers import Container
 from kazoo.client import KazooClient
 from statemachine import Event, State, StateMachine
 
-from typing import Any
+from typing import Any, Optional
+
+from graphmassivizer.simulation.network import Network
 
 
 class NodeStatus(StateMachine):
@@ -21,32 +26,22 @@ class NodeStatus(StateMachine):
 
 
 class Node(threading.Thread):
-    def __init__(self, node_id: str, resources, network) -> None:
+    def __init__(self, node_id: str, resources, network: Network) -> None:
         super().__init__()
         self.node_id: str = node_id
         self.resources = resources
         self.network = network
         self.status: NodeStatus = NodeStatus()
         self.docker_client = docker.from_env()
-        self.containers = []
+        self.containers: list[Container] = []
         self.zookeeper_host = 'zookeeper:2181'
-        self.zk = None
+        self.zk: Optional[KazooClient] = None
 
     def run(self) -> None:
         while self.status.current_state == NodeStatus.RUNNING:
             time.sleep(1)
 
-    def report_status(self) -> dict:
-        # Existing method
-        status = {
-            'node_id': self.node_id,
-            'status': self.status,
-            'containers': [c.name for c in self.containers]
-        }
-        # Optionally, you can add more detailed status information
-        return status
-
-    def deploy_container(self, service_name) -> None:
+    def deploy_container(self, service_name: str) -> None:
         container_name = f"{service_name}_{self.node_id}"
         # Ensure this matches the image name in docker-compose.yml
         image_name = f"{service_name}_image"
@@ -59,7 +54,7 @@ class Node(threading.Thread):
             except docker.errors.NotFound:
                 pass  # No existing container, proceed
 
-            container = self.docker_client.containers.run(
+            container: Container = self.docker_client.containers.run(
                 image_name,
                 detach=True,
                 name=container_name,
@@ -153,14 +148,14 @@ class Node(threading.Thread):
             self.zk.stop()
 
     def report_status(self) -> dict[str, Any]:
-        return {
+        # Existing method
+        status: dict[str, Any] = {
             'node_id': self.node_id,
             'status': self.status,
             'containers': [c.name for c in self.containers]
         }
-
-    def receive_message(self, message):
-        pass
+        # Optionally, you can add more detailed status information
+        return status
 
     def deploy_workload_manager(self) -> None:
         """Deploy the Workload Manager instance in Docker."""
@@ -238,16 +233,17 @@ class Node(threading.Thread):
         machine_info = self.collect_machine_info()
         node_path = f'/taskmanagers/{machine_info["uid"]}'
         data = json.dumps(machine_info).encode('utf-8')
+        assert self.zk
         if self.zk.exists(node_path):
             self.zk.set(node_path, data)
         else:
             self.zk.create(node_path, data)
         print(f"TaskManager {machine_info['uid']} registered with ZooKeeper.")
 
-    def collect_machine_info(self) -> dict:
+    def collect_machine_info(self) -> dict[str, Any]:
         # Replace with actual methods to collect machine info
-        machine_info = {
-            'uid': str(uuid.uuid4()),
+        machine_info: dict[str, Any] = {
+            'uuid': str(uuid.uuid4()),
             'address': socket.gethostbyname(socket.gethostname()),
             'host_name': socket.gethostname(),
             'data_port': 5000,
