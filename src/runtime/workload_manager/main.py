@@ -13,7 +13,7 @@ from core.descriptors.descriptor_factory import create_machine_descriptor
 
 logging.basicConfig(level=logging.INFO)
 
-def main():
+def main() -> None:
     try:
         # Initialize logging
         logger = logging.getLogger('WorkloadManager')
@@ -51,7 +51,7 @@ def main():
         if 'infrastructure_manager' in locals():
             infrastructure_manager.shutdown_infrastructure_manager()
             
-def execute_dataflow_job(user_defined_json_DAG):
+def execute_dataflow_job(user_defined_json_DAG) -> None:
     
     # TODO Daniel
     

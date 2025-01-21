@@ -3,7 +3,8 @@ from core.descriptors.descriptors import MachineDescriptor, HardwareDescriptor, 
 from core.common.config import Config
 
 
-def create_machine_descriptor(config: Config):
+from core.descriptors.descriptors import MachineDescriptor
+def create_machine_descriptor(config: Config) -> MachineDescriptor:
     address = socket.gethostbyname(socket.gethostname())
     host_name = socket.gethostname()
     data_port = config.get_int("io.tcp.port", default=5000)

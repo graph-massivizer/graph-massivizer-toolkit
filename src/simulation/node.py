@@ -5,8 +5,10 @@ import socket
 from kazoo.client import KazooClient
 
 
+from typing import Any
+from typing import Any
 class Node(threading.Thread):
-    def __init__(self, node_id, resources, network):
+    def __init__(self, node_id, resources, network) -> None:
         super().__init__()
         self.node_id = node_id
         self.resources = resources
@@ -18,11 +20,11 @@ class Node(threading.Thread):
         self.zookeeper_host = 'zookeeper:2181'
         self.zk = None
 
-    def run(self):
+    def run(self) -> None:
         while self.running:
             time.sleep(1)
 
-    def report_status(self):
+    def report_status(self) -> dict:
         # Existing method
         status = {
             'node_id': self.node_id,
@@ -32,7 +34,7 @@ class Node(threading.Thread):
         # Optionally, you can add more detailed status information
         return status
 
-    def deploy_container(self, service_name):
+    def deploy_container(self, service_name) -> None:
         container_name = f"{service_name}_{self.node_id}"
         image_name = f"{service_name}_image"  # Ensure this matches the image name in docker-compose.yml
         try:
@@ -55,7 +57,7 @@ class Node(threading.Thread):
         except Exception as e:
             print(f"Error deplying container on node {self.node_id}: {e}")
 
-    def deploy_zookeeper(self):
+    def deploy_zookeeper(self) -> None:
         """Deploy a Zookeeper instance in Docker."""
         container_name = f"zookeeper_{self.node_id}"
         image_name = "zookeeper:3.7"  # Or whatever version you prefer
@@ -97,7 +99,7 @@ class Node(threading.Thread):
         except Exception as e:
             print(f"Error starting Zookeeper container on node {self.node_id}: {e}")
 
-    def start_zk_client(self):
+    def start_zk_client(self) -> None:
         try:
             self.zk = KazooClient(hosts=self.zookeeper_host)
             self.zk.start()
@@ -105,7 +107,7 @@ class Node(threading.Thread):
             print(f"Error connecting to ZooKeeper from node {self.node_id}: {e}")
             raise
 
-    def wait_for_zookeeper(self):
+    def wait_for_zookeeper(self) -> None:
         command = "echo ruok | nc zookeeper 2181"
         try:
             output = self.docker_client.containers.run(
@@ -122,7 +124,7 @@ class Node(threading.Thread):
         print("Waiting for ZooKeeper to become ready...")
         time.sleep(2)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.running = False
         self.status = 'offline'
         for container in self.containers:
@@ -130,7 +132,7 @@ class Node(threading.Thread):
             container.remove()
         self.containers.clear()
 
-    def report_status(self):
+    def report_status(self) -> dict[str, Any]:
         return {
             'node_id': self.node_id,
             'status': self.status,
@@ -140,7 +142,7 @@ class Node(threading.Thread):
     def receive_message(self, message):
         pass
 
-    def deploy_workload_manager(self):
+    def deploy_workload_manager(self) -> None:
         """Deploy the Workload Manager instance in Docker."""
         container_name = f"workload_manager_{self.node_id}"
         image_name = "workload_manager_image"  # Ensure this image is built
@@ -173,7 +175,7 @@ class Node(threading.Thread):
         except Exception as e:
             print(f"Error starting Workload Manager on node {self.node_id}: {e}")
 
-    def deploy_task_manager(self):
+    def deploy_task_manager(self) -> None:
         """Deploy the Task Manager instance in Docker."""
         container_name = f"task_manager_{self.node_id}"
         image_name = "task_manager_image"  # Ensure this image is built and available
@@ -206,7 +208,7 @@ class Node(threading.Thread):
         except Exception as e:
             print(f"Error starting Task Manager on node {self.node_id}: {e}")
 
-    def register_task_manager(self):
+    def register_task_manager(self) -> None:
         machine_info = self.collect_machine_info()
         node_path = f'/taskmanagers/{machine_info["uid"]}'
         data = json.dumps(machine_info).encode('utf-8')
@@ -216,7 +218,7 @@ class Node(threading.Thread):
             self.zk.create(node_path, data)
         print(f"TaskManager {machine_info['uid']} registered with ZooKeeper.")
 
-    def collect_machine_info(self):
+    def collect_machine_info(self) -> dict:
         # Replace with actual methods to collect machine info
         machine_info = {
             'uid': str(uuid.uuid4()),
@@ -230,7 +232,7 @@ class Node(threading.Thread):
         }
         return machine_info
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.running = False
         self.status = 'offline'
         for container in self.containers:
@@ -239,7 +241,7 @@ class Node(threading.Thread):
         self.containers.clear()
         self.zk.stop()
 
-    def report_status(self):
+    def report_status(self) -> dict[str, Any]:
         return {
             'node_id': self.node_id,
             'status': self.status,

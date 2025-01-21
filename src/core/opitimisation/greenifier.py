@@ -6,18 +6,18 @@ import time
 
 
 class Greenifier(Thread):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = "Greenifier"
         self.running = True
         self.terminal = Terminal.get_instance()
 
-    def run(self):
+    def run(self) -> None:
         self.terminal.log(f"{self.name} started.", level='INFO')
         while self.running:
             # Implement greenifier logic here
             time.sleep(5)
             self.terminal.log(f"{self.name} is optimizing energy usage.", level='DEBUG')
 
-    def stop(self):
+    def stop(self) -> None:
         self.running = False

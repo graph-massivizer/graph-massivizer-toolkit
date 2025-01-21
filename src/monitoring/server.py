@@ -2,7 +2,8 @@ from flask import Flask
 from monitoring.dashboard import dashboard_bp
 from monitoring.api import api_bp
 
-def create_app(simulation):
+from flask.app import Flask
+def create_app(simulation) -> Flask:
     app = Flask(__name__)
     
     # Register Blueprints

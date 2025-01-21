@@ -16,7 +16,7 @@ from typing import List, Optional
 
 
 class TaskExecutionManager:
-    def __init__(self, task_manager, machine_descriptor, buffer_memory_manager, number_of_execution_units):
+    def __init__(self, task_manager, machine_descriptor, buffer_memory_manager, number_of_execution_units) -> None:
         if task_manager is None:
             raise ValueError("task_manager cannot be None")
         if machine_descriptor is None:
@@ -35,7 +35,7 @@ class TaskExecutionManager:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.initialize_execution_units()
 
-    def initialize_execution_units(self):
+    def initialize_execution_units(self) -> None:
         for i in range(self.number_of_execution_units):
             input_buffer = self.buffer_memory_manager.get_buffer_allocator_group()
             output_buffer = self.buffer_memory_manager.get_buffer_allocator_group()
@@ -44,7 +44,7 @@ class TaskExecutionManager:
             self.execution_units.append(execution_unit)
             self.logger.debug(f"Initialized execution unit {i}")
 
-    def schedule_task(self, runtime: TaskRuntime):
+    def schedule_task(self, runtime: TaskRuntime) -> None:
         if runtime is None:
             raise ValueError("runtime cannot be None")
 
@@ -109,7 +109,7 @@ class TaskExecutionManager:
     def get_execution_units(self) -> List[TaskExecutionUnit]:
         return self.execution_units
 
-    def stop_all_execution_units(self):
+    def stop_all_execution_units(self) -> None:
         for eu in self.execution_units:
             eu.stop()
         for eu in self.execution_units:

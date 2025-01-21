@@ -1,8 +1,8 @@
 class LogicalDataflowBuilder:
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.logical_dataflow = LogicalDataflow(name)
 
-    def add_node(self, node: LogicalNode):
+    def add_node(self, node: LogicalNode) -> LogicalDataflowBuilder:
         self.logical_dataflow.add_node(node)
         return self  # Enable method chaining
 
@@ -12,7 +12,7 @@ class LogicalDataflowBuilder:
         dst_name: str,
         transfer_type: str = Edge.TransferType.POINT_TO_POINT,
         edge_type: str = Edge.EdgeType.FORWARD_EDGE
-    ):
+    ) -> LogicalDataflowBuilder:
         self.logical_dataflow.connect_nodes(src_name, dst_name, transfer_type, edge_type)
         return self
 

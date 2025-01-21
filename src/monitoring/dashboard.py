@@ -3,5 +3,5 @@ from flask import Blueprint, render_template
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/')
-def index():
+def index() -> str:
     return render_template('index.html')

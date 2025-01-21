@@ -15,17 +15,17 @@ class LifecycleState(Enum):
 
 
 class SimulationLifecycle:
-    def __init__(self):
+    def __init__(self) -> None:
         self.state = LifecycleState.INITIALIZED
 
-    def transition(self, new_state):
+    def transition(self, new_state) -> None:
         if new_state not in LifecycleState:
             raise ValueError(f"Invalid state: {new_state}")
         self.state = new_state
         print(f"State transitioned to: {self.state}")
 
     # TODO: This is probably not neccessary. See below
-    def initialize_environment(self):
+    def initialize_environment(self) -> None:
         if self.state == LifecycleState.INITIALIZED:
             print("Initializing environment...")
             # Initialize the environment and deploy Zookeeper
@@ -34,7 +34,7 @@ class SimulationLifecycle:
             print("Cannot initialize environment from current state.")
 
     # TODO: zookeeper deployment should probably be moved to a seperate deployment phase
-    def create_cluster(self, network):
+    def create_cluster(self, network) -> None:
         if self.state == LifecycleState.ENVIRONMENT_SETUP:
             print("Creating cluster with 10 nodes...")
             cluster = Cluster(network)
@@ -61,7 +61,7 @@ class SimulationLifecycle:
         else:
             print("Cannot create cluster from current state.")
 
-    def initialize_monitoring(self):
+    def initialize_monitoring(self) -> None:
 
         # Create the Flask app with the simulation context
         self.app = create_app(self)
@@ -74,7 +74,7 @@ class SimulationLifecycle:
         self.monitoring_thread.start()
         print("Monitoring web interface started on port 5002.")
 
-    def get_status(self):
+    def get_status(self) -> dict:
         # Collect status from the cluster and nodes
         status = {
             'state': self.state.value,
@@ -88,7 +88,7 @@ class SimulationLifecycle:
 
     # TODO: workload_manager deployment should probably be moved to a seperate deployment phase
 
-    def start_simulation(self):
+    def start_simulation(self) -> None:
         if self.state == LifecycleState.CLUSTER_CREATED:
             print("Starting workload manager on node-1...")
             cluster = self.cluster  # Use the stored cluster reference
@@ -104,13 +104,13 @@ class SimulationLifecycle:
         else:
             print("Cannot start simulation from current state.")
 
-    def complete(self):
+    def complete(self) -> None:
         if self.state == LifecycleState.RUNNING:
             print("Simulation completed.")
             self.transition(LifecycleState.COMPLETED)
         else:
             print("Cannot complete simulation from current state.")
 
-    def fail(self):
+    def fail(self) -> None:
         print("Simulation failed.")
         self.transition(LifecycleState.FAILED)

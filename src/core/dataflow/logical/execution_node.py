@@ -1,5 +1,5 @@
 class ExecutionNode:
-    def __init__(self, logical_node: LogicalNode, task_index: int):
+    def __init__(self, logical_node: LogicalNode, task_index: int) -> None:
         self.uid = uuid.uuid4()
         self.logical_node = logical_node
         self.task_index = task_index
@@ -7,15 +7,15 @@ class ExecutionNode:
         self.node_descriptor = None  # Placeholder for node descriptor
         self.node_binding_descriptor = None  # Placeholder for binding descriptor
 
-    def set_state(self, state):
+    def set_state(self, state) -> None:
         self.state = state
 
-    def set_node_descriptor(self, descriptor):
+    def set_node_descriptor(self, descriptor) -> None:
         if self.node_descriptor is not None:
             raise ValueError("Node descriptor is already set.")
         self.node_descriptor = descriptor
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"ExecutionNode(uid={self.uid}, "
             f"logical_node={self.logical_node.name}, "

@@ -13,13 +13,13 @@ class LogicalEdge:
         dst_node: LogicalNode,
         transfer_type: str,
         edge_type: str
-    ):
+    ) -> None:
         self.src_node = src_node
         self.dst_node = dst_node
         self.transfer_type = transfer_type
         self.edge_type = edge_type
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"Edge({self.src_node.name} -> {self.dst_node.name}, "
             f"transfer_type={self.transfer_type}, edge_type={self.edge_type})"

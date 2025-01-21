@@ -6,8 +6,9 @@ from collections import deque
 from typing import List, Dict, Optional
 
 # Now, define the Scheduler class
+from collections import deque
 class Scheduler:
-    def __init__(self, infrastructure_manager: InfrastructureManager):
+    def __init__(self, infrastructure_manager: InfrastructureManager) -> None:
         if infrastructure_manager is None:
             raise ValueError("infrastructure_manager cannot be None")
         self.infrastructure_manager = infrastructure_manager
@@ -23,7 +24,7 @@ class Scheduler:
         # self.dispatcher.dispatch_event(event)
         return topology
 
-    def schedule_topology(self, topology: AuraTopology):
+    def schedule_topology(self, topology: AuraTopology) -> None:
         self.logger.debug(
             f"Schedule topology [{topology.name}] on {self.infrastructure_manager.get_number_of_machines()} task managers"
         )
@@ -54,11 +55,11 @@ class Scheduler:
                            and node not in nodes_with_preferred_locations]
         self.schedule_collection_of_elements(remaining_nodes, topology)
 
-    def schedule_collection_of_elements(self, nodes: List[LogicalNode], topology: AuraTopology):
+    def schedule_collection_of_elements(self, nodes: List[LogicalNode], topology: AuraTopology) -> None:
         for node in nodes:
             self.schedule_element(node, topology)
 
-    def schedule_element(self, element: LogicalNode, topology: AuraTopology):
+    def schedule_element(self, element: LogicalNode, topology: AuraTopology) -> None:
         location_preferences = self.compute_location_preferences(element, topology)
 
         for en in element.get_execution_nodes():
@@ -74,7 +75,7 @@ class Scheduler:
                 f"{en.get_node_descriptor().name}_{en.get_node_descriptor().task_index}"
             )
 
-    def compute_location_preferences(self, element: LogicalNode, topology: AuraTopology):
+    def compute_location_preferences(self, element: LogicalNode, topology: AuraTopology) -> deque:
         location_preferences = deque()
 
         if element.has_co_location_requirements():

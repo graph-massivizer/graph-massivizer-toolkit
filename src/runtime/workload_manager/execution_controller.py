@@ -5,10 +5,11 @@
 
 class ExecutionController:
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def execute(self,execlutable_DAG):
         # in the first version (sequential) we jump from BGOto BGO (for loop)
         
         # we transform the zookeper
+        pass

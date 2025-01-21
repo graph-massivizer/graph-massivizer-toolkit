@@ -17,14 +17,14 @@ logging.basicConfig(level=logging.INFO)
 
 
 class TaskManager:
-    def __init__(self, zookeeper_host):
+    def __init__(self, zookeeper_host) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.zookeeper_host = zookeeper_host
         self.zk = KazooClient(hosts=self.zookeeper_host)
         self.zk.start()
         self.register_self()
 
-    def register_self(self):
+    def register_self(self) -> None:
         machine_info = self.collect_machine_info()
         node_path = f'/taskmanagers/{machine_info["uid"]}'
         data = json.dumps(machine_info).encode('utf-8')
@@ -34,7 +34,7 @@ class TaskManager:
             self.zk.create(node_path, data, makepath=True)
         self.logger.info(f"Registered TaskManager {machine_info['uid']} with ZooKeeper.")
 
-    def collect_machine_info(self):
+    def collect_machine_info(self) -> dict:
         machine_info = {
             'uid': str(uuid.uuid4()),
             'address': socket.gethostbyname(socket.gethostname()),
@@ -47,12 +47,12 @@ class TaskManager:
         }
         return machine_info
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.zk.stop()
         self.logger.info("Shutdown TaskManager.")
 
 
-def main():
+def main() -> None:
     try:
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
         task_manager = TaskManager(zookeeper_host)

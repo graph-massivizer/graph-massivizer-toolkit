@@ -25,20 +25,20 @@ class TopologyTransition(Enum):
 
 
 class Topology:
-    def __init__(self, name, machine_id):
+    def __init__(self, name, machine_id) -> None:
         self.name = name
         self.machine_id = machine_id
         self.state = TopologyState.CREATED
         self.nodes = []
         self.edges = []
 
-    def add_node(self, node):
+    def add_node(self, node) -> None:
         self.nodes.append(node)
 
-    def add_edge(self, src, dst):
+    def add_edge(self, src, dst) -> None:
         self.edges.append((src, dst))
 
-    def transition_state(self, transition):
+    def transition_state(self, transition) -> None:
         if transition == TopologyTransition.PARALLELIZE:
             self.state = TopologyState.PARALLELIZED
         elif transition == TopologyTransition.SCHEDULE:
@@ -56,5 +56,5 @@ class Topology:
         else:
             self.state = TopologyState.ERROR
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Topology(name={self.name}, state={self.state}, nodes={len(self.nodes)}, edges={len(self.edges)})"

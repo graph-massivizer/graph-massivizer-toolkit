@@ -12,7 +12,7 @@ from core.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescripto
 import uuid
 
 class InfrastructureManager:
-    def __init__(self, workload_manager, zookeeper_host, wm_machine_descriptor, config):
+    def __init__(self, workload_manager, zookeeper_host, wm_machine_descriptor, config) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.workload_manager = workload_manager
         self.zookeeper_host = zookeeper_host
@@ -38,14 +38,14 @@ class InfrastructureManager:
 
         self.input_split_manager = None  # Placeholder for actual implementation
 
-    def init_zookeeper_directories(self):
+    def init_zookeeper_directories(self) -> None:
         paths = ['/workloadmanager', '/taskmanagers', '/environment']
         for path in paths:
             if not self.zk.exists(path):
                 self.zk.create(path)
                 self.logger.debug(f"Created Zookeeper path: {path}")
 
-    def store_machine_descriptor(self):
+    def store_machine_descriptor(self) -> None:
         data = str(self.wm_machine_descriptor).encode('utf-8')
         wm_path = '/workloadmanager'
         if not self.zk.exists(wm_path):
@@ -54,7 +54,7 @@ class InfrastructureManager:
             self.zk.set(wm_path, data)
         self.logger.debug("Stored workload manager machine descriptor in Zookeeper.")
 
-    def update_machine_descriptors(self, machine_info):
+    def update_machine_descriptors(self, machine_info) -> None:
         machine_id = machine_info['uid']
         hardware = HardwareDescriptor(
             cpu_cores=machine_info['cpu_cores'],
@@ -78,7 +78,7 @@ class InfrastructureManager:
         })
         return model_data.encode('utf-8')  # Convert to bytes for ZooKeeper
 
-    def store_environment_model_in_zookeeper(self):
+    def store_environment_model_in_zookeeper(self) -> None:
         model_data = self.serialize_environment_model()
         model_path = '/environment/machines'
         if self.zk.exists(model_path):
@@ -87,7 +87,7 @@ class InfrastructureManager:
             self.zk.create(model_path, model_data)
         self.logger.debug("Environment model updated in ZooKeeper.")
 
-    def zookeeper_task_manager_watcher(self, task_manager_nodes):
+    def zookeeper_task_manager_watcher(self, task_manager_nodes) -> None:
         with self.node_info_lock:
             self.logger.debug(f"Task Manager nodes: {task_manager_nodes}")
             # Update machine descriptors based on task manager nodes
@@ -109,6 +109,6 @@ class InfrastructureManager:
             self.available_execution_units_map[selected_machine.uid] -= 1
             return selected_machine
 
-    def shutdown_infrastructure_manager(self):
+    def shutdown_infrastructure_manager(self) -> None:
         self.zk.stop()
         self.logger.info("Shutdown infrastructure manager.")

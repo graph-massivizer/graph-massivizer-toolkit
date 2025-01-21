@@ -3,7 +3,7 @@ from typing import List, Optional
 
 
 class MachineDescriptor:
-    def __init__(self, address: str, host_name: str, data_port: int, control_port: int, hardware):
+    def __init__(self, address: str, host_name: str, data_port: int, control_port: int, hardware) -> None:
         if data_port < 1024 or data_port > 65535 or control_port < 1024 or control_port > 65535:
             raise ValueError("Port numbers must be between 1024 and 65535")
 
@@ -16,7 +16,7 @@ class MachineDescriptor:
         self.data_address = (address, data_port)
         self.control_address = (address, control_port)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str]:
         return {
             'uid': str(self.uid),
             'address': self.address,
@@ -26,13 +26,13 @@ class MachineDescriptor:
             'hardware': self.hardware.to_dict()
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"MachineDescriptor(uid={self.uid}, address={self.address}, host_name={self.host_name}, "
                 f"data_port={self.data_port}, control_port={self.control_port}, hardware={self.hardware})")
 
 
 class HardwareDescriptor:
-    def __init__(self, cpu_cores: int, size_of_ram: int, hdd):
+    def __init__(self, cpu_cores: int, size_of_ram: int, hdd) -> None:
         if cpu_cores < 1:
             raise ValueError("CPU cores must be at least 1")
         if size_of_ram < 1:
@@ -43,7 +43,7 @@ class HardwareDescriptor:
         self.size_of_ram = size_of_ram
         self.hdd = hdd
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str]:
         return {
             'uid': str(self.uid),
             'cpu_cores': self.cpu_cores,
@@ -51,31 +51,31 @@ class HardwareDescriptor:
             'hdd': self.hdd.to_dict()
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"HardwareDescriptor(uid={self.uid}, cpu_cores={self.cpu_cores}, "
                 f"size_of_ram={self.size_of_ram}, hdd={self.hdd})")
 
 
 class HDDDescriptor:
-    def __init__(self, size_of_hdd: int):
+    def __init__(self, size_of_hdd: int) -> None:
         if size_of_hdd < 1024 * 1024 * 1024:
             raise ValueError("Size of HDD must be at least 1 GB")
 
         self.uid = uuid.uuid4()
         self.size_of_hdd = size_of_hdd
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str]:
         return {
             'uid': str(self.uid),
             'size_of_hdd': self.size_of_hdd
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"HDDDescriptor(uid={self.uid}, size_of_hdd={self.size_of_hdd})"
 
 
 class AbstractNodeDescriptor:
-    def __init__(self, topology_id: uuid.UUID, task_id: uuid.UUID, task_index: int, name: str, is_re_executable: bool):
+    def __init__(self, topology_id: uuid.UUID, task_id: uuid.UUID, task_index: int, name: str, is_re_executable: bool) -> None:
         if task_index < 0:
             raise ValueError("Task index must be non-negative")
 
@@ -88,7 +88,7 @@ class AbstractNodeDescriptor:
         self.user_code_classes = []
         self.properties_list = []
 
-    def set_machine_descriptor(self, machine):
+    def set_machine_descriptor(self, machine) -> None:
         if machine is None:
             raise ValueError("machine cannot be None")
         if self.machine is not None:
@@ -99,14 +99,14 @@ class AbstractNodeDescriptor:
     def get_machine_descriptor(self):
         return self.machine
 
-    def set_user_code_classes(self, user_code_classes):
+    def set_user_code_classes(self, user_code_classes) -> None:
         if user_code_classes is None:
             raise ValueError("user_code_classes cannot be None")
         self.user_code_classes = user_code_classes
 
-    def get_user_code_classes(self):
+    def get_user_code_classes(self) -> list:
         return self.user_code_classes
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"AbstractNodeDescriptor(topology_id={self.topology_id}, task_id={self.task_id}, "
                 f"name={self.name}, machine={self.machine})")

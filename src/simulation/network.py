@@ -2,7 +2,7 @@ import docker
 
 
 class Network:
-    def __init__(self, latency=0.1, bandwidth=100):
+    def __init__(self, latency=0.1, bandwidth=100) -> None:
         self.latency = latency
         self.bandwidth = bandwidth
         self.cluster = None
@@ -11,7 +11,7 @@ class Network:
         self.network_name = 'cluster_net'
         self.ensure_network()
 
-    def ensure_network(self):
+    def ensure_network(self) -> None:
         try:
             self.docker_client.networks.get(self.network_name)
             self.cluster = None
@@ -20,13 +20,13 @@ class Network:
             self.docker_client.networks.create(self.network_name, driver="bridge")
             print(f"Network '{self.network_name}' created.")
 
-    def register_node(self, node):
+    def register_node(self, node) -> None:
         self.nodes[node.node_id] = node
 
-    def register_cluster(self, cluster):
+    def register_cluster(self, cluster) -> None:
         self.cluster = cluster
 
-    def send_message(self, sender_id, receiver_id, message):
+    def send_message(self, sender_id, receiver_id, message) -> None:
         time.sleep(self.latency)
         if receiver_id == 'cluster_manager':
             self.cluster.receive_message(message)

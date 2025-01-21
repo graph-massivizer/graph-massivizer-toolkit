@@ -4,7 +4,7 @@
 
 class Optimizer_2:
     
-    def optimize(DAG):
+    def optimize(DAG) -> Optimizer_2:
     
     # TODO Ana, Duncan, Dante
        # THIS CAN BE STATIC 
