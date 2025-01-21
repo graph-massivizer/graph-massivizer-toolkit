@@ -1,7 +1,7 @@
 # components/master/greenifier.py
 
 from threading import Thread
-from core.commons.terminal import Terminal
+# from graphmassivizer.core.commons.terminal import Terminal
 import time
 
 

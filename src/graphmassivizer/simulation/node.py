@@ -6,7 +6,7 @@ from kazoo.client import KazooClient
 
 
 from typing import Any
-from typing import Any
+
 class Node(threading.Thread):
     def __init__(self, node_id, resources, network) -> None:
         super().__init__()
