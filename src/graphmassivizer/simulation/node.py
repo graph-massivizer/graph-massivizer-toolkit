@@ -167,7 +167,7 @@ class Node(threading.Thread):
         # Existing method
         status: dict[str, Any] = {
             'node_id': self.node_id,
-            'status': self.status,
+            'status': self.status.current_state.id,
             'containers': [c.name for c in self.containers]
         }
         # Optionally, you can add more detailed status information

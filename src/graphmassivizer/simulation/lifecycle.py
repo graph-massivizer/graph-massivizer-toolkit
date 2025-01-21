@@ -107,10 +107,10 @@ class SimulationLifecycle:
     def complete(self) -> None:
         self.state.complete()
 
-    def get_status(self) -> tuple[LifecycleState, list[dict[str, Any]]]:
+    def get_status(self) -> tuple[str, list[dict[str, Any]]]:
         # Collect status from the cluster and nodes
-        status: tuple[LifecycleState, list[dict[str, Any]]] = (
-            self.state,
+        status: tuple[str, list[dict[str, Any]]] = (
+            self.state.current_state.id,
             []
         )
         if self.cluster:
