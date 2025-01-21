@@ -6,8 +6,8 @@
 import threading
 import logging
 import json
-from kazoo.client import KazooClient
-from kazoo.protocol.states import WatchedEvent, EventType
+#from kazoo.client import KazooClient
+#from kazoo.protocol.states import WatchedEvent, EventType
 from graphmassivizer.core.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
 
 class InfrastructureManager:

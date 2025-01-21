@@ -1,11 +1,53 @@
 
 # this contains the optimization parts from the optimizer, the greenifier is in optimization_2
 #BGO selection 
+import random
+import uuid
+
 class Optimizer_1:
-    
-    def optimize(DAG):
+
+	def get_hardware_descriptors():
+		return [{
+				"ID": "SRV-001",
+				"Type": "Physical",
+				"CPU": "Intel Xeon Gold 6230, 20 cores",
+				"RAM": 256,
+				"Storage": [
+					{ "Type": "SSD", "Size": 2048, "Interface": "NVMe" },
+					{ "Type": "HDD", "Size": 8192, "Interface": "SAS" }
+					],
+				"Network": { "Bandwidth": "10 Gbps", "Interfaces": 2 },
+				"Power": 800,
+				"Location": "Rack 1, Unit 5"
+			},
+			{
+				"ID": "SRV-002",
+				"Type": "Blade",
+				"CPU": "AMD EPYC 7742, 64 cores",
+				"RAM": 512,
+				"Storage": [
+					{ "Type": "NVMe", "Size": 1024 }
+					],
+				"Network": { "Bandwidth": "25 Gbps", "Interfaces": 4 },
+				"Power": 1200,
+				"Location": "Rack 2, Unit 3"
+			}]
+
+	def get_optimization_result():
+		return {'cost_time': random.randint(86645, 6096529), 'cost_energy': random.randint(21661, 2580000), 'algorithm_id': str(uuid.uuid4())}
+		
+	def optimize(DAG):
         
-        # TODO Ana, Duncan, Dante
-        # THIS CAN BE STATIC 
-        
-        return DAG
+		available_infrastructure = Optimizer_1.get_hardware_descriptors()
+
+		for node in DAG.nodes:
+		    optimization_decorations={}
+		    # TODO: we get the infrastructure information from somewhere: API call?
+		    # QUESTION - THIS SHOULD GO INTO THE GRAPH OR IS RETRIEVED ELSEWHERE?: optimization_decorations['available_infrastructure']=available_infrastructure
+		    # TODO: we run the optimization on the node
+		    # TODO: the step below simulates the optimization results
+		    for hardware_id in [x['ID'] for x in available_infrastructure]:
+		    	optimization_decorations[hardware_id]=Optimizer_1.get_optimization_result()
+		    DAG.nodes[node]['optimized']=optimization_decorations
+		
+		return DAG

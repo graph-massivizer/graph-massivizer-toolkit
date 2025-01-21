@@ -9,7 +9,7 @@ class Parallelizer:
     
     def parallelize(DAG):
     
-        # TODO Ana, Duncan, Dante
-        # THIS CAN BE STATIC 
+        for node in DAG.nodes:
+        	DAG.nodes[node]['data_parallel']=True
         
         return DAG

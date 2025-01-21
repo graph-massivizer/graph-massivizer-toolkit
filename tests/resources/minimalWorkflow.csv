@@ -1,0 +1,7 @@
+s,p,q
+https://ontologies.metaphacts.com/bgo-ontology/instances/task-47fbd9da-6117-4dbb-877a-67dbf8018eb0,https://ontologies.metaphacts.com/bgo-ontology/hasNextTask,https://ontologies.metaphacts.com/bgo-ontology/instances/task-533dced3-0dcd-4305-b8c5-6ceacbb43bfd
+https://ontologies.metaphacts.com/bgo-ontology/instances/task-533dced3-0dcd-4305-b8c5-6ceacbb43bfd,https://ontologies.metaphacts.com/bgo-ontology/hasNextTask,https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422
+https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422,https://ontologies.metaphacts.com/bgo-ontology/hasNextTask,https://ontologies.metaphacts.com/bgo-ontology/instances/task-50374a30-b22b-453e-9e7c-9edeac241abd
+https://ontologies.metaphacts.com/bgo-ontology/instances/task-50374a30-b22b-453e-9e7c-9edeac241abd,https://ontologies.metaphacts.com/bgo-ontology/hasNextTask,https://ontologies.metaphacts.com/bgo-ontology/instances/task-7857f612-7702-47fb-8c8e-a0d870d78e75
+https://ontologies.metaphacts.com/bgo-ontology/instances/task-7857f612-7702-47fb-8c8e-a0d870d78e75,https://ontologies.metaphacts.com/bgo-ontology/hasNextTask,https://ontologies.metaphacts.com/bgo-ontology/instances/task-742e362a-fead-4ad4-8dc5-de7b73c91051
+https://ontologies.metaphacts.com/bgo-ontology/instances/workflow-deae5723-dafb-4e79-8648-0510f0312958,https://ontologies.metaphacts.com/bgo-ontology/hasFirstTask,https://ontologies.metaphacts.com/bgo-ontology/instances/task-47fbd9da-6117-4dbb-877a-67dbf8018eb0

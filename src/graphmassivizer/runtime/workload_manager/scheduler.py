@@ -9,14 +9,15 @@ from collections import deque
 
 
 class Scheduler:
-    def __init__(self, infrastructure_manager: InfrastructureManager) -> None:
-        if infrastructure_manager is None:
-            raise ValueError("infrastructure_manager cannot be None")
-        self.infrastructure_manager = infrastructure_manager
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self,DAG):#, infrastructure_manager: InfrastructureManager) -> None:
+        #if infrastructure_manager is None:
+        #    raise ValueError("infrastructure_manager cannot be None")
+        #self.infrastructure_manager = infrastructure_manager
+        #self.logger = logging.getLogger(self.__class__.__name__)
         # Dispatcher or event system can be implemented as needed
-        self.dispatcher = StateMachine()
-
+        #self.dispatcher = StateMachine()
+        self.DAG = DAG
+"""
     def apply(self, topology: AuraTopology) -> AuraTopology:
         self.schedule_topology(topology)
         # Dispatch the state transition event
@@ -104,3 +105,4 @@ class Scheduler:
                 location_preferences.append(LocationPreference(machines, LocationPreference.PreferenceLevel.PREFERRED))
 
         return location_preferences
+        """
