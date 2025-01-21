@@ -23,3 +23,9 @@ After that is installed, you can install the dependencies for visualizations usi
 ```bash
 pip install -e '.[visualization]'
 ```
+
+To be able to run tests, also install test dependencies
+
+```bash
+pip install -e '.[test]'
+```
