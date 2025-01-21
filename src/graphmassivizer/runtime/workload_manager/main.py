@@ -7,8 +7,8 @@
 import os
 import logging
 from kazoo.client import KazooClient
-from infrastructure_manager import InfrastructureManager
-from core.descriptors.descriptor_factory import create_machine_descriptor
+from graphmassivizer.runtime.workload_manager.infrastructure_manager import InfrastructureManager
+from graphmassivizer.core.descriptors.descriptor_factory import create_machine_descriptor
 # Import any necessary configuration classes or functions
 
 logging.basicConfig(level=logging.INFO)

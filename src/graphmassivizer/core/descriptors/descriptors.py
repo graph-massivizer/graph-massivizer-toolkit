@@ -1,5 +1,4 @@
 import uuid
-from typing import List, Optional
 
 
 class MachineDescriptor:

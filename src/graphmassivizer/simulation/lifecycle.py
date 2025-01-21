@@ -1,8 +1,8 @@
 import threading
 from enum import Enum
-from simulation.cluster import Cluster
-from simulation.node import Node
-from monitoring.server import create_app
+from graphmassivizer.simulation.cluster import Cluster
+from graphmassivizer.simulation.node import Node
+from graphmassivizer.monitoring.server import create_app
 
 
 class LifecycleState(Enum):
@@ -14,9 +14,16 @@ class LifecycleState(Enum):
     FAILED = 'FAILED'
 
 
+class LifeCycleFSM()
+
+
 class SimulationLifecycle:
     def __init__(self) -> None:
         self.state = LifecycleState.INITIALIZED
+
+
+    def start() -> None:
+        pass
 
     def transition(self, new_state) -> None:
         if new_state not in LifecycleState:
