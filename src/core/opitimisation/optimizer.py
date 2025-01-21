@@ -4,6 +4,7 @@ from threading import Thread
 from core.commons.terminal import Terminal
 import time
 
+
 class Optimizer(Thread):
     def __init__(self):
         super().__init__()

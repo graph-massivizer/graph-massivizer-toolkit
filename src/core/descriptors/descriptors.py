@@ -1,6 +1,7 @@
 import uuid
 from typing import List, Optional
 
+
 class MachineDescriptor:
     def __init__(self, address: str, host_name: str, data_port: int, control_port: int, hardware):
         if data_port < 1024 or data_port > 65535 or control_port < 1024 or control_port > 65535:
@@ -29,6 +30,7 @@ class MachineDescriptor:
         return (f"MachineDescriptor(uid={self.uid}, address={self.address}, host_name={self.host_name}, "
                 f"data_port={self.data_port}, control_port={self.control_port}, hardware={self.hardware})")
 
+
 class HardwareDescriptor:
     def __init__(self, cpu_cores: int, size_of_ram: int, hdd):
         if cpu_cores < 1:
@@ -53,6 +55,7 @@ class HardwareDescriptor:
         return (f"HardwareDescriptor(uid={self.uid}, cpu_cores={self.cpu_cores}, "
                 f"size_of_ram={self.size_of_ram}, hdd={self.hdd})")
 
+
 class HDDDescriptor:
     def __init__(self, size_of_hdd: int):
         if size_of_hdd < 1024 * 1024 * 1024:
@@ -69,6 +72,7 @@ class HDDDescriptor:
 
     def __repr__(self):
         return f"HDDDescriptor(uid={self.uid}, size_of_hdd={self.size_of_hdd})"
+
 
 class AbstractNodeDescriptor:
     def __init__(self, topology_id: uuid.UUID, task_id: uuid.UUID, task_index: int, name: str, is_re_executable: bool):

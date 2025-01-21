@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class TopologyState(Enum):
     CREATED = 'TOPOLOGY_STATE_CREATED'
     PARALLELIZED = 'TOPOLOGY_STATE_PARALLELIZED'
@@ -11,6 +12,7 @@ class TopologyState(Enum):
     FAILURE = 'TOPOLOGY_STATE_FAILURE'
     ERROR = 'ERROR'
 
+
 class TopologyTransition(Enum):
     PARALLELIZE = 'TOPOLOGY_TRANSITION_PARALLELIZE'
     SCHEDULE = 'TOPOLOGY_TRANSITION_SCHEDULE'
@@ -21,6 +23,7 @@ class TopologyTransition(Enum):
     CANCEL = 'TOPOLOGY_TRANSITION_CANCEL'
     FAIL = 'TOPOLOGY_TRANSITION_FAIL'
 
+
 class Topology:
     def __init__(self, name, machine_id):
         self.name = name
@@ -28,7 +31,7 @@ class Topology:
         self.state = TopologyState.CREATED
         self.nodes = []
         self.edges = []
-        
+
     def add_node(self, node):
         self.nodes.append(node)
 

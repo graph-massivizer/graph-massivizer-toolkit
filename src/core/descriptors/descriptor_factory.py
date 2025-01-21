@@ -2,6 +2,7 @@ import socket
 from core.descriptors.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
 from core.common.config import Config
 
+
 def create_machine_descriptor(config: Config):
     address = socket.gethostbyname(socket.gethostname())
     host_name = socket.gethostname()

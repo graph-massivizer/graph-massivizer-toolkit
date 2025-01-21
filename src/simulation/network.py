@@ -1,5 +1,6 @@
 import docker
 
+
 class Network:
     def __init__(self, latency=0.1, bandwidth=100):
         self.latency = latency

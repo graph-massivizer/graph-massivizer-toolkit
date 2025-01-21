@@ -1,6 +1,7 @@
 import uuid
 from typing import List, Dict, Any
 
+
 class LogicalNode:
     def __init__(
         self,

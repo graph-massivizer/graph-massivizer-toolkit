@@ -4,6 +4,7 @@ import docker
 import socket
 from kazoo.client import KazooClient
 
+
 class Node(threading.Thread):
     def __init__(self, node_id, resources, network):
         super().__init__()
@@ -20,9 +21,9 @@ class Node(threading.Thread):
     def run(self):
         while self.running:
             time.sleep(1)
-            
+
     def report_status(self):
-            # Existing method
+        # Existing method
         status = {
             'node_id': self.node_id,
             'status': self.status,
@@ -53,7 +54,7 @@ class Node(threading.Thread):
             self.containers.append(container)
         except Exception as e:
             print(f"Error deplying container on node {self.node_id}: {e}")
-            
+
     def deploy_zookeeper(self):
         """Deploy a Zookeeper instance in Docker."""
         container_name = f"zookeeper_{self.node_id}"
@@ -95,7 +96,7 @@ class Node(threading.Thread):
 
         except Exception as e:
             print(f"Error starting Zookeeper container on node {self.node_id}: {e}")
-            
+
     def start_zk_client(self):
         try:
             self.zk = KazooClient(hosts=self.zookeeper_host)
@@ -103,7 +104,7 @@ class Node(threading.Thread):
         except Exception as e:
             print(f"Error connecting to ZooKeeper from node {self.node_id}: {e}")
             raise
-            
+
     def wait_for_zookeeper(self):
         command = "echo ruok | nc zookeeper 2181"
         try:
@@ -138,7 +139,7 @@ class Node(threading.Thread):
 
     def receive_message(self, message):
         pass
-    
+
     def deploy_workload_manager(self):
         """Deploy the Workload Manager instance in Docker."""
         container_name = f"workload_manager_{self.node_id}"
@@ -171,7 +172,7 @@ class Node(threading.Thread):
             print(f"Workload Manager started on {self.node_id} with container {container.name}")
         except Exception as e:
             print(f"Error starting Workload Manager on node {self.node_id}: {e}")
-            
+
     def deploy_task_manager(self):
         """Deploy the Task Manager instance in Docker."""
         container_name = f"task_manager_{self.node_id}"
@@ -204,7 +205,7 @@ class Node(threading.Thread):
             print(f"Task Manager started on {self.node_id} with container {container.name}")
         except Exception as e:
             print(f"Error starting Task Manager on node {self.node_id}: {e}")
-            
+
     def register_task_manager(self):
         machine_info = self.collect_machine_info()
         node_path = f'/taskmanagers/{machine_info["uid"]}'

@@ -15,6 +15,7 @@ from kazoo.client import KazooClient
 
 logging.basicConfig(level=logging.INFO)
 
+
 class TaskManager:
     def __init__(self, zookeeper_host):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -50,6 +51,7 @@ class TaskManager:
         self.zk.stop()
         self.logger.info("Shutdown TaskManager.")
 
+
 def main():
     try:
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
@@ -62,6 +64,7 @@ def main():
     finally:
         if 'task_manager' in locals():
             task_manager.shutdown()
+
 
 if __name__ == '__main__':
     main()

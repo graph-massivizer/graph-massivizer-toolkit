@@ -5,3 +5,9 @@ from core.descriptors.descriptors import (
     AbstractNodeDescriptor
 )
 from core.descriptors.descriptor_factory import create_machine_descriptor
+
+
+__all__ = ["MachineDescriptor",
+           "HardwareDescriptor",
+           "HDDDescriptor",
+           "AbstractNodeDescriptor", "create_machine_descriptor"]
