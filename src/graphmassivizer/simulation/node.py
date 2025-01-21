@@ -3,25 +3,37 @@ import time
 import docker
 import socket
 from kazoo.client import KazooClient
-
+from statemachine import Event, State, StateMachine
 
 from typing import Any
 
+
+class NodeStatus(StateMachine):
+    CREATED = State(initial=True)
+    RUNNING = State()
+    IDLE = State()
+    OFFLINE = State(final=True)
+
+    run = Event(CREATED.to(RUNNING) | IDLE.to(RUNNING))
+    idle = Event(RUNNING.to(IDLE))
+    offline = Event(IDLE.to(OFFLINE) | RUNNING.to(
+        OFFLINE) | CREATED.to(OFFLINE))
+
+
 class Node(threading.Thread):
-    def __init__(self, node_id, resources, network) -> None:
+    def __init__(self, node_id: str, resources, network) -> None:
         super().__init__()
-        self.node_id = node_id
+        self.node_id: str = node_id
         self.resources = resources
         self.network = network
-        self.status = 'idle'
-        self.running = True
+        self.status: NodeStatus = NodeStatus()
         self.docker_client = docker.from_env()
         self.containers = []
         self.zookeeper_host = 'zookeeper:2181'
         self.zk = None
 
     def run(self) -> None:
-        while self.running:
+        while self.status.current_state == NodeStatus.RUNNING:
             time.sleep(1)
 
     def report_status(self) -> dict:
@@ -36,10 +48,12 @@ class Node(threading.Thread):
 
     def deploy_container(self, service_name) -> None:
         container_name = f"{service_name}_{self.node_id}"
-        image_name = f"{service_name}_image"  # Ensure this matches the image name in docker-compose.yml
+        # Ensure this matches the image name in docker-compose.yml
+        image_name = f"{service_name}_image"
         try:
             try:
-                existing_container = self.docker_client.containers.get(container_name)
+                existing_container = self.docker_client.containers.get(
+                    container_name)
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
@@ -64,7 +78,8 @@ class Node(threading.Thread):
 
         try:
             try:
-                existing_container = self.docker_client.containers.get(container_name)
+                existing_container = self.docker_client.containers.get(
+                    container_name)
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
@@ -82,7 +97,8 @@ class Node(threading.Thread):
                     'ZOOKEEPER_INIT_LIMIT': '5',
                     'ZOOKEEPER_SYNC_LIMIT': '2'
                 },
-                ports={'2181/tcp': 2181},  # Expose port 2181 for client connections
+                # Expose port 2181 for client connections
+                ports={'2181/tcp': 2181},
                 labels={'node': self.node_id}
             )
 
@@ -94,17 +110,20 @@ class Node(threading.Thread):
             container.start()
 
             self.containers.append(container)
-            print(f"Zookeeper instance started on {self.node_id} with container {container.name}")
+            print(
+                f"Zookeeper instance started on {self.node_id} with container {container.name}")
 
         except Exception as e:
-            print(f"Error starting Zookeeper container on node {self.node_id}: {e}")
+            print(
+                f"Error starting Zookeeper container on node {self.node_id}: {e}")
 
     def start_zk_client(self) -> None:
         try:
             self.zk = KazooClient(hosts=self.zookeeper_host)
             self.zk.start()
         except Exception as e:
-            print(f"Error connecting to ZooKeeper from node {self.node_id}: {e}")
+            print(
+                f"Error connecting to ZooKeeper from node {self.node_id}: {e}")
             raise
 
     def wait_for_zookeeper(self) -> None:
@@ -125,12 +144,13 @@ class Node(threading.Thread):
         time.sleep(2)
 
     def shutdown(self) -> None:
-        self.running = False
-        self.status = 'offline'
-        for container in self.containers:
-            container.stop()
-            container.remove()
-        self.containers.clear()
+        if self.status.current_state != NodeStatus.OFFLINE:
+            self.status.offline()
+            for container in self.containers:
+                container.stop()
+                container.remove()
+            self.containers.clear()
+            self.zk.stop()
 
     def report_status(self) -> dict[str, Any]:
         return {
@@ -148,7 +168,8 @@ class Node(threading.Thread):
         image_name = "workload_manager_image"  # Ensure this image is built
         try:
             try:
-                existing_container = self.docker_client.containers.get(container_name)
+                existing_container = self.docker_client.containers.get(
+                    container_name)
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
@@ -171,9 +192,11 @@ class Node(threading.Thread):
             # Start the container
             container.start()
             self.containers.append(container)
-            print(f"Workload Manager started on {self.node_id} with container {container.name}")
+            print(
+                f"Workload Manager started on {self.node_id} with container {container.name}")
         except Exception as e:
-            print(f"Error starting Workload Manager on node {self.node_id}: {e}")
+            print(
+                f"Error starting Workload Manager on node {self.node_id}: {e}")
 
     def deploy_task_manager(self) -> None:
         """Deploy the Task Manager instance in Docker."""
@@ -182,7 +205,8 @@ class Node(threading.Thread):
         try:
             # Remove existing container if it exists
             try:
-                existing_container = self.docker_client.containers.get(container_name)
+                existing_container = self.docker_client.containers.get(
+                    container_name)
                 existing_container.stop()
                 existing_container.remove()
             except docker.errors.NotFound:
@@ -201,10 +225,12 @@ class Node(threading.Thread):
             )
             # Connect to the network
             network = self.docker_client.networks.get('cluster_net')
-            network.connect(container, aliases=[f"task_manager_{self.node_id}"])
+            network.connect(container, aliases=[
+                            f"task_manager_{self.node_id}"])
             container.start()
             self.containers.append(container)
-            print(f"Task Manager started on {self.node_id} with container {container.name}")
+            print(
+                f"Task Manager started on {self.node_id} with container {container.name}")
         except Exception as e:
             print(f"Error starting Task Manager on node {self.node_id}: {e}")
 
@@ -232,21 +258,5 @@ class Node(threading.Thread):
         }
         return machine_info
 
-    def shutdown(self) -> None:
-        self.running = False
-        self.status = 'offline'
-        for container in self.containers:
-            container.stop()
-            container.remove()
-        self.containers.clear()
-        self.zk.stop()
-
-    def report_status(self) -> dict[str, Any]:
-        return {
-            'node_id': self.node_id,
-            'status': self.status,
-            'containers': [c.name for c in self.containers]
-        }
-
-    def receive_message(self, message):
-        pass
+    def receive_message(self, message: str) -> None:
+        raise NotImplementedError()

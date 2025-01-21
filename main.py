@@ -6,21 +6,26 @@ from graphmassivizer.simulation.cluster import Cluster
 
 
 def main():
+
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
+
     network = Network()  # Initialize the network
-    simulation = SimulationLifecycle()  # Initialize the simulation lifecycle manager
-    
-    simulation.start()
+    simulation = SimulationLifecycle()  # Create the simulation lifecycle manager
+
+    simulation.start(network)
     # Transition through lifecycle stages
-    simulation.initialize_environment()
-    simulation.create_cluster(network)
-    simulation.start_simulation()
-    simulation.complete()
+    # simulation.initialize_environment()
+    # simulation.create_cluster(network)
+    # simulation.start_simulation()
     try:
-        while True:
-            pass  # Keep the main thread alive
+        simulation.complete()
+        # while True:
+        #     pass  # Keep the main thread alive
     except KeyboardInterrupt:
         print("Shutting down simulation.")
-        simulation.complete()
+        simulation.fail()
 
 
 if __name__ == '__main__':
