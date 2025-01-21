@@ -1,9 +1,11 @@
 from graphmassivizer.simulation.node import Node
-from graphmassivizer.simulation.network import Network
 
 
 class Cluster:
-    def __init__(self, network: Network) -> None:
+    def __init__(self, network) -> None:
+        """network must be of type graphmassivizer.simulation.network import Network 
+        but we have a cyclic import left
+        """
         self.nodes: dict[str, Node] = {}
         self.network = network
         self.network.register_cluster(self)

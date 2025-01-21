@@ -10,8 +10,6 @@ from statemachine import Event, State, StateMachine
 
 from typing import Any, Optional
 
-from graphmassivizer.simulation.network import Network
-
 
 class NodeStatus(StateMachine):
     CREATED = State(initial=True)
@@ -26,7 +24,10 @@ class NodeStatus(StateMachine):
 
 
 class Node(threading.Thread):
-    def __init__(self, node_id: str, resources, network: Network) -> None:
+    def __init__(self, node_id: str, resources, network) -> None:
+        """network must be of type graphmassivizer.simulation.network import Network 
+        but we have a cyclic import left
+        """
         super().__init__()
         self.node_id: str = node_id
         self.resources = resources
