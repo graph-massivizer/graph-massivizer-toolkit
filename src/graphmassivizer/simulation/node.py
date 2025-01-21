@@ -257,3 +257,6 @@ class Node(threading.Thread):
             'size_of_hdd': 256 * 1024 * 1024 * 1024  # 256 GB
         }
         return machine_info
+
+    def receive_message(self, message: str) -> None:
+        raise NotImplementedError()

@@ -11,10 +11,10 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)
 
-    # network = Network()  # Initialize the network
+    network = Network()  # Initialize the network
     simulation = SimulationLifecycle()  # Create the simulation lifecycle manager
 
-    simulation.start()
+    simulation.start(network)
     # Transition through lifecycle stages
     # simulation.initialize_environment()
     # simulation.create_cluster(network)

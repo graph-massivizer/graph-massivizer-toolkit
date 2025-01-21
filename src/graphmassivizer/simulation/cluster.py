@@ -26,3 +26,6 @@ class Cluster:
             status = node.report_status()
             print(
                 f"Node {status['node_id']}: Status {status['status']}, Task Queue Length {status['task_queue_length']}")
+
+    def receive_message(self, message: str) -> None:
+        raise NotImplementedError()
