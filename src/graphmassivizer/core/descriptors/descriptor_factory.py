@@ -1,10 +1,9 @@
 import socket
-from core.descriptors.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
-from core.common.config import Config
+from graphmassivizer.core.descriptors.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
 
 
 from core.descriptors.descriptors import MachineDescriptor
-def create_machine_descriptor(config: Config) -> MachineDescriptor:
+def create_machine_descriptor(config) -> MachineDescriptor:
     address = socket.gethostbyname(socket.gethostname())
     host_name = socket.gethostname()
     data_port = config.get_int("io.tcp.port", default=5000)

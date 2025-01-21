@@ -8,8 +8,7 @@ import logging
 import json
 from kazoo.client import KazooClient
 from kazoo.protocol.states import WatchedEvent, EventType
-from core.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
-import uuid
+from graphmassivizer.core.descriptors import MachineDescriptor, HardwareDescriptor, HDDDescriptor
 
 class InfrastructureManager:
     def __init__(self, workload_manager, zookeeper_host, wm_machine_descriptor, config) -> None:

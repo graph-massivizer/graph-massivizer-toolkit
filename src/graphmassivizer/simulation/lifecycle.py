@@ -38,7 +38,6 @@ class SimulationLifecycle:
         self.state.add_listener(LoggingListener(self.logger))  # type: ignore
 
     def start(self) -> None:
-
         self.state.initialize()
 
         self.state.run()

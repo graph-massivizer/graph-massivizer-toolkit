@@ -1,10 +1,10 @@
-from core.descriptors.descriptors import (
+from .descriptors import (
     MachineDescriptor,
     HardwareDescriptor,
     HDDDescriptor,
     AbstractNodeDescriptor
 )
-from core.descriptors.descriptor_factory import create_machine_descriptor
+from .descriptor_factory import create_machine_descriptor
 
 
 __all__ = ["MachineDescriptor",
