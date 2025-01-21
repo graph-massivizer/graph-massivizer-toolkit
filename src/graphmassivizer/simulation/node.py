@@ -35,7 +35,7 @@ class Node(threading.Thread):
         self.status: NodeStatus = NodeStatus()
         self.docker_client = docker.from_env()
         self.containers: list[Container] = []
-        self.zookeeper_host = 'zookeeper:2181'
+        self.zookeeper_host = 'localhost:2181'
         self.zk: Optional[KazooClient] = None
 
     def run(self) -> None:
@@ -65,12 +65,18 @@ class Node(threading.Thread):
             )
             self.containers.append(container)
         except Exception as e:
-            print(f"Error deplying container on node {self.node_id}: {e}")
+            print(f"Error deploying container on node {self.node_id}: {e}")
 
     def deploy_zookeeper(self) -> None:
         """Deploy a Zookeeper instance in Docker."""
         container_name = f"zookeeper_{self.node_id}"
-        image_name = "zookeeper:3.7"  # Or whatever version you prefer
+        image_name = "zookeeper"
+        tag = "3.7"  # Or whatever version you prefer
+
+        try:
+            self.docker_client.images.pull(image_name, tag=tag)
+        except Exception as e:
+            raise e
 
         try:
             try:
@@ -83,15 +89,18 @@ class Node(threading.Thread):
 
             # Create the container without networking_config
             container = self.docker_client.containers.create(
-                image_name,
+                image_name + ":" + tag,
                 name=container_name,
+
                 hostname='zookeeper',
                 detach=True,
                 environment={
                     'ZOOKEEPER_CLIENT_PORT': '2181',
                     'ZOOKEEPER_TICK_TIME': '2000',
                     'ZOOKEEPER_INIT_LIMIT': '5',
-                    'ZOOKEEPER_SYNC_LIMIT': '2'
+                    'ZOOKEEPER_SYNC_LIMIT': '2',
+                    'ZOO_4LW_COMMANDS_WHITELIST': '*',
+                    'KAFKA_OPTS': "-Dzookeeper.4lw.commands.whitelist=*"
                 },
                 # Expose port 2181 for client connections
                 ports={'2181/tcp': 2181},
@@ -122,8 +131,8 @@ class Node(threading.Thread):
                 f"Error connecting to ZooKeeper from node {self.node_id}: {e}")
             raise
 
-    def wait_for_zookeeper(self) -> None:
-        command = "echo ruok | nc zookeeper 2181"
+    def _is_zk_running(self) -> bool:
+        command = 'sh -c "echo ruok | nc zookeeper_node-0 2181"'
         try:
             output = self.docker_client.containers.run(
                 "alpine:latest",
@@ -132,12 +141,18 @@ class Node(threading.Thread):
                 remove=True
             )
             if b'imok' in output:
-                print("ZooKeeper is ready.")
-                return
-        except Exception:
-            pass
-        print("Waiting for ZooKeeper to become ready...")
-        time.sleep(2)
+                return True
+            else:
+                return False
+        except Exception as e:
+            raise e
+
+    def wait_for_zookeeper(self) -> None:
+        if self._is_zk_running():
+            print("ZooKeeper is ready.")
+        else:
+            raise NotImplementedError(
+                "Zookeeper is not ready and no logic tor retry is implemented")
 
     def shutdown(self) -> None:
         if self.status.current_state != NodeStatus.OFFLINE:
