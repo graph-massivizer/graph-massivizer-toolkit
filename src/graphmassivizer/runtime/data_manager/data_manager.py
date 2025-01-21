@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class DataManager(ABC):
     # This could be any access point to a graph (e.g. an endpoint for request,s or a path to a file for I/O)
     @property
