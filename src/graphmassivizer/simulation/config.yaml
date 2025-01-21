@@ -1,0 +1,30 @@
+storage:
+  type: "s3"                 
+  endpoint: "s3.amazonaws.com"
+  bucket: "my-storage-bucket"
+  access_key: "my-access-key"
+  secret_key: "my-secret-key"
+
+comp_servers: 
+  - name: "server1"
+    ip: "192.168.1.2"
+    role: "primary"
+  - name: "server2"
+    ip: "192.168.1.3"
+    role: "secondary"
+
+zookeeper:
+  host: "192.168.1.1"       
+  port: 2181                 
+  root_node: "/myproject"    
+
+logging:
+  level: "INFO"              
+  log_dir: "/var/log/myproject"
+
+monitoring:
+  enabled: true             
+  host: "192.168.1.3"            
+  port: 5002                 
+  log_level: "INFO"          
+  log_file: "/var/log/monitoring.log" 
