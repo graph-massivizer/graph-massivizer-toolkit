@@ -1,48 +1,49 @@
 import threading
-from enum import Enum
+from typing import Any
 from graphmassivizer.simulation.cluster import Cluster
+from graphmassivizer.simulation.network import Network
 from graphmassivizer.simulation.node import Node
 from graphmassivizer.monitoring.server import create_app
+import logging
+
+from statemachine import Event, StateMachine, State
 
 
-class LifecycleState(Enum):
-    INITIALIZED = 'INITIALIZED'
-    ENVIRONMENT_SETUP = 'ENVIRONMENT_SETUP'
-    CLUSTER_CREATED = 'CLUSTER_CREATED'
-    RUNNING = 'RUNNING'
-    COMPLETED = 'COMPLETED'
-    FAILED = 'FAILED'
+class LifecycleState(StateMachine):
+
+    CREATED = State(initial=True)
+    INITIALIZED = State()
+    RUNNING = State()
+    FAILED = State(final=True)
+    COMPLETED = State(final=True)
+
+    initialize = Event(CREATED.to(INITIALIZED))
+    run = Event(INITIALIZED.to(RUNNING))
+    fail = Event(RUNNING.to(FAILED))
+    complete = Event(RUNNING.to(COMPLETED))
 
 
-class LifeCycleFSM()
+class LoggingListener:
+    def __init__(self, logger: logging.Logger) -> None:
+        self.logger = logger
+
+    def on_transition(self, event: Event, state: State) -> None:
+        self.logger.info(f"With {event} to {state}")
 
 
 class SimulationLifecycle:
+
     def __init__(self) -> None:
-        self.state = LifecycleState.INITIALIZED
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.INFO)
+        self.state: LifecycleState = LifecycleState()
+        self.state.add_listener(LoggingListener(self.logger))  # type: ignore
 
+    def start(self, network: Network) -> None:
 
-    def start() -> None:
-        pass
-
-    def transition(self, new_state) -> None:
-        if new_state not in LifecycleState:
-            raise ValueError(f"Invalid state: {new_state}")
-        self.state = new_state
-        print(f"State transitioned to: {self.state}")
-
-    # TODO: This is probably not neccessary. See below
-    def initialize_environment(self) -> None:
-        if self.state == LifecycleState.INITIALIZED:
-            print("Initializing environment...")
-            # Initialize the environment and deploy Zookeeper
-            self.transition(LifecycleState.ENVIRONMENT_SETUP)
-        else:
-            print("Cannot initialize environment from current state.")
-
-    # TODO: zookeeper deployment should probably be moved to a seperate deployment phase
-    def create_cluster(self, network) -> None:
-        if self.state == LifecycleState.ENVIRONMENT_SETUP:
+        # We attempt to change the state ahead of doing the action, it will trigger an exception if this is not possible now.
+        self.state.initialize()
+        try:
             print("Creating cluster with 10 nodes...")
             cluster = Cluster(network)
             self.cluster = cluster
@@ -54,7 +55,7 @@ class SimulationLifecycle:
             node_0.wait_for_zookeeper()
 
             # Start ZooKeeper client on node-0
-            # node_0.start_zk_client()
+            node_0.start_zk_client()
 
             # Create the remaining 9 nodes
             for i in range(1, 10):
@@ -62,62 +63,58 @@ class SimulationLifecycle:
                 cluster.add_node(node)
 
             # Initialize monitoring component
-            self.initialize_monitoring()
+            # self.initialize_monitoring()
 
-            self.transition(LifecycleState.CLUSTER_CREATED)
-        else:
-            print("Cannot create cluster from current state.")
+                # def initialize_monitoring(self) -> None:
 
-    def initialize_monitoring(self) -> None:
+            # Create the Flask app with the simulation context
+            self.app = create_app(self)
 
-        # Create the Flask app with the simulation context
-        self.app = create_app(self)
+            # Run the Flask app in a separate thread
+            def run_app():
+                self.app.run(host='0.0.0.0', port=5002)
 
-        # Run the Flask app in a separate thread
-        def run_app():
-            self.app.run(host='0.0.0.0', port=5002)
+            self.monitoring_thread = threading.Thread(target=run_app)
+            self.monitoring_thread.start()
+            print("Monitoring web interface started on port 5002.")
 
-        self.monitoring_thread = threading.Thread(target=run_app)
-        self.monitoring_thread.start()
-        print("Monitoring web interface started on port 5002.")
+        except Exception:
+            self.state.fail()
+            raise
 
-    def get_status(self) -> dict:
-        # Collect status from the cluster and nodes
-        status = {
-            'state': self.state.value,
-            'nodes': []
-        }
-        if self.cluster:
-            for node in self.cluster.nodes.values():
-                node_status = node.report_status()
-                status['nodes'].append(node_status)
-        return status
-
-    # TODO: workload_manager deployment should probably be moved to a seperate deployment phase
-
-    def start_simulation(self) -> None:
-        if self.state == LifecycleState.CLUSTER_CREATED:
+        # Now that things are setup, start running
+        self.state.run()
+        try:
             print("Starting workload manager on node-1...")
             cluster = self.cluster  # Use the stored cluster reference
             cluster.nodes["node-1"].deploy_workload_manager()
 
             print("Starting task managers on remaining nodes...")
             for node_id, node in cluster.nodes.items():
-                if node_id not in ["node-0", "node-1"]:  # Skip node-0 (ZooKeeper) and node-1 (Workload Manager)
+                # Skip node-0 (ZooKeeper) and node-1 (Workload Manager)
+                if node_id not in ["node-0", "node-1"]:
                     node.deploy_task_manager()
 
             print("Simulation is running...")
-            self.transition(LifecycleState.RUNNING)
-        else:
-            print("Cannot start simulation from current state.")
 
-    def complete(self) -> None:
-        if self.state == LifecycleState.RUNNING:
-            print("Simulation completed.")
-            self.transition(LifecycleState.COMPLETED)
-        else:
-            print("Cannot complete simulation from current state.")
+        except Exception:
+            self.state.fail()
+            raise
 
     def fail(self) -> None:
-        print("Simulation failed.")
-        self.transition(LifecycleState.FAILED)
+        self.state.fail()
+
+    def complete(self) -> None:
+        self.state.complete()
+
+    def get_status(self) -> tuple[LifecycleState, list[dict[str, Any]]]:
+        # Collect status from the cluster and nodes
+        status: tuple[LifecycleState, list[dict[str, Any]]] = (
+            self.state,
+            []
+        )
+        if self.cluster:
+            for node in self.cluster.nodes.values():
+                node_status: dict[str, Any] = node.report_status()
+                status[1].append(node_status)
+        return status
