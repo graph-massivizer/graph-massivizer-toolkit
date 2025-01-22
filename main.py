@@ -1,6 +1,4 @@
-from graphmassivizer.simulation.network import Network
-from graphmassivizer.simulation.lifecycle import SimulationLifecycle
-from graphmassivizer.simulation.cluster import Cluster
+from graphmassivizer.infrastructure.simulation.lifecycle import SimulationLifecycle
 
 # https://docs.google.com/drawings/d/1FC5paw_2A3nFBcIW7s99Pk1I_bSUXy_2Uma1LtBmQ_c/edit?usp=sharing
 
@@ -11,10 +9,9 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)
 
-    network = Network()  # Initialize the network
     simulation = SimulationLifecycle()  # Create the simulation lifecycle manager
 
-    simulation.start(network)
+    simulation.start()
     # Transition through lifecycle stages
     # simulation.initialize_environment()
     # simulation.create_cluster(network)

@@ -1,13 +1,24 @@
-from typing import cast
+from typing import Any, cast
 from flask import Blueprint, jsonify, current_app
-
-from graphmassivizer.simulation.lifecycle import SimulationLifecycle
 
 api_bp = Blueprint('api', __name__)
 
 
-def _get_simulation() -> SimulationLifecycle:
-    simulation = cast(SimulationLifecycle, current_app.config['simulation'])
+# TODO This needs to be upgrades so that more information can make it to the dashboard. Now Mocked.
+
+class LifeCycleWrapper:
+    def get_status(self) -> tuple[str, list[dict[str, Any]]]:
+        raise NotImplementedError()
+
+    def start_simulation(self) -> None:
+        raise NotImplementedError()
+
+    def complete(self) -> None:
+        raise NotImplementedError()
+
+
+def _get_simulation() -> LifeCycleWrapper:
+    simulation = cast(LifeCycleWrapper, current_app.config['simulation'])
     return simulation
 
 

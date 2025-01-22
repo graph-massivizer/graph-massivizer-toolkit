@@ -1,9 +1,7 @@
-import threading
 from typing import Any
-from graphmassivizer.simulation.cluster import Cluster
-from graphmassivizer.simulation.network import Network
-from graphmassivizer.simulation.node import Node
-from graphmassivizer.monitoring.server import create_app
+from graphmassivizer.infrastructure.simulation.cluster import Cluster
+from graphmassivizer.infrastructure.simulation.node import SimulatedNode
+# from graphmassivizer.monitoring.server import create_app
 import logging
 
 from statemachine import Event, StateMachine, State
@@ -39,17 +37,17 @@ class SimulationLifecycle:
         self.state: LifecycleState = LifecycleState()
         self.state.add_listener(LoggingListener(self.logger))  # type: ignore
 
-    def start(self, network: Network) -> None:
+    def start(self) -> None:
 
         # We attempt to change the state ahead of doing the action, it will trigger an exception if this is not possible now.
         self.state.initialize()
         try:
             print("Creating cluster with 10 nodes...")
-            cluster = Cluster(network)
+            cluster = Cluster()
             self.cluster = cluster
 
             # First, create node-0 and deploy ZooKeeper
-            node_0 = Node(node_id="node-0", resources={}, network=network)
+            node_0 = SimulatedNode(node_id="node-0", resources={})
             cluster.add_node(node_0)
             node_0.deploy_zookeeper()
             node_0.wait_for_zookeeper()
@@ -59,7 +57,7 @@ class SimulationLifecycle:
 
             # Create the remaining 9 nodes
             for i in range(1, 10):
-                node = Node(node_id=f"node-{i}", resources={}, network=network)
+                node = SimulatedNode(node_id=f"node-{i}", resources={})
                 cluster.add_node(node)
 
             # Initialize monitoring component
@@ -70,13 +68,13 @@ class SimulationLifecycle:
             # Create the Flask app with the simulation context
             self.app = create_app(self)
 
-            # Run the Flask app in a separate thread
-            def run_app():
-                self.app.run(host='0.0.0.0', port=5002)
+            # # Run the Flask app in a separate thread
+            # def run_app():
+            #     self.app.run(host='0.0.0.0', port=5002)
 
-            self.monitoring_thread = threading.Thread(target=run_app)
-            self.monitoring_thread.start()
-            print("Monitoring web interface started on port 5002.")
+            # self.monitoring_thread = threading.Thread(target=run_app)
+            # self.monitoring_thread.start()
+            # print("Monitoring web interface started on port 5002.")
 
         except Exception:
             self.state.fail()

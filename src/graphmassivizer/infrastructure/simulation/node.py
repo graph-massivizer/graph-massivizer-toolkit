@@ -1,40 +1,26 @@
 import json
-import threading
+from threading import Thread
 import time
 import uuid
 import docker
 import socket
 from docker.models.containers import Container
 from kazoo.client import KazooClient
-from statemachine import Event, State, StateMachine
 
 from typing import Any, Optional
 
 from graphmassivizer.core.descriptors.descriptors import MachineDescriptor
+from graphmassivizer.infrastructure.components import Node, NodeStatus
 
 
-class NodeStatus(StateMachine):
-    CREATED = State(initial=True)
-    RUNNING = State()
-    IDLE = State()
-    OFFLINE = State(final=True)
-
-    run = Event(CREATED.to(RUNNING) | IDLE.to(RUNNING))
-    idle = Event(RUNNING.to(IDLE))
-    offline = Event(IDLE.to(OFFLINE) | RUNNING.to(
-        OFFLINE) | CREATED.to(OFFLINE))
-
-
-class Node(threading.Thread):
-    def __init__(self, node_id: str, resources, network) -> None:
-        """network must be of type graphmassivizer.simulation.network import Network 
+class SimulatedNode(Node, Thread):
+    def __init__(self, node_id: str, resources) -> None:
+        """network must be of type graphmassivizer.infrastructure.simulation.network import Network 
         but we have a cyclic import left
         """
-        super().__init__()
-        self.node_id: str = node_id
+        super().__init__(node_id=node_id)
+        Thread.__init__(self)
         self.resources = resources
-        self.network = network
-        self.status: NodeStatus = NodeStatus()
         self.docker_client = docker.from_env()
         self.containers: list[Container] = []
         self.zookeeper_host = 'localhost:2181'
@@ -165,11 +151,8 @@ class Node(threading.Thread):
             self.containers.clear()
             self.zk.stop()
 
-    def report_status(self) -> dict[str, Any]:
-        # Existing method
+    def _report_status(self) -> dict[str, Any]:
         status: dict[str, Any] = {
-            'node_id': self.node_id,
-            'status': self.status.current_state.id,
             'containers': [c.name for c in self.containers]
         }
         # Optionally, you can add more detailed status information

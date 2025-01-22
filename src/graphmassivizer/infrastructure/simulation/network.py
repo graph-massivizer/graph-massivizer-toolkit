@@ -3,8 +3,8 @@
 # import docker
 # import time
 
-# from graphmassivizer.simulation.cluster import Cluster
-# from graphmassivizer.simulation.node import Node
+# from graphmassivizer.infrastructure.simulation.cluster import Cluster
+# from graphmassivizer.infrastructure.simulation.node import Node
 
 # logger = logging.getLogger()
 
