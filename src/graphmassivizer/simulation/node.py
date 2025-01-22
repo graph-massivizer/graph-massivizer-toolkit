@@ -10,6 +10,8 @@ from statemachine import Event, State, StateMachine
 
 from typing import Any, Optional
 
+from graphmassivizer.core.descriptors.descriptors import MachineDescriptor
+
 
 class NodeStatus(StateMachine):
     CREATED = State(initial=True)
@@ -256,8 +258,9 @@ class Node(threading.Thread):
             self.zk.create(node_path, data)
         print(f"TaskManager {machine_info['uid']} registered with ZooKeeper.")
 
-    def collect_machine_info(self) -> dict[str, Any]:
+    def collect_machine_info(self) -> MachineDescriptor:
         # Replace with actual methods to collect machine info
+        raise NotImplementedError()
         machine_info: dict[str, Any] = {
             'uuid': str(uuid.uuid4()),
             'address': socket.gethostbyname(socket.gethostname()),
