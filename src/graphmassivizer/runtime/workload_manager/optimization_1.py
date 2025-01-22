@@ -3,7 +3,7 @@
 #BGO selection 
 class Optimizer_1:
     
-    def optimize(DAG):
+    def optimize(DAG) -> Optimizer_1:
         
         # TODO Ana, Duncan, Dante
         # THIS CAN BE STATIC 

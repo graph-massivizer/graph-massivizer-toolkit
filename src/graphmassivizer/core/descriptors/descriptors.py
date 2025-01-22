@@ -14,7 +14,7 @@ class MachineDescriptor:
 @dataclass
 class Machine:
     ID: int
-    # maybe MachineDescriptor here?
+    descriptor: MachineDescriptor
 
 
 @dataclass

@@ -7,7 +7,7 @@
 
 class Parallelizer:
     
-    def parallelize(DAG):
+    def parallelize(DAG) -> Parallelizer:
     
         # TODO Ana, Duncan, Dante
         # THIS CAN BE STATIC 

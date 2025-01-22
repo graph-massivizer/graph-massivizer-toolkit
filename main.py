@@ -9,11 +9,11 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)
 
-    simulation = Simulation()  # Create the simulation lifecycle manager
+    simulation = Simulation(10)
     try:
         simulation.start()
         simulation.complete()
-    except KeyboardInterrupt:
+    except Exception:
         simulation.fail()
 
 

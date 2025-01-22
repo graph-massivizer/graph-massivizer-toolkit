@@ -1,12 +1,17 @@
+import logging
 import socket
 from typing import Any
-from graphmassivizer.core.descriptors.descriptors import MachineDescriptor
-from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import SimulatedNode, WorkflowManagerNode, ZookeeperNode
-# from graphmassivizer.monitoring.server import create_app
-import logging
 
-from statemachine import Event, StateMachine, State
+from exceptiongroup import catch
+from statemachine import Event, State, StateMachine
+
+from graphmassivizer.core.descriptors.descriptors import (Machine,
+                                                          MachineDescriptor)
+from graphmassivizer.infrastructure.simulation.cluster import Cluster
+from graphmassivizer.infrastructure.simulation.node import (
+    TaskManagerNode, WorkflowManagerNode, ZookeeperNode)
+
+# from graphmassivizer.monitoring.server import create_app
 
 
 class LifecycleState(StateMachine):
@@ -39,97 +44,99 @@ class Simulation:
         self.logger.setLevel(logging.INFO)
         self.state: LifecycleState = LifecycleState()
         self.state.add_listener(LoggingListener(self.logger))  # type: ignore
+        self.__machine_descriptor = MachineDescriptor(
+            address="",
+            host_name=socket.gethostname(),
+            hardware="simulated",
+            cpu_cores=1,
+            ram_size=256,
+            hdd=10
+        )
+
+        self.__network_name = 'graphmassivizer_simulation_net'
 
     def start(self) -> None:
 
         # We attempt to change the state ahead of doing the action, it will trigger an exception if this is not possible now.
         # TODO consider using the state transition as a trigger to execute the logic.
         self.state.initialize()
-        try:
-            # create zookeeper
-            zookeeper = ZookeeperNode(node_id="node-zookeeper", machine_info=MachineDescriptor(
-                address="",
-                host_name=socket.gethostname(),
-                hardware="simulated",
-                cpu_cores=1,
-                ram_size=256,
-                hdd=10
-            ))
-            zookeeper.deploy_zookeeper()
-            zookeeper.wait_for_zookeeper()
-            self.logger.info("Zookeeper started")
 
-            workflow_manager = WorkflowManagerNode(node_id="node-workflowmanager", machine_info=MachineDescriptor(
-                address="",
-                host_name=socket.gethostname(),
-                hardware="simulated",
-                cpu_cores=1,
-                ram_size=256,
-                hdd=10
-            ))
-            workflow_manager.deploy_workflow_manager()
-            self.logger.info("workflow manager started")
+        try:
+
+            # create zookeeper
+            zookeeper = ZookeeperNode(
+                "zookeeper", Machine(0, self.__machine_descriptor), self.__network_name)
+
+            workflow_manager = WorkflowManagerNode(
+                "node-workflowmanager", Machine(1, self.__machine_descriptor), self.__network_name)
 
             # adding the task managers
-
+            task_managers: list[TaskManagerNode] = []
             for i in range(self.number_of_task_nodes):
-                tm =
+                id = f"tm-node{i}"
+                tm = TaskManagerNode(
+                    id, Machine(i + 2, self.__machine_descriptor), self.__network_name)
+                task_managers.append(tm)
+            self.cluster = Cluster(
+                zookeeper, workflow_manager, task_managers, self.__network_name)
 
         except Exception as e:
             self.state.fail()
             raise e
 
-        try:
-
-            print("Creating cluster with 10 nodes...")
-
-            self.cluster = Cluster()
-
-            # Start ZooKeeper client on node-0
-            node_0.start_zk_client()
-
-            MachineDescriptor(
-                address="",
-                host_name=socket.gethostname(),
-                hardware="simulated",
-                cpu_cores=1,
-                ram_size=256,
-                hdd=10
-            )
-
-            # Create the remaining 9 nodes
-            for i in range(1, 10):
-                node = SimulatedNode(node_id=f"node-{i}", resources={})
-                self.cluster.add_node(node)
-
-        except Exception:
-            self.state.fail()
-            raise
-
-        # Now that things are setup, start running
         self.state.run()
         try:
-            print("Starting workload manager on node-1...")
-            cluster = self.cluster  # Use the stored cluster reference
-            self.cluster.nodes["node-1"].deploy_workload_manager()
+            self.cluster.ensure_network()
 
-            print("Starting task managers on remaining nodes...")
-            for node_id, node in cluster.nodes.items():
-                # Skip node-0 (ZooKeeper) and node-1 (Workload Manager)
-                if node_id not in ["node-0", "node-1"]:
-                    node.deploy_task_manager()
+            self.logger.info("deploying all containers")
+            zookeeper.deploy()
+            self.logger.info("Zookeeper deployed")
+            zookeeper.wait_for_zookeeper(10)
+            self.logger.info("Zookeeper ready")
 
-            print("Simulation is running...")
+            workflow_manager.deploy()
+            self.logger.info("workflow manager started")
+
+            for tm in task_managers:
+                tm.deploy()
+                self.logger.info(f"Task Manager started on {tm.node_id}")
 
         except Exception:
-            self.state.fail()
+            self.fail()
             raise
 
+        self.logger.info("Full simulation is running...")
+
     def fail(self) -> None:
-        self.state.fail()
+        self._try_complete_nodes()
+        self.cluster.remove_network()
+        if self.state.current_state != LifecycleState.FAILED:
+            self.state.fail()
 
     def complete(self) -> None:
-        self.state.complete()
+        self._try_complete_nodes()
+        self.cluster.remove_network()
+        if (self.state.current_state != LifecycleState.FAILED):
+            self.state.complete()
+
+    def _try_complete_nodes(self):
+        try:
+            self.cluster.zookeeper.shutdown()
+        except Exception as e:
+            self.logger.info("Closing the zookeeper failed. " + str(e))
+            self.state.fail()
+        try:
+            self.cluster.workload_manager.shutdown()
+        except Exception as e:
+            self.logger.info("Closing the workload manager failed. " + str(e))
+            self.state.fail()
+        for tm in self.cluster.task_managers:
+            try:
+                tm.shutdown()
+            except Exception as e:
+                self.logger.info(
+                    f"Closing the task manager {tm.node_id} failed. " + str(e))
+                self.state.fail()
 
     def get_status(self) -> tuple[str, list[dict[str, Any]]]:
         # Collect status from the cluster and nodes
@@ -137,8 +144,9 @@ class Simulation:
             self.state.current_state.id,
             []
         )
-        if self.cluster:
-            for node in self.cluster.nodes.values():
-                node_status: dict[str, Any] = node.report_status()
+        if self.state.current_state in {LifecycleState.CREATED, LifecycleState.RUNNING}:
+
+            for tm in self.cluster.task_managers:
+                node_status: dict[str, Any] = tm.report_status()
                 status[1].append(node_status)
         return status
