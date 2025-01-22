@@ -32,8 +32,8 @@ class LoggingListener:
     def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
 
-    def on_transition(self, event: Event, state: State) -> None:
-        self.logger.info(f"With {event} to {state}")
+    def after_transition(self, event: Event, state: State) -> None:
+        self.logger.info(f"With event {event} to state {state}")
 
 
 class Simulation:

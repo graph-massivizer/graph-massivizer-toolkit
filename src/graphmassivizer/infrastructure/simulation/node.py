@@ -1,13 +1,12 @@
+import logging
 import math
 import time
 from abc import abstractmethod
 from threading import Thread
 from typing import Any, Optional
-from venv import logger
 
 import docker
 from docker.models.containers import Container
-from docker.models.networks import Network
 
 from graphmassivizer.core.descriptors.descriptors import Machine
 from graphmassivizer.infrastructure.components import Node, NodeStatus
@@ -136,7 +135,6 @@ class ZookeeperNode(SimulatedNode):
         return self.__zookeeper_environment
 
     def _is_zk_running(self) -> bool:
-
         command = f'sh -c "echo ruok | nc {self.__container_name} 2181"'
         try:
             output = self.docker_client.containers.run(
@@ -154,17 +152,29 @@ class ZookeeperNode(SimulatedNode):
 
     def wait_for_zookeeper(self, timeout: int) -> None:
         """Wait at most timeout seconds for zookeeper to come online"""
-        polling_interval_s = 0.200
-        polling_steps = math.ceil(timeout / polling_interval_s)
-        for i in range(polling_steps):
-            if self._is_zk_running():
-                return
-            else:
-                logger.info(
-                    f"Waiting {i*polling_interval_s} seconds for zookeeper to become available")
-                time.sleep(polling_interval_s)
-        raise Exception(
-            f"Zookeeper is not available after trying for {timeout} seconds.")
+
+        polling_shortest_s = 0.010
+        current_waiting_time = polling_shortest_s
+        total_waiting_time = 0
+        while True:
+            try:
+                if self._is_zk_running():
+                    return
+            except Exception as e:
+                logging.getLogger(__name__).debug(
+                    "Got an exception while checking zookeeper availability, this happens usually when the zookeeper is not yet running. " + str(e))
+            logging.getLogger(__name__).info(
+                f"Zookeeper not yet available. Waiting {current_waiting_time} seconds for it to become available")
+            time.sleep(current_waiting_time)
+            total_waiting_time += current_waiting_time
+            if math.isclose(total_waiting_time, timeout):
+                raise Exception(
+                    f"Zookeeper is not available after trying for {timeout} seconds.")
+
+            current_waiting_time = current_waiting_time * 2
+
+            if total_waiting_time + current_waiting_time > timeout:
+                current_waiting_time = timeout - total_waiting_time
 
 
 class WorkflowManagerNode(SimulatedNode):

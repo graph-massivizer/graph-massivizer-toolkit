@@ -7,7 +7,9 @@ def main():
 
     import logging
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
+    logging.getLogger("docker.utils.config").setLevel(logging.ERROR)
 
     simulation = Simulation(10)
     try:
@@ -15,6 +17,7 @@ def main():
         simulation.complete()
     except Exception:
         simulation.fail()
+        raise
 
 
 if __name__ == '__main__':
