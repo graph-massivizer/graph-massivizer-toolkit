@@ -1,6 +1,8 @@
+import socket
 from typing import Any
+from graphmassivizer.core.descriptors.descriptors import MachineDescriptor
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import SimulatedNode
+from graphmassivizer.infrastructure.simulation.node import SimulatedNode, WorkflowManagerNode, ZookeeperNode
 # from graphmassivizer.monitoring.server import create_app
 import logging
 
@@ -29,9 +31,10 @@ class LoggingListener:
         self.logger.info(f"With {event} to {state}")
 
 
-class SimulationLifecycle:
+class Simulation:
 
-    def __init__(self) -> None:
+    def __init__(self, number_of_task_nodes: int) -> None:
+        self.number_of_task_nodes = number_of_task_nodes
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.INFO)
         self.state: LifecycleState = LifecycleState()
@@ -40,41 +43,64 @@ class SimulationLifecycle:
     def start(self) -> None:
 
         # We attempt to change the state ahead of doing the action, it will trigger an exception if this is not possible now.
+        # TODO consider using the state transition as a trigger to execute the logic.
         self.state.initialize()
         try:
-            print("Creating cluster with 10 nodes...")
-            cluster = Cluster()
-            self.cluster = cluster
+            # create zookeeper
+            zookeeper = ZookeeperNode(node_id="node-zookeeper", machine_info=MachineDescriptor(
+                address="",
+                host_name=socket.gethostname(),
+                hardware="simulated",
+                cpu_cores=1,
+                ram_size=256,
+                hdd=10
+            ))
+            zookeeper.deploy_zookeeper()
+            zookeeper.wait_for_zookeeper()
+            self.logger.info("Zookeeper started")
 
-            # First, create node-0 and deploy ZooKeeper
-            node_0 = SimulatedNode(node_id="node-0", resources={})
-            cluster.add_node(node_0)
-            node_0.deploy_zookeeper()
-            node_0.wait_for_zookeeper()
+            workflow_manager = WorkflowManagerNode(node_id="node-workflowmanager", machine_info=MachineDescriptor(
+                address="",
+                host_name=socket.gethostname(),
+                hardware="simulated",
+                cpu_cores=1,
+                ram_size=256,
+                hdd=10
+            ))
+            workflow_manager.deploy_workflow_manager()
+            self.logger.info("workflow manager started")
+
+            # adding the task managers
+
+            for i in range(self.number_of_task_nodes):
+                tm =
+
+        except Exception as e:
+            self.state.fail()
+            raise e
+
+        try:
+
+            print("Creating cluster with 10 nodes...")
+
+            self.cluster = Cluster()
 
             # Start ZooKeeper client on node-0
             node_0.start_zk_client()
 
+            MachineDescriptor(
+                address="",
+                host_name=socket.gethostname(),
+                hardware="simulated",
+                cpu_cores=1,
+                ram_size=256,
+                hdd=10
+            )
+
             # Create the remaining 9 nodes
             for i in range(1, 10):
                 node = SimulatedNode(node_id=f"node-{i}", resources={})
-                cluster.add_node(node)
-
-            # Initialize monitoring component
-            # self.initialize_monitoring()
-
-                # def initialize_monitoring(self) -> None:
-
-            # Create the Flask app with the simulation context
-            self.app = create_app(self)
-
-            # # Run the Flask app in a separate thread
-            # def run_app():
-            #     self.app.run(host='0.0.0.0', port=5002)
-
-            # self.monitoring_thread = threading.Thread(target=run_app)
-            # self.monitoring_thread.start()
-            # print("Monitoring web interface started on port 5002.")
+                self.cluster.add_node(node)
 
         except Exception:
             self.state.fail()
@@ -85,7 +111,7 @@ class SimulationLifecycle:
         try:
             print("Starting workload manager on node-1...")
             cluster = self.cluster  # Use the stored cluster reference
-            cluster.nodes["node-1"].deploy_workload_manager()
+            self.cluster.nodes["node-1"].deploy_workload_manager()
 
             print("Starting task managers on remaining nodes...")
             for node_id, node in cluster.nodes.items():
