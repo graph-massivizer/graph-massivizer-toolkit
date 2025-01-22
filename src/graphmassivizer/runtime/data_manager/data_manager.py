@@ -27,3 +27,9 @@ class DataManager(ABC):
     @abstractmethod
     def delete(self):
         pass
+
+    # An optional method for execution an arbitrary query
+    def query(self):
+        raise NotImplementedError(
+            f"The class {type(self).__name__} (subclass of DataManager) has not implemented the query() method. Implement this method or use any of create(), read(), update() or write() instead."
+        )
