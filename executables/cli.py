@@ -19,14 +19,9 @@ def simulate_environment():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
     logging.getLogger("docker.utils.config").setLevel(logging.ERROR)
-
-    simulation = Simulation(10)
-    try:
-        simulation.start()
-        simulation.complete()
-    except Exception:
-        simulation.fail()
-        raise
+    with Simulation(10) as simulation:
+        # simulation.wait_for_completion()
+        print("Simulation has started, now something useful should happen.")
 
 
 @main.group()

@@ -1,8 +1,8 @@
 import logging
 import socket
-from typing import Any
+from types import TracebackType
+from typing import Any, Optional, Type
 
-from exceptiongroup import catch
 from statemachine import Event, State, StateMachine
 
 from graphmassivizer.core.descriptors.descriptors import (Machine,
@@ -54,6 +54,30 @@ class Simulation:
         )
 
         self.__network_name = 'graphmassivizer_simulation_net'
+
+    def __enter__(self) -> "Simulation":
+        self.start()
+        return self
+
+    def __exit__(self,
+                 exctype: Optional[Type[BaseException]],
+                 excinst: Optional[BaseException],
+                 exctb: Optional[TracebackType]
+                 ) -> bool:
+
+        if self.state.current_state not in {LifecycleState.COMPLETED, LifecycleState.FAILED}:
+            try:
+                self.complete()
+            except Exception as e:
+                if excinst:
+                    raise Exception(
+                        "completion failed, but there was an earlier exception that might have caused this.", [e, excinst])
+        if excinst:
+            print("Closing the server, because an Exception was raised")
+            # by returning False, we indicate that the exception was not handled.
+            return False
+        print("Server closed")
+        return True
 
     def start(self) -> None:
 
@@ -114,25 +138,33 @@ class Simulation:
             self.state.fail()
 
     def complete(self) -> None:
+        self.logger.info("Completing the simulation")
         self._try_complete_nodes()
         self.cluster.remove_network()
         if (self.state.current_state != LifecycleState.FAILED):
             self.state.complete()
 
+    def wait_for_completion(self) -> None:
+        raise NotImplementedError()
+
     def _try_complete_nodes(self):
         try:
             self.cluster.zookeeper.shutdown()
+            self.logger.info("Zookeeper stopped")
         except Exception as e:
             self.logger.info("Closing the zookeeper failed. " + str(e))
             self.state.fail()
         try:
             self.cluster.workload_manager.shutdown()
+            self.logger.info("Workload manager stopped")
         except Exception as e:
             self.logger.info("Closing the workload manager failed. " + str(e))
             self.state.fail()
         for tm in self.cluster.task_managers:
             try:
                 tm.shutdown()
+                self.logger.info(
+                    f"Task manager {tm.node_id} has been shut down.")
             except Exception as e:
                 self.logger.info(
                     f"Closing the task manager {tm.node_id} failed. " + str(e))

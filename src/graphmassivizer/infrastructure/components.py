@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Any, final
 
 from statemachine import Event, State, StateMachine
-
-from typing import Any, final
 
 from graphmassivizer.core.descriptors.descriptors import MachineDescriptor
 
