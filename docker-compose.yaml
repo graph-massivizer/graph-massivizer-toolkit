@@ -1,0 +1,35 @@
+version: '2'
+services:
+    zoo1:
+        image: manios/zookeeper:3.4.5
+        restart: always
+        ports:
+            - 2181:2181
+            - 2888:2888
+            - 3888:3888
+        environment:
+            ZOO_MY_ID: 1
+            ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2889:3889 server.3=zoo3:2890:3890
+
+    zoo2:
+        image: manios/zookeeper:3.4.5
+        restart: always
+        ports:
+            - 2182:2181
+            - 2889:2889
+            - 3889:3889
+        environment:
+            ZOO_MY_ID: 2
+            ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2889:3889 server.3=zoo3:2890:3890
+
+    zoo3:
+        image: manios/zookeeper:3.4.5
+        restart: always
+        ports:
+            - 2183:2181
+            - 2890:2890
+            - 3890:3890
+        environment:
+            ZOO_MY_ID: 3
+            ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2889:3889 server.3=zoo3:2890:3890
+
