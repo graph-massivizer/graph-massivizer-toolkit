@@ -29,3 +29,19 @@ To be able to run tests, also install test dependencies
 ```bash
 pip install -e '.[test]'
 ```
+
+
+# executing
+
+The main executable is in /exectuables/cli.py, it can be executed as
+
+```bash
+python executables/cli.py
+```
+
+It has options to run the graph massivizer in a local simulation and to start workflow and task managers.
+Run 
+```bash
+python executables/cli.py --help 
+```
+for more information.

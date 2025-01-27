@@ -7,7 +7,7 @@
 
 class Parallelizer:
     
-    def parallelize(DAG):
+    def parallelize(DAG) -> Parallelizer:
     
         for node in DAG.nodes:
         	DAG.nodes[node]['data_parallel']=True

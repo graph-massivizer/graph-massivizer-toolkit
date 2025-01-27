@@ -2,11 +2,16 @@
 import random
 
 class Optimizer_2:
+<<<<<<< HEAD
 	def get_greenified_plans_for_bgos(G):
 		for node in G.nodes:
 			hardware_ids = sorted(list(G.nodes[node]['optimized'].keys()))
 		
 	def optimize(DAG):
+=======
+    
+    def optimize(DAG) -> Optimizer_2:
+>>>>>>> origin/main
     
     # TODO Ana, Duncan, Dante
        # THIS CAN BE STATIC 
