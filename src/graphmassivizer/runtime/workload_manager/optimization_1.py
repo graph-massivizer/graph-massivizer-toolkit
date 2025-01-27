@@ -5,7 +5,6 @@ import random
 import uuid
 
 class Optimizer_1:
-<<<<<<< HEAD
 
 	def get_hardware_descriptors():
 		return [{
@@ -38,10 +37,6 @@ class Optimizer_1:
 		return {'cost_time': random.randint(86645, 6096529), 'cost_energy': random.randint(21661, 2580000), 'algorithm_id': str(uuid.uuid4())}
 		
 	def optimize(DAG):
-=======
-    
-    def optimize(DAG) -> Optimizer_1:
->>>>>>> origin/main
         
 		available_infrastructure = Optimizer_1.get_hardware_descriptors()
 
