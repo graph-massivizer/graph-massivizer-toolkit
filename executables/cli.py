@@ -11,7 +11,14 @@ def run_simulation():
     logging.getLogger("docker.utils.config").setLevel(logging.ERROR)
     with Simulation(10) as simulation:
         # simulation.wait_for_completion()
+        
+        
+        
+        
+        
+        
         print("Simulation has started, now something useful should happen.")
+        
 
 def start_task_manager():
     task_manager_main.main()

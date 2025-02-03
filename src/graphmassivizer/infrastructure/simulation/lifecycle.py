@@ -112,7 +112,7 @@ class Simulation:
             self.logger.info("Zookeeper ready")
 
             workflow_manager.deploy()
-            self.logger.info("workflow manager started")
+            self.logger.info("Workflow Manager started")
 
             for tm in task_managers:
                 tm.deploy()
