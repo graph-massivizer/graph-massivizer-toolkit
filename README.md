@@ -33,6 +33,8 @@ pip install -e '.[test]'
 
 # executing
 
+Please make sure Docker runs on your system.
+
 The main executable is in /exectuables/cli.py, it can be executed as
 
 ```bash
@@ -45,3 +47,9 @@ Run
 python executables/cli.py --help 
 ```
 for more information.
+
+For interactive mode run 
+Run 
+```bash
+python executables/cli.py interactive
+```

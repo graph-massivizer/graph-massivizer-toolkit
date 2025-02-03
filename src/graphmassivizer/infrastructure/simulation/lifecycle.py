@@ -2,16 +2,10 @@ import logging
 import socket
 from types import TracebackType
 from typing import Any, Optional, Type
-
 from statemachine import Event, State, StateMachine
-
-from graphmassivizer.core.descriptors.descriptors import (Machine,
-                                                          MachineDescriptor)
+from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import (
-    TaskManagerNode, WorkflowManagerNode, ZookeeperNode)
-
-# from graphmassivizer.monitoring.server import create_app
+from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode)
 
 
 class LifecycleState(StateMachine):
@@ -52,7 +46,6 @@ class Simulation:
             ram_size=256,
             hdd=10
         )
-
         self.__network_name = 'graphmassivizer_simulation_net'
 
     def __enter__(self) -> "Simulation":
