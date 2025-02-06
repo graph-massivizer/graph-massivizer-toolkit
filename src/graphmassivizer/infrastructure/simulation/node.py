@@ -42,6 +42,7 @@ class SimulatedNode(Node, Thread):
         return {}
 
     def deploy(self) -> None:
+        
         try:
             self.docker_container = self.docker_client.containers.run(
                 self.__image_name + ":" + self.__tag,
@@ -192,6 +193,7 @@ class WorkflowManagerNode(SimulatedNode):
                          )
 
         self.__workflow_manager_environment = {
+            'ROLE': 'workflow_manager',
             'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
             'NODE_ID': self.node_id
         }
@@ -215,6 +217,7 @@ class TaskManagerNode(SimulatedNode):
                          )
 
         self.__task_manager_environment = {
+            'ROLE': 'task_manager',
             'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
             'NODE_ID': self.node_id
         }
