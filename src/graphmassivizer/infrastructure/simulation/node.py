@@ -107,7 +107,7 @@ class ZookeeperNode(SimulatedNode):
 
     def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str) -> None:
 
-        self.__container_name = f"zookeeper_{node_id}"
+        self.__container_name = "zookeeper"
         self.__image_name = "zookeeper"
         self.__tag = "3.7"  # Or whatever version you prefer
         self.__host_port = 2181
