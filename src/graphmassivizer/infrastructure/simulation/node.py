@@ -182,10 +182,8 @@ class WorkflowManagerNode(SimulatedNode):
 
     def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str) -> None:
         self.__container_name = f"workflow_manager_{node_id}"
-
-        self.__image_name = "workflow_manager_image"
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR WFM")
-        self.__image_name = "alpine"
+        self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
         super().__init__(node_id, machine_info, docker_network_name,
                          self.__container_name, self.__image_name, self.__tag,
@@ -205,10 +203,8 @@ class WorkflowManagerNode(SimulatedNode):
 class TaskManagerNode(SimulatedNode):
     def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str) -> None:
         self.__container_name = f"task_manager_{node_id}"
-        self.__image_name = "task_manager_image"
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR TM")
-        self.__image_name = "alpine"
-
+        self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
 
         super().__init__(node_id, machine_info, docker_network_name,
