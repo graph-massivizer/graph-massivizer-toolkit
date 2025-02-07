@@ -13,10 +13,6 @@ class MachineDescriptor:
     
     @staticmethod
     def parse_from_env(prefix: str) -> "MachineDescriptor":
-        """
-        Reads environment variables with the given prefix (e.g. 'TM_' or 'WM_')
-        and returns a MachineDescriptor.
-        """
         addr = os.environ.get(prefix + "ADDR", "unknown")
         hostname = os.environ.get(prefix + "HOSTNAME", "unknown")
         hardware = os.environ.get(prefix + "HARDWARE", "unknown")
@@ -40,7 +36,29 @@ class MachineDescriptor:
 class Machine:
     ID: int
     descriptor: MachineDescriptor
-
+    
+    def to_dict(self) -> dict:
+        return {
+            "ID": self.ID,
+            "descriptor": {
+                "address": self.descriptor.address,
+                "host_name": self.descriptor.host_name,
+                "hardware": self.descriptor.hardware,
+                "cpu_cores": self.descriptor.cpu_cores,
+                "ram_size": self.descriptor.ram_size,
+                "hdd": self.descriptor.hdd
+            }
+        }
+        
+    def to_utf8(self) -> bytes:
+        return str(self.to_dict()).encode('utf-8')
+    
+    @staticmethod
+    def parse_from_env(prefix: str) -> "Machine":
+        return Machine(
+            ID=int(os.environ.get(prefix + "NODE_ID", "-1")),
+            descriptor=MachineDescriptor.parse_from_env(prefix)
+        )
 
 @dataclass
 class BGODescriptor:

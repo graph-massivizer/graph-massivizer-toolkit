@@ -231,7 +231,7 @@ class WorkflowManagerNode(SimulatedNode):
                          )
         
         # Use the static helper function
-        self.__workflow_manager_environment = SimulatedNode.create_environment(
+        self.__workflow_manager_environment = SimulatedNode.create_runtime_environment(
             role="workflow_manager",
             node_id=node_id,
             machine_info=machine_info,
@@ -258,7 +258,7 @@ class TaskManagerNode(SimulatedNode):
                          {}
                          )
 
-        self.__task_manager_environment = SimulatedNode.create_environment(
+        self.__task_manager_environment = SimulatedNode.create_runtime_environment(
             role="task_manager",
             node_id=node_id,
             machine_info=machine_info,
