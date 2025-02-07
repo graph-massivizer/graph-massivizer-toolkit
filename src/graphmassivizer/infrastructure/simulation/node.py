@@ -101,6 +101,41 @@ class SimulatedNode(Node, Thread):
 
     def receive_message(self, message: str) -> None:
         raise NotImplementedError()
+    
+    @staticmethod
+    def create_runtime_environment(
+        role: str,
+        node_id: str,
+        machine_info: Machine,
+        zookeeper_host: str = "zookeeper"
+    ) -> dict[str, str]:
+        """
+        Returns environment variables for either a Task Manager or a Workflow Manager,
+        depending on `role` ('task_manager' or 'workflow_manager').
+        """
+        # Common to both roles:
+        env = {
+            "ROLE": role,
+            "ZOOKEEPER_HOST": zookeeper_host,
+            "NODE_ID": node_id,
+        }
+
+        # If you need separate fields for Task vs. Workflow,
+        # handle them conditionally:
+        if role == "task_manager":
+            env["TM_ADDR"] = machine_info.descriptor.address
+            env["TM_HOSTNAME"] = machine_info.descriptor.host_name
+            env["TM_CPU_CORES"] = str(machine_info.descriptor.cpu_cores)
+            env["TM_RAM_SIZE"] = str(machine_info.descriptor.ram_size)
+            env["TM_HDD_SIZE"] = str(machine_info.descriptor.hdd)
+        elif role == "workflow_manager":
+            env["WM_ADDR"] = machine_info.descriptor.address
+            env["WM_HOSTNAME"] = machine_info.descriptor.host_name
+            env["WM_CPU_CORES"] = str(machine_info.descriptor.cpu_cores)
+            env["WM_RAM_SIZE"] = str(machine_info.descriptor.ram_size)
+            env["WM_HDD_SIZE"] = str(machine_info.descriptor.hdd)
+
+        return env
 
 
 class ZookeeperNode(SimulatedNode):
@@ -185,16 +220,23 @@ class WorkflowManagerNode(SimulatedNode):
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR WFM")
         self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
-        super().__init__(node_id, machine_info, docker_network_name,
-                         self.__container_name, self.__image_name, self.__tag,
+        
+        super().__init__(node_id, 
+                         machine_info, 
+                         docker_network_name,
+                         self.__container_name, 
+                         self.__image_name, 
+                         self.__tag,
                          {}
                          )
-
-        self.__workflow_manager_environment = {
-            'ROLE': 'workflow_manager',
-            'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
-            'NODE_ID': self.node_id
-        }
+        
+        # Use the static helper function
+        self.__workflow_manager_environment = SimulatedNode.create_environment(
+            role="workflow_manager",
+            node_id=node_id,
+            machine_info=machine_info,
+            zookeeper_host="zookeeper"
+        )
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__workflow_manager_environment
@@ -207,16 +249,21 @@ class TaskManagerNode(SimulatedNode):
         self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
 
-        super().__init__(node_id, machine_info, docker_network_name,
-                         self.__container_name, self.__image_name, self.__tag,
+        super().__init__(node_id, 
+                         machine_info, 
+                         docker_network_name,
+                         self.__container_name, 
+                         self.__image_name, 
+                         self.__tag,
                          {}
                          )
 
-        self.__task_manager_environment = {
-            'ROLE': 'task_manager',
-            'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
-            'NODE_ID': self.node_id
-        }
+        self.__task_manager_environment = SimulatedNode.create_environment(
+            role="task_manager",
+            node_id=node_id,
+            machine_info=machine_info,
+            zookeeper_host="zookeeper"
+        )
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__task_manager_environment
