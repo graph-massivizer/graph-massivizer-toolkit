@@ -267,13 +267,4 @@ class TaskManagerNode(SimulatedNode):
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__task_manager_environment
-
-    # def register_task_manager(self) -> None:
-    #     node_path = f'/taskmanagers/{self.machine_info.ID}'
-    #     data = json.dumps(self.machine_info).encode('utf-8')
-    #     assert self.zk
-    #     if self.zk.exists(node_path):
-    #         self.zk.set(node_path, data)
-    #     else:
-    #         self.zk.create(node_path, data)
-    #     print(f"TaskManager {machine_info['uid']} registered with ZooKeeper.")
+    
