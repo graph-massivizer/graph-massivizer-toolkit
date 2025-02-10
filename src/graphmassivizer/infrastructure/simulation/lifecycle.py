@@ -81,18 +81,14 @@ class Simulation:
         try:
 
             # create zookeeper
-            zookeeper = ZookeeperNode(
-                "zookeeper", Machine(0, self.__machine_descriptor), self.__network_name)
+            zookeeper = ZookeeperNode(Machine(0, self.__machine_descriptor), self.__network_name)
 
-            workflow_manager = WorkflowManagerNode(
-                "node-workflowmanager", Machine(1, self.__machine_descriptor), self.__network_name)
+            workflow_manager = WorkflowManagerNode(Machine(1, self.__machine_descriptor), self.__network_name)
 
             # adding the task managers
             task_managers: list[TaskManagerNode] = []
             for i in range(self.number_of_task_nodes):
-                id = f"tm-node{i}"
-                tm = TaskManagerNode(
-                    id, Machine(i + 2, self.__machine_descriptor), self.__network_name)
+                tm = TaskManagerNode(Machine(i + 2, self.__machine_descriptor), self.__network_name)
                 task_managers.append(tm)
             self.cluster = Cluster(
                 zookeeper, workflow_manager, task_managers, self.__network_name)

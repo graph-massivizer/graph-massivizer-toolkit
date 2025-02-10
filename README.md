@@ -30,6 +30,18 @@ To be able to run tests, also install test dependencies
 pip install -e '.[test]'
 ```
 
+Furthermore, you have to build the runtime-container. Therfore, go to the projects root and run
+
+```bash
+docker build -t gm/runtime:latest
+```
+
+You can try if the workload_manager / task_manager runs with 
+
+```bash
+docker run --rm -e ROLE=task_manager gm/runtime:latest
+docker run --rm -e ROLE=workflow_manager gm/runtime:latest
+```
 
 # executing
 

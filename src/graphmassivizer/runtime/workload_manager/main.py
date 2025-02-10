@@ -5,37 +5,65 @@
 # - Monitors cluster utilization and resource usage.
 
 import os
+import json
 import logging
+import logging.handlers
 from kazoo.client import KazooClient
 from graphmassivizer.runtime.workload_manager.infrastructure_manager import InfrastructureManager
-from graphmassivizer.core.descriptors.descriptor_factory import create_machine_descriptor
-# Import any necessary configuration classes or functions
+from graphmassivizer.core.descriptors.descriptors import Machine
+
+class WorkloadManager:
+
+    def __init__(self, zookeeper_host, machine) -> None:
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.zookeeper_host = zookeeper_host
+        self.machine = machine
+        self.zk = KazooClient(hosts=self.zookeeper_host)
+        self.zk.start()
+        self.register_self()
+        
+    def register_self(self) -> None: 
+        node_path = f'/workloadmanagers/{self.machine.ID}'
+        mashine_utf8 = self.machine.to_utf8() 
+        if self.zk.exists(node_path):
+            self.zk.set(node_path, mashine_utf8)
+        else:
+            self.zk.create(node_path, mashine_utf8, makepath=True)
+        self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
+
 
 logging.basicConfig(level=logging.INFO)
 
-
 def main() -> None:
     try:
-        # Initialize logging
+        # Initialize logging using our helper
         logger = logging.getLogger('WorkloadManager')
-        logger.info("Starting Workload Manager...")
+        zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'zookeeper:2181')
+        machine = Machine.parse_from_env(prefix="WM_")
+        workload_manager = WorkloadManager(zookeeper_host, machine)
+        logger.info("I am Workload Manager " + str(machine.ID))
+        
+        
+        
+        
+        logger.info("Starting Workload Manager... YYYYYY")
 
         # Get ZooKeeper host from environment variables
-        zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'zookeeper:2181')
-
-        # Initialize configuration
-        config = {}  # Replace with actual configuration if available
+        
 
         # Create the workload manager's machine descriptor
-        wm_machine_descriptor = create_machine_descriptor(config)
+        
+        
+        
+        # wm_machine_descriptor = create_machine_descriptor(config)
 
         # Instantiate the InfrastructureManager
-        infrastructure_manager = InfrastructureManager(
-            workload_manager=None,  # Replace with actual workload manager instance if available
-            zookeeper_host=zookeeper_host,
-            wm_machine_descriptor=wm_machine_descriptor,
-            config=config
-        )
+        # infrastructure_manager = InfrastructureManager(
+        #     workload_manager=None,  # Replace with actual workload manager instance if available
+        #     zookeeper_host=zookeeper_host,
+        #     wm_machine_descriptor=wm_machine_descriptor,
+        #     config=config
+        # )
         
         # TODO Zookeeper listener for triggering workflow execution
 
