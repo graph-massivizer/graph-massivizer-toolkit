@@ -23,10 +23,10 @@ class NodeStatus(StateMachine):
 class Node(ABC):
     """A node is the abstraction of a piece of hardware that can execute things."""
 
-    def __init__(self, node_id: str) -> None:
+    def __init__(self, node_id: int) -> None:
         """
         """
-        self.node_id: str = node_id
+        self.node_id: int = node_id
         self.status: NodeStatus = NodeStatus()
 
     @abstractmethod

@@ -13,39 +13,28 @@ import socket
 import uuid
 from kazoo.client import KazooClient
 
+from graphmassivizer.core.descriptors.descriptors import Machine
+
 logging.basicConfig(level=logging.INFO)
 
 
 class TaskManager:
-    def __init__(self, zookeeper_host) -> None:
+    def __init__(self, zookeeper_host, machine) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.zookeeper_host = zookeeper_host
+        self.machine = machine
         self.zk = KazooClient(hosts=self.zookeeper_host)
         self.zk.start()
         self.register_self()
 
-    def register_self(self) -> None:
-        machine_info = self.collect_machine_info()
-        node_path = f'/taskmanagers/{machine_info["uid"]}'
-        data = json.dumps(machine_info).encode('utf-8')
+    def register_self(self) -> None: 
+        node_path = f'/taskmanagers/{self.machine.ID}'
+        mashine_utf8 = self.machine.to_utf8()
         if self.zk.exists(node_path):
-            self.zk.set(node_path, data)
+            self.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.create(node_path, data, makepath=True)
-        self.logger.info(f"Registered TaskManager {machine_info['uid']} with ZooKeeper.")
-
-    def collect_machine_info(self) -> dict:
-        machine_info = {
-            'uid': str(uuid.uuid4()),
-            'address': socket.gethostbyname(socket.gethostname()),
-            'host_name': socket.gethostname(),
-            'data_port': 5000,
-            'control_port': 5001,
-            'cpu_cores': 4,
-            'size_of_ram': 8 * 1024 * 1024 * 1024,  # 8 GB
-            'size_of_hdd': 256 * 1024 * 1024 * 1024  # 256 GB
-        }
-        return machine_info
+            self.zk.create(node_path, mashine_utf8, makepath=True)
+        self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
 
     def shutdown(self) -> None:
         self.zk.stop()
@@ -54,8 +43,13 @@ class TaskManager:
 
 def main() -> None:
     try:
+        # Initialize logging using our helper
+        logger = logging.getLogger('TaskManager')
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
-        task_manager = TaskManager(zookeeper_host)
+        machine = Machine.parse_from_env(prefix="TM_")
+        task_manager = TaskManager(zookeeper_host, machine)
+        logger.info("I am Task Manager " + str(machine.ID))
+        
         # Keep the Task Manager running
         while True:
             pass
