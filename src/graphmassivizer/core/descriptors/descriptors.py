@@ -56,7 +56,7 @@ class Machine:
     @staticmethod
     def parse_from_env(prefix: str) -> "Machine":
         return Machine(
-            ID=int(os.environ.get(prefix + "NODE_ID", "-1")),
+            ID=int(os.environ.get("NODE_ID", "-1")),
             descriptor=MachineDescriptor.parse_from_env(prefix)
         )
 
