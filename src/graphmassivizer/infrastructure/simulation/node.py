@@ -1,8 +1,9 @@
 import logging
 import math
 import time
-from abc import abstractmethod
+import threading
 from threading import Thread
+from abc import abstractmethod
 from typing import Any, Optional
 
 import docker
@@ -42,9 +43,26 @@ class SimulatedNode(Node, Thread):
     @ abstractmethod
     def _get_docker_environment(self) -> dict[str, str]:
         return {}
-
-    def deploy(self) -> None:
         
+    def _forward_container_logs_to_python_logger(self) -> None:
+        """
+        Continuously reads Docker container logs (stdout+stderr) 
+        and forwards them to the local Python logger.
+        """
+        if not self.docker_container:
+            return  # Container isn't set up
+        logger = logging.getLogger(__name__)  # Or your class logger
+
+        # logs(stream=True) yields lines as they appear
+        log_stream = self.docker_container.logs(stream=True, follow=True)
+
+        for raw_line in log_stream:
+            # Decode bytes
+            line = raw_line.decode('utf-8', errors='replace').rstrip()
+            # For instance, you might want to add the container name or ID:
+            logger.info(f"[container:{self.__container_name}] {line}")
+
+    def deploy(self) -> None:        
         try:
             self.docker_container = self.docker_client.containers.run(
                 self.__image_name + ":" + self.__tag,
@@ -58,6 +76,13 @@ class SimulatedNode(Node, Thread):
 
             # Start the container
             self.docker_container.start()
+            
+            threading.Thread(
+                target=self._forward_container_logs_to_python_logger,
+                name=f"{self.__container_name}-log-forwarder",
+                daemon=True
+            ).start()
+                   
         except Exception as e:
             print(f"Error deploying container on node {self.node_id}: {e}")
             raise e
