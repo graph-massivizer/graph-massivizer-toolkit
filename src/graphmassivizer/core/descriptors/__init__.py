@@ -3,4 +3,4 @@ from .descriptors import (
 )
 
 
-__all__ = ["MachineDescriptor"]
+__all__ = ["MachineDescriptor", "Machine"]

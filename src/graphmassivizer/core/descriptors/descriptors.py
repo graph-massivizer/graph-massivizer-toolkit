@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import os
+import json
 
 
 @dataclass
@@ -51,7 +52,7 @@ class Machine:
         }
         
     def to_utf8(self) -> bytes:
-        return str(self.to_dict()).encode('utf-8')
+        return json.dumps(self.to_dict()).encode("utf-8")
     
     @staticmethod
     def parse_from_env(prefix: str) -> "Machine":

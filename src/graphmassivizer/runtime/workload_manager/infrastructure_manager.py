@@ -6,17 +6,21 @@
 import threading
 import logging
 import json
-#from kazoo.client import KazooClient
-#from kazoo.protocol.states import WatchedEvent, EventType
-from graphmassivizer.core.descriptors import MachineDescriptor
+from kazoo.client import KazooClient
+from kazoo.protocol.states import WatchedEvent, EventType
+from graphmassivizer.core.descriptors.descriptors import Machine, MachineDescriptor
+
 
 class InfrastructureManager:
-    def __init__(self, workload_manager, zookeeper_host, wm_machine_descriptor, config) -> None:
+    def __init__(self, 
+                 workload_manager, 
+                 zookeeper_host, 
+                 machine: Machine) -> None:
+        
         self.logger = logging.getLogger(self.__class__.__name__)
         self.workload_manager = workload_manager
         self.zookeeper_host = zookeeper_host
-        self.wm_machine_descriptor = wm_machine_descriptor
-        self.config = config
+        self.machine = machine
 
         self.node_info_lock = threading.Lock()
         self.tm_machine_map = {}
@@ -29,13 +33,45 @@ class InfrastructureManager:
         self.init_zookeeper_directories()
 
         self.machine_descriptors = {}  # Store MachineDescriptors
-        self.store_machine_descriptor()
+        # self.store_machine_descriptor()
+        self.register_self()
         self.store_environment_model_in_zookeeper()
 
         # Watch for changes in task managers
         self.zk.ChildrenWatch('/taskmanagers', self.zookeeper_task_manager_watcher)
 
         self.input_split_manager = None  # Placeholder for actual implementation
+        
+    def print_zookeeper_subtree(self, path: str = "/", indent: int = 0) -> None:
+        """
+        Recursively print (or log) the ZooKeeper nodes under `path`.
+        """
+        prefix = "  " * indent  # indentation for visual clarity
+            
+        try:
+            # Get data and children for the current node
+            data, stat = self.zk.get(path)
+            children = self.zk.get_children(path)
+        except Exception as e:
+            self.logger.warning(f"Failed to get info for path '{path}': {e}")
+            return
+
+        # Print path and data
+        # Note: data is raw bytes. You might want to decode them or just print length.
+        data_str = data.decode('utf-8', errors='replace') if data else ""
+        node_name = path if path != "" else "/"
+        self.logger.info(f"{prefix}{node_name} -> '{data_str}'")
+
+        # Recurse for each child
+        for child in children:
+            # Construct child path carefully
+            # If path == "/", then child_path = "/" + child
+            # else child_path = path + "/" + child
+            if path == "/":
+                child_path = f"/{child}"
+            else:
+                child_path = f"{path}/{child}"
+            self.print_zookeeper_subtree(child_path, indent + 1)
 
     def init_zookeeper_directories(self) -> None:
         paths = ['/workloadmanager', '/taskmanagers', '/environment']
@@ -43,32 +79,16 @@ class InfrastructureManager:
             if not self.zk.exists(path):
                 self.zk.create(path)
                 self.logger.debug(f"Created Zookeeper path: {path}")
-
-    def store_machine_descriptor(self) -> None:
-        data = str(self.wm_machine_descriptor).encode('utf-8')
-        wm_path = '/workloadmanager'
-        if not self.zk.exists(wm_path):
-            self.zk.create(wm_path, data)
+                
+                
+    def register_self(self) -> None: 
+        node_path = f'/workloadmanager/{self.machine.ID}'
+        mashine_utf8 = self.machine.to_utf8()
+        if self.zk.exists(node_path):
+            self.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.set(wm_path, data)
-        self.logger.debug("Stored workload manager machine descriptor in Zookeeper.")
-
-    def update_machine_descriptors(self, machine_info) -> None:
-        machine_id = machine_info['uid']
-        hardware = HardwareDescriptor(
-            cpu_cores=machine_info['cpu_cores'],
-            size_of_ram=machine_info['size_of_ram'],
-            hdd=HDDDescriptor(size_of_hdd=machine_info['size_of_hdd'])
-        )
-        machine_descriptor = MachineDescriptor(
-            address=machine_info['address'],
-            host_name=machine_info['host_name'],
-            data_port=machine_info['data_port'],
-            control_port=machine_info['control_port'],
-            hardware=hardware
-        )
-        self.machine_descriptors[machine_id] = machine_descriptor
-        self.logger.debug(f"Updated machine descriptor for {machine_id}.")
+            self.zk.create(node_path, mashine_utf8, makepath=True)
+        self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")            
 
     def serialize_environment_model(self):
         # Convert descriptors to dictionaries
@@ -93,10 +113,14 @@ class InfrastructureManager:
             for node in task_manager_nodes:
                 node_path = f'/taskmanagers/{node}'
                 data, stat = self.zk.get(node_path)
-                if data:
-                    machine_info = json.loads(data.decode('utf-8'))
-                    self.update_machine_descriptors(machine_info)
+                # if data:
+                #     machine_info = json.loads(data.decode('utf-8'))
+                #     self.update_machine_descriptors(machine_info)
             self.store_environment_model_in_zookeeper()
+            
+            # NOW: Call the subtree-printing function after each event:
+            self.logger.info("ZK tree (all) after update:")
+            self.print_zookeeper_subtree("/")  
 
     def get_machine(self, location_preference=None):
         with self.node_info_lock:

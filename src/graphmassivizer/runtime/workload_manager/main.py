@@ -42,28 +42,13 @@ def main() -> None:
         machine = Machine.parse_from_env(prefix="WM_")
         workload_manager = WorkloadManager(zookeeper_host, machine)
         logger.info("I am Workload Manager " + str(machine.ID))
-        
-        
-        
-        
-        logger.info("Starting Workload Manager... YYYYYY")
-
-        # Get ZooKeeper host from environment variables
-        
-
-        # Create the workload manager's machine descriptor
-        
-        
-        
-        # wm_machine_descriptor = create_machine_descriptor(config)
 
         # Instantiate the InfrastructureManager
-        # infrastructure_manager = InfrastructureManager(
-        #     workload_manager=None,  # Replace with actual workload manager instance if available
-        #     zookeeper_host=zookeeper_host,
-        #     wm_machine_descriptor=wm_machine_descriptor,
-        #     config=config
-        # )
+        infrastructure_manager = InfrastructureManager(
+            workload_manager=workload_manager, 
+            zookeeper_host=zookeeper_host,
+            machine=machine
+        )
         
         # TODO Zookeeper listener for triggering workflow execution
 
