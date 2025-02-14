@@ -6,3 +6,16 @@
 # - getNextInputSplit: Retrieves the next input split for HDFS sources.
 # - shutdownRuntime: Shuts down the task runtime.
 
+
+from graphmassivizer.runtime.task_manager.task_execution_unit import BGO
+
+
+class BGOMapper:
+    """Maps BGO identifier to implementation"""
+
+    bgos = {
+        "betweenness_centrality":
+
+    }
+
+    def select(self, id: str) -> BGO:
