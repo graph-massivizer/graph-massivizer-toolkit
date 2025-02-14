@@ -33,7 +33,7 @@ pip install -e '.[test]'
 Furthermore, you have to build the runtime-container. Therfore, go to the projects root and run
 
 ```bash
-docker build -t gm/runtime:latest
+docker build -t gm/runtime:latest .
 ```
 
 You can try if the workload_manager / task_manager runs with 
