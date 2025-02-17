@@ -5,7 +5,7 @@ from typing import Any, Optional, Type
 from statemachine import Event, State, StateMachine
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode)
+from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode)
 
 
 class LifecycleState(StateMachine):
@@ -84,14 +84,21 @@ class Simulation:
             zookeeper = ZookeeperNode(Machine(0, self.__machine_descriptor), self.__network_name)
 
             workflow_manager = WorkflowManagerNode(Machine(1, self.__machine_descriptor), self.__network_name)
+            
+            hdfs_node = HDFSNode(Machine(2, self.__machine_descriptor), self.__network_name)
 
             # adding the task managers
             task_managers: list[TaskManagerNode] = []
+            offset = 3
             for i in range(self.number_of_task_nodes):
-                tm = TaskManagerNode(Machine(i + 2, self.__machine_descriptor), self.__network_name)
+                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name)
                 task_managers.append(tm)
             self.cluster = Cluster(
-                zookeeper, workflow_manager, task_managers, self.__network_name)
+                zookeeper, 
+                workflow_manager, 
+                task_managers, 
+                self.__network_name,
+                hdfs_node)
 
         except Exception as e:
             self.state.fail()
