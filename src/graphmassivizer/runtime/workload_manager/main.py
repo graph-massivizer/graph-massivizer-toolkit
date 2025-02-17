@@ -9,18 +9,111 @@ import json
 import logging
 import logging.handlers
 from kazoo.client import KazooClient
+from statemachine import Event, State, StateMachine
+from typing import Any, Optional, Type
 from graphmassivizer.runtime.workload_manager.infrastructure_manager import InfrastructureManager
 from graphmassivizer.core.descriptors.descriptors import Machine
+
+
+    
+    
+    
+logging.basicConfig(level=logging.INFO)
+    
+#     # ----------------------------------------
+#     # WORKLOAD MANAGER STATE MACHINE
+#     # ----------------------------------------
+#     # This is the most basic state machine for the 
+#     # Workload Manager I could think of. Has most likely 
+#     # to be refined and extended.
+# class WorkloadManagerState(StateMachine):
+    
+#     # STATES
+#     # ----------------------------------------
+#     # initial
+#     CREATED = State(initial=True)
+#     # transition 
+#     INITIALIZED = State()
+#     PARALLELIZED = State()
+#     OPTIMIZED = State()
+#     GREENIFIED = State()
+#     SCHEDULED = State()
+#     DEPLOYED = State()
+#     RUNNING_PROGRAM = State()
+#     RUNNING_ONBOARDING = State()
+#     FAILED = State()
+#     RECOVER = State()
+#     # final
+#     CANCELLED = State(final=True)
+#     FINISHED = State(final=True)
+#     # TRANSITIONS: workflow lifecycle
+#     # ----------------------------------------
+#     initialize = Event(CREATED.to(INITIALIZED))
+#     receive_workflow = Event(INITIALIZED.to(PARALLELIZED))
+#     optimize = Event(PARALLELIZED.to(OPTIMIZED))
+#     optimization_failed = Event(OPTIMIZED.to(FAILED))
+#     greenify = Event(OPTIMIZED.to(GREENIFIED))
+#     greenification_failed = Event(GREENIFIED.to(FAILED))
+#     schedule = Event(GREENIFIED.to(SCHEDULED))
+#     schedule_failed = Event(SCHEDULED.to(FAILED))
+#     deploy = Event(SCHEDULED.to(DEPLOYED))
+#     deploy_failed = Event(DEPLOYED.to(FAILED))
+#     start_execution = Event(INITIALIZED.to(RUNNING_PROGRAM))
+#     execution_failed = Event(RUNNING_PROGRAM.to(FAILED))
+#     finish = Event(RUNNING_PROGRAM.to(FINISHED))
+#     # TRANSITIONS: data onboarding
+#     # ----------------------------------------
+#     onboard_data = Event(INITIALIZED.to(RUNNING_ONBOARDING))
+#     onboarding_failed = Event(RUNNING_ONBOARDING.to(FAILED))
+#     # TRANSITIONS: failure
+#     # ----------------------------------------
+#     recover = Event(FAILED.to(RECOVER))
+#     cancel = Event(FAILED.to(CANCELLED))
+
+# class LoggingListener:
+#     def __init__(self, logger: logging.Logger) -> None:
+#         self.logger = logger
+        
+#     def after_transition(self, event: Event, state: State) -> None:
+#         self.logger.info(f"With event {event} to state {state}")
+
 
 class WorkloadManager:
 
     def __init__(self, zookeeper_host, machine) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
+        # self.state: WorkloadManagerState = WorkloadManagerState()
+        # self.state.add_listener(LoggingListener(self.logger))  # type: ignore
         self.zookeeper_host = zookeeper_host
         self.machine = machine
         self.zk = KazooClient(hosts=self.zookeeper_host)
         self.zk.start()
         self.register_self()
+        self.infrastructure_manager = None
+        
+    # def __enter__(self) -> "WorkloadManager":
+    #     self.start()
+    #     return self
+
+    # def __exit__(self,
+    #              exctype: Optional[Type[BaseException]],
+    #              excinst: Optional[BaseException],
+    #              exctb: Optional[TracebackType]
+    #              ) -> bool:
+    #     if self.state.current_state not in {WorkloadManagerState.COMPLETED, WorkloadManagerState.FAILED}:
+    #         try:
+    #             self.complete()
+    #         except Exception as e:
+    #             if excinst:
+    #                 raise Exception("completion failed, but there was an earlier exception that might have caused this.", [e, excinst])
+    #     if excinst:
+    #         print("Closing the server, because an Exception was raised")
+    #         # by returning False, we indicate that the exception was not handled.
+    #         return False
+        
+    #     print("Server closed")
+    #     return True
+
         
     def register_self(self) -> None: 
         node_path = f'/workloadmanagers/{self.machine.ID}'
@@ -32,7 +125,7 @@ class WorkloadManager:
         self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
 
 
-logging.basicConfig(level=logging.INFO)
+
 
 def main() -> None:
     try:
