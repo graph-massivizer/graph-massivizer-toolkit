@@ -1,19 +1,22 @@
 import logging
 import math
 import time
-from abc import abstractmethod
+import threading
 from threading import Thread
+from abc import abstractmethod
 from typing import Any, Optional
 
 import docker
 from docker.models.containers import Container
 
-from graphmassivizer.core.descriptors.descriptors import Machine
+from graphmassivizer.core.descriptors.descriptors import Machine, MachineDescriptor
 from graphmassivizer.infrastructure.components import Node, NodeStatus
 
 
 class SimulatedNode(Node, Thread):
-    def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str,
+    def __init__(self, 
+                 machine: Machine, 
+                 docker_network_name: str,
                  container_name: str,
                  image_name: str,
                  tag: str,
@@ -22,11 +25,11 @@ class SimulatedNode(Node, Thread):
         """network must be of type graphmassivizer.infrastructure.simulation.network import Network
         but we have a cyclic import left
         """
-        super().__init__(node_id=node_id)
+        super().__init__(node_id=machine.ID)
         Thread.__init__(self)
         self.docker_client = docker.from_env()
         self.docker_container: Optional[Container] = None
-        self.machine_info: Machine = machine_info
+        self.machine_descriptor: MachineDescriptor = machine.descriptor
         self.docker_network_name = docker_network_name
 
         self.__container_name = container_name
@@ -40,8 +43,26 @@ class SimulatedNode(Node, Thread):
     @ abstractmethod
     def _get_docker_environment(self) -> dict[str, str]:
         return {}
+        
+    def _forward_container_logs_to_python_logger(self) -> None:
+        """
+        Continuously reads Docker container logs (stdout+stderr) 
+        and forwards them to the local Python logger.
+        """
+        if not self.docker_container:
+            return  # Container isn't set up
+        logger = logging.getLogger(__name__)  # Or your class logger
 
-    def deploy(self) -> None:
+        # logs(stream=True) yields lines as they appear
+        log_stream = self.docker_container.logs(stream=True, follow=True)
+
+        for raw_line in log_stream:
+            # Decode bytes
+            line = raw_line.decode('utf-8', errors='replace').rstrip()
+            # For instance, you might want to add the container name or ID:
+            logger.info(f"[container:{self.__container_name}] {line}")
+
+    def deploy(self) -> None:        
         try:
             self.docker_container = self.docker_client.containers.run(
                 self.__image_name + ":" + self.__tag,
@@ -49,12 +70,19 @@ class SimulatedNode(Node, Thread):
                 name=self.__container_name,
                 network=self.docker_network_name,
                 environment=self._get_docker_environment(),
-                labels={'node': self.node_id}
+                labels={'node': str(self.node_id)}
             )
             # TODO In the past we added some aliases as well. Are they still needed?
 
             # Start the container
             self.docker_container.start()
+            
+            threading.Thread(
+                target=self._forward_container_logs_to_python_logger,
+                name=f"{self.__container_name}-log-forwarder",
+                daemon=True
+            ).start()
+                   
         except Exception as e:
             print(f"Error deploying container on node {self.node_id}: {e}")
             raise e
@@ -100,18 +128,54 @@ class SimulatedNode(Node, Thread):
 
     def receive_message(self, message: str) -> None:
         raise NotImplementedError()
+    
+    @staticmethod
+    def create_runtime_environment(
+        role: str,
+        machine: Machine,
+        zookeeper_host: str = "zookeeper"
+    ) -> dict[str, str]:
+        """
+        Returns environment variables for either a Task Manager or a Workflow Manager,
+        depending on `role` ('task_manager' or 'workflow_manager').
+        """
+        # Common to both roles:
+        env = {
+            "ROLE": role,
+            "ZOOKEEPER_HOST": zookeeper_host,
+            "NODE_ID": str(machine.ID),
+        }
+
+        # If you need separate fields for Task vs. Workflow,
+        # handle them conditionally:
+        if role == "task_manager":
+            env["TM_ADDR"] = machine.descriptor.address
+            env["TM_HOSTNAME"] = machine.descriptor.host_name
+            env["TM_CPU_CORES"] = str(machine.descriptor.cpu_cores)
+            env["TM_RAM_SIZE"] = str(machine.descriptor.ram_size)
+            env["TM_HDD_SIZE"] = str(machine.descriptor.hdd)
+        elif role == "workflow_manager":
+            env["WM_ADDR"] = machine.descriptor.address
+            env["WM_HOSTNAME"] = machine.descriptor.host_name
+            env["WM_CPU_CORES"] = str(machine.descriptor.cpu_cores)
+            env["WM_RAM_SIZE"] = str(machine.descriptor.ram_size)
+            env["WM_HDD_SIZE"] = str(machine.descriptor.hdd)
+
+        return env
 
 
 class ZookeeperNode(SimulatedNode):
 
-    def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str) -> None:
+    def __init__(self, machine: Machine, docker_network_name: str) -> None:
 
-        self.__container_name = f"zookeeper_{node_id}"
+        self.__container_name = "zookeeper"
         self.__image_name = "zookeeper"
         self.__tag = "3.7"  # Or whatever version you prefer
         self.__host_port = 2181
-        super().__init__(node_id, machine_info, docker_network_name,
-                         self.__container_name, self.__image_name, self.__tag,
+        super().__init__(machine, 
+                         docker_network_name,
+                         self.__container_name, 
+                         self.__image_name, self.__tag,
                          {'2181/tcp': self.__host_port}
                          )
 
@@ -179,55 +243,52 @@ class ZookeeperNode(SimulatedNode):
 
 class WorkflowManagerNode(SimulatedNode):
 
-    def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str) -> None:
-        self.__container_name = f"workflow_manager_{node_id}"
-
-        self.__image_name = "workflow_manager_image"
+    def __init__(self, machine: Machine, docker_network_name: str) -> None:
+        self.__container_name = f"workflow_manager_{machine.ID}"
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR WFM")
-        self.__image_name = "alpine"
+        self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
-        super().__init__(node_id, machine_info, docker_network_name,
-                         self.__container_name, self.__image_name, self.__tag,
+        
+        super().__init__(machine, 
+                         docker_network_name,
+                         self.__container_name, 
+                         self.__image_name, 
+                         self.__tag,
                          {}
                          )
-
-        self.__workflow_manager_environment = {
-            'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
-            'NODE_ID': self.node_id
-        }
+        
+        # Use the static helper function
+        self.__workflow_manager_environment = SimulatedNode.create_runtime_environment(
+            role="workflow_manager",
+            machine = machine,
+            zookeeper_host="zookeeper"
+        )
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__workflow_manager_environment
 
 
 class TaskManagerNode(SimulatedNode):
-    def __init__(self, node_id: str, machine_info: Machine, docker_network_name: str) -> None:
-        self.__container_name = f"task_manager_{node_id}"
-        self.__image_name = "task_manager_image"
+    def __init__(self, machine: Machine, docker_network_name: str) -> None:
+        self.__container_name = f"task_manager_{machine.ID}"
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR TM")
-        self.__image_name = "alpine"
-
+        self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
 
-        super().__init__(node_id, machine_info, docker_network_name,
-                         self.__container_name, self.__image_name, self.__tag,
+        super().__init__(machine, 
+                         docker_network_name,
+                         self.__container_name, 
+                         self.__image_name, 
+                         self.__tag,
                          {}
                          )
 
-        self.__task_manager_environment = {
-            'ZOOKEEPER_HOST': 'zookeeper',  # Use the alias set for Zookeeper
-            'NODE_ID': self.node_id
-        }
+        self.__task_manager_environment = SimulatedNode.create_runtime_environment(
+            role="task_manager",
+            machine=machine,
+            zookeeper_host="zookeeper"
+        )
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__task_manager_environment
-
-    # def register_task_manager(self) -> None:
-    #     node_path = f'/taskmanagers/{self.machine_info.ID}'
-    #     data = json.dumps(self.machine_info).encode('utf-8')
-    #     assert self.zk
-    #     if self.zk.exists(node_path):
-    #         self.zk.set(node_path, data)
-    #     else:
-    #         self.zk.create(node_path, data)
-    #     print(f"TaskManager {machine_info['uid']} registered with ZooKeeper.")
+    

@@ -30,8 +30,22 @@ To be able to run tests, also install test dependencies
 pip install -e '.[test]'
 ```
 
+Furthermore, you have to build the runtime-container. Therfore, go to the projects root and run
+
+```bash
+docker build -t gm/runtime:latest .
+```
+
+You can try if the workload_manager / task_manager runs with 
+
+```bash
+docker run --rm -e ROLE=task_manager gm/runtime:latest
+docker run --rm -e ROLE=workflow_manager gm/runtime:latest
+```
 
 # executing
+
+Please make sure Docker runs on your system.
 
 The main executable is in /exectuables/cli.py, it can be executed as
 
@@ -45,3 +59,9 @@ Run
 python executables/cli.py --help 
 ```
 for more information.
+
+For interactive mode run 
+Run 
+```bash
+python executables/cli.py interactive
+```
