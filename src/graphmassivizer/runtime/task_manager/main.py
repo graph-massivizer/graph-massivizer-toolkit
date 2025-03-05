@@ -44,12 +44,12 @@ class TaskManager:
             data_to_write = b'Hello from TaskManager!'
             # Choose your path in HDFS
             file_path = '/tmp/task_manager_hello.txt'
-            with self.hdfs_client.write(file_path, overwrite=True) as writer:
+            with self.hdfs.write(file_path, overwrite=True) as writer:
                 writer.write(data_to_write)
             self.logger.info(f"Wrote file to HDFS: {file_path}")
 
             self.logger.info(f"Attempting to read file back from HDFS: {file_path}")
-            with self.hdfs_client.read(file_path) as reader:
+            with self.hdfs.read(file_path) as reader:
                 contents = reader.read()
             self.logger.info(f"Read from HDFS: {contents}")
 

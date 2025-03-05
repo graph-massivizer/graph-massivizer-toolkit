@@ -81,12 +81,13 @@ logging.basicConfig(level=logging.INFO)
 
 class WorkloadManager:
 
-    def __init__(self, zookeeper_host, machine) -> None:
+    def __init__(self, zookeeper_host, machine, hdfs_client) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         # self.state: WorkloadManagerState = WorkloadManagerState()
         # self.state.add_listener(LoggingListener(self.logger))  # type: ignore
         self.zookeeper_host = zookeeper_host
         self.machine = machine
+        self.hdfs = hdfs_client
         self.zk = KazooClient(hosts=self.zookeeper_host)
         self.zk.start()
         self.register_self()
@@ -114,6 +115,21 @@ class WorkloadManager:
         
     #     print("Server closed")
     #     return True
+    
+    
+    def demo_hdfs_io(self) -> None:
+        """Example method: do some reading or writing in HDFS."""
+        self.logger.info("WorkloadManager is writing to HDFS for demonstration.")
+        data_to_write = b'Hello from WorkloadManager!'
+        file_path = '/tmp/workload_manager_hello.txt'
+        with self.hdfs.write(file_path, overwrite=True) as writer:
+            writer.write(data_to_write)
+        self.logger.info(f"Wrote file to HDFS: {file_path}")
+
+        self.logger.info("Reading the same file back from HDFS.")
+        with self.hdfs.read(file_path) as reader:
+            contents = reader.read()
+        self.logger.info(f"Read from HDFS: {contents}")
 
         
     def register_self(self) -> None: 
@@ -133,9 +149,24 @@ def main() -> None:
         # Initialize logging using our helper
         logger = logging.getLogger('WorkloadManager')
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'zookeeper:2181')
+        
+        # HDFS NameNode 
+        hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://namenode:8020')
+        logger.info(f"HDFS_NAMENODE = {hdfs_namenode}")
+        hdfs_client = InsecureClient(hdfs_namenode, user='root')
+
+        
+        
         machine = Machine.parse_from_env(prefix="WM_")
-        workload_manager = WorkloadManager(zookeeper_host, machine)
+        workload_manager = WorkloadManager(zookeeper_host, machine, hdfs_client)
         logger.info("I am Workload Manager " + str(machine.ID))
+        
+        
+        
+        # Optional: demonstrate HDFS I/O
+        workload_manager.demo_hdfs_io()
+        
+        
 
         # Instantiate the InfrastructureManager
         infrastructure_manager = InfrastructureManager(
