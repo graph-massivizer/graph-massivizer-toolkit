@@ -11,6 +11,7 @@ import logging.handlers
 from kazoo.client import KazooClient
 from statemachine import Event, State, StateMachine
 from typing import Any, Optional, Type
+from hdfs import InsecureClient
 from graphmassivizer.runtime.workload_manager.infrastructure_manager import InfrastructureManager
 from graphmassivizer.core.descriptors.descriptors import Machine
 

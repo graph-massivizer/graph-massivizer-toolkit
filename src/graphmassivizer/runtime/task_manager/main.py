@@ -12,6 +12,7 @@ import logging
 import socket
 import uuid
 from kazoo.client import KazooClient
+from hdfs import InsecureClient
 
 from graphmassivizer.core.descriptors.descriptors import Machine
 
