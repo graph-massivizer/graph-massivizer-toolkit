@@ -12,7 +12,8 @@ import logging
 import socket
 import uuid
 from kazoo.client import KazooClient
-from hdfs import InsecureClient
+import pyarrow as pa
+import pyarrow.fs as pafs
 
 from graphmassivizer.core.descriptors.descriptors import Machine
 
@@ -20,12 +21,12 @@ logging.basicConfig(level=logging.INFO)
 
 
 class TaskManager:
-    def __init__(self, zookeeper_host, machine, hdfs_client) -> None:
+    def __init__(self, zookeeper_host, machine, hdfs_filesystem) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.zookeeper_host = zookeeper_host
         self.machine = machine
         self.zk = KazooClient(hosts=self.zookeeper_host)
-        self.hdfs_client = hdfs_client
+        self.fs = hdfs_filesystem
         self.zk.start()
         self.register_self()
 
@@ -39,19 +40,16 @@ class TaskManager:
         self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
         
     def demo_hdfs_io(self) -> None:
-            """Example method: do some reading or writing in HDFS."""
-            self.logger.info("Attempting to write a small file to HDFS for demonstration.")
-            data_to_write = b'Hello from TaskManager!'
-            # Choose your path in HDFS
-            file_path = '/tmp/task_manager_hello.txt'
-            with self.hdfs.write(file_path, overwrite=True) as writer:
-                writer.write(data_to_write)
-            self.logger.info(f"Wrote file to HDFS: {file_path}")
-
-            self.logger.info(f"Attempting to read file back from HDFS: {file_path}")
-            with self.hdfs.read(file_path) as reader:
-                contents = reader.read()
-            self.logger.info(f"Read from HDFS: {contents}")
+        """Write and read a small file to HDFS (PyArrow style)."""
+        file_path = '/tmp/task_manager_hello.txt'
+        data_to_write = b'Hello from TaskManager!\n'
+        self.logger.info(f"Writing to HDFS path: {file_path}")
+        with self.fs.open_output_stream(file_path, overwrite=True) as f:
+            f.write(data_to_write)
+        self.logger.info(f"Reading back from HDFS path: {file_path}")
+        with self.fs.open_input_stream(file_path) as f:
+            contents = f.read()
+        self.logger.info(f"Content read from HDFS:\n{contents}")
 
     def shutdown(self) -> None:
         self.zk.stop()
@@ -67,12 +65,35 @@ def main() -> None:
         # Retrieve HDFS endpoint from environment
         hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://namenode:8020')
         logger.info(f"HDFS_NAMENODE = {hdfs_namenode}")
+        
+        
+        
+        
 
-        # Create HDFS client
-        hdfs_client = InsecureClient(hdfs_namenode, user='root')
+        # PyArrow: parse the host and port from the URI
+        # e.g. "hdfs://my-hdfs-host:8020"
+        # If the user sets HDFS_NAMENODE = "hdfs://namenode:8020"
+        # we can parse the host="namenode", port=8020
+        # but let's cheat if it's always in the form hdfs://host:port
+        import re
+        pattern = r'hdfs://([^:]+):(\d+)'
+        match = re.match(pattern, hdfs_namenode)
+        if not match:
+            raise ValueError(f"Could not parse HDFS_NAMENODE={hdfs_namenode}")
+        hdfs_host, hdfs_port = match.groups()
+        hdfs_port = int(hdfs_port)
+
+        # Create a PyArrow HadoopFileSystem
+        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port, user='root')
+        
+        
+        
+        
+        
+        
         
         machine = Machine.parse_from_env(prefix="TM_")
-        task_manager = TaskManager(zookeeper_host, machine, hdfs_client)
+        task_manager = TaskManager(zookeeper_host, machine, fs)
         logger.info("I am Task Manager " + str(machine.ID))
         
         # Optional: demonstrate HDFS I/O

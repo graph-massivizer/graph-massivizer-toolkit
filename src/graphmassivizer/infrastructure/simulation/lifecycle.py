@@ -113,6 +113,12 @@ class Simulation:
             self.logger.info("Zookeeper deployed")
             zookeeper.wait_for_zookeeper(10)
             self.logger.info("Zookeeper ready")
+            
+            # 3. Deploy the HDFS node
+            self.__logger.info("Deploying HDFS node...")
+            hdfs_node.deploy()
+            hdfs_node.wait_for_hdfs(timeout=60)
+            self.__logger.info("HDFS node is ready")
 
             workflow_manager.deploy()
             self.logger.info("Workflow Manager started")

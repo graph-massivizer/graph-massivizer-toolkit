@@ -8,16 +8,14 @@ import os
 import json
 import logging
 import logging.handlers
+import re
+import pyarrow as pa
+import pyarrow.fs as pafs
 from kazoo.client import KazooClient
 from statemachine import Event, State, StateMachine
 from typing import Any, Optional, Type
-from hdfs import InsecureClient
 from graphmassivizer.runtime.workload_manager.infrastructure_manager import InfrastructureManager
-from graphmassivizer.core.descriptors.descriptors import Machine
-
-
-    
-    
+from graphmassivizer.core.descriptors.descriptors import Machine    
     
 logging.basicConfig(level=logging.INFO)
     
@@ -81,13 +79,13 @@ logging.basicConfig(level=logging.INFO)
 
 class WorkloadManager:
 
-    def __init__(self, zookeeper_host, machine, hdfs_client) -> None:
+    def __init__(self, zookeeper_host, machine, hdfs_fs) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         # self.state: WorkloadManagerState = WorkloadManagerState()
         # self.state.add_listener(LoggingListener(self.logger))  # type: ignore
         self.zookeeper_host = zookeeper_host
         self.machine = machine
-        self.hdfs = hdfs_client
+        self.fs = hdfs_fs
         self.zk = KazooClient(hosts=self.zookeeper_host)
         self.zk.start()
         self.register_self()
@@ -118,17 +116,16 @@ class WorkloadManager:
     
     
     def demo_hdfs_io(self) -> None:
-        """Example method: do some reading or writing in HDFS."""
-        self.logger.info("WorkloadManager is writing to HDFS for demonstration.")
-        data_to_write = b'Hello from WorkloadManager!'
+        """Example: write & read a file in HDFS."""
         file_path = '/tmp/workload_manager_hello.txt'
-        with self.hdfs.write(file_path, overwrite=True) as writer:
-            writer.write(data_to_write)
-        self.logger.info(f"Wrote file to HDFS: {file_path}")
+        data_to_write = b'Hello from WorkloadManager!\n'
+        self.logger.info(f"Writing to HDFS path: {file_path}")
+        with self.fs.open_output_stream(file_path, overwrite=True) as f:
+            f.write(data_to_write)
 
-        self.logger.info("Reading the same file back from HDFS.")
-        with self.hdfs.read(file_path) as reader:
-            contents = reader.read()
+        self.logger.info(f"Reading the same file back from HDFS.")
+        with self.fs.open_input_stream(file_path) as f:
+            contents = f.read()
         self.logger.info(f"Read from HDFS: {contents}")
 
         
@@ -150,15 +147,22 @@ def main() -> None:
         logger = logging.getLogger('WorkloadManager')
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'zookeeper:2181')
         
-        # HDFS NameNode 
         hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://namenode:8020')
         logger.info(f"HDFS_NAMENODE = {hdfs_namenode}")
-        hdfs_client = InsecureClient(hdfs_namenode, user='root')
+
+        # Parse HDFS host/port from the URI
+        pattern = r'hdfs://([^:]+):(\d+)'
+        match = re.match(pattern, hdfs_namenode)
+        if not match:
+            raise ValueError(f"Could not parse HDFS_NAMENODE={hdfs_namenode}")
+        hdfs_host, hdfs_port = match.groups()
+        hdfs_port = int(hdfs_port)
+        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port, user='root')
 
         
         
         machine = Machine.parse_from_env(prefix="WM_")
-        workload_manager = WorkloadManager(zookeeper_host, machine, hdfs_client)
+        workload_manager = WorkloadManager(zookeeper_host, machine, fs)
         logger.info("I am Workload Manager " + str(machine.ID))
         
         

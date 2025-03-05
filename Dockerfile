@@ -20,23 +20,10 @@ RUN python -m pip install --upgrade pip setuptools wheel
 # Or if you use setup.py / setup.cfg, do:
 RUN pip install --no-cache-dir .
 
-# -------------------------------
-# OPTIONAL: Install Hadoop CLI tools 
-# for debugging or advanced usage:
-# RUN apt-get update && \
-#     apt-get install -y --no-install-recommends hadoop-client-core && \
-#     apt-get clean && \
-#     rm -rf /var/lib/apt/lists/*
-# -------------------------------
+# Install PyArrow with HDFS support 
+# (this replaces the old "RUN pip install hdfs")
+RUN pip install --no-cache-dir "pyarrow[hdfs]"
 
-# (A) Install Python HDFS library:
-RUN pip install --no-cache-dir hdfs
-
-# If you prefer PyArrow for reading/writing Parquet from HDFS:
-# RUN pip install --no-cache-dir pyarrow
-
-# Or if you want snakebite:
-# RUN pip install --no-cache-dir snakebite[kerberos]
 
 # Expose environment variables for HDFS
 ENV HDFS_NAMENODE="hdfs://namenode:8020"

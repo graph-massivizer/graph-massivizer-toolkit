@@ -135,7 +135,8 @@ class SimulatedNode(Node, Thread):
     def create_runtime_environment(
         role: str,
         machine: Machine,
-        zookeeper_host: str = "zookeeper"
+        zookeeper_host: str = "zookeeper",
+        hdfs_host: str = "hdfs_2"
     ) -> dict[str, str]:
         """
         Returns environment variables for either a Task Manager or a Workflow Manager,
@@ -146,6 +147,7 @@ class SimulatedNode(Node, Thread):
             "ROLE": role,
             "ZOOKEEPER_HOST": zookeeper_host,
             "NODE_ID": str(machine.ID),
+            "HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020",
         }
 
         # If you need separate fields for Task vs. Workflow,
