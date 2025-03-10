@@ -253,7 +253,7 @@ class HDFSNode(SimulatedNode):
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
         self.__container_name = f"hdfs_{machine.ID}"
         self.__image_name = "bitnami/hadoop"
-        self.__tag = "latest"  # or a pinned version
+        self.__tag = "3.3.4-debian-11-r12" # or a pinned version
 
         super().__init__(
             machine,
