@@ -5,9 +5,11 @@ import socketserver
 import pickle
 import struct
 import time
+import pandas as pd
 from graphmassivizer.infrastructure.simulation.lifecycle import Simulation
 from graphmassivizer.runtime.task_manager import main as task_manager_main
 from graphmassivizer.runtime.workload_manager import main as workload_manager_main
+from graphmassivizer.runtime.dashboard import main as dashboard_main
 
 
 # https://docs.google.com/drawings/d/1FC5paw_2A3nFBcIW7s99Pk1I_bSUXy_2Uma1LtBmQ_c/edit?usp=sharing
@@ -76,6 +78,9 @@ def start_task_manager():
 
 def start_workflow_manager():
     workload_manager_main.main()
+
+def start_dashboard():
+    dashboard_main.main()
 
 # --- Click commands ---
 
