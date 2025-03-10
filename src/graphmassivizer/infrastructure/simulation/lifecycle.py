@@ -3,9 +3,10 @@ import socket
 from types import TracebackType
 from typing import Any, Optional, Type
 from statemachine import Event, State, StateMachine
+import sys
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode)
+from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, DashboardNode)
 
 
 class LifecycleState(StateMachine):
@@ -90,8 +91,12 @@ class Simulation:
             for i in range(self.number_of_task_nodes):
                 tm = TaskManagerNode(Machine(i + 2, self.__machine_descriptor), self.__network_name)
                 task_managers.append(tm)
+
+            # adding dashboard node
+            dashboard = DashboardNode(Machine(self.number_of_task_nodes + 2, self.__machine_descriptor), self.__network_name)
+            
             self.cluster = Cluster(
-                zookeeper, workflow_manager, task_managers, self.__network_name)
+                zookeeper, workflow_manager, task_managers, dashboard, self.__network_name)
 
         except Exception as e:
             self.state.fail()
@@ -113,6 +118,9 @@ class Simulation:
             for tm in task_managers:
                 tm.deploy()
                 self.logger.info(f"Task Manager started on {tm.node_id}")
+
+            dashboard.deploy()
+            self.logger.info("Dashboard started")
 
         except Exception:
             self.fail()
@@ -148,6 +156,12 @@ class Simulation:
             self.logger.info("Workload manager stopped")
         except Exception as e:
             self.logger.info("Closing the workload manager failed. " + str(e))
+            self.state.fail()
+        try:
+            self.cluster.dashboard.shutdown()
+            self.logger.info("Dashboard stopped")
+        except Exception as e:
+            self.logger.info("Closing the dashboard failed. " + str(e))
             self.state.fail()
         for tm in self.cluster.task_managers:
             try:
