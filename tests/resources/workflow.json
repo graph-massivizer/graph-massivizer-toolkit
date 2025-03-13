@@ -1,0 +1,141 @@
+{
+  "head": {
+    "vars": [
+      "task",
+      "next",
+      "bgo",
+      "algorithm",
+      "graph"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-47fbd9da-6117-4dbb-877a-67dbf8018eb0"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/LoadRDFGraph-cf6bc582-5e07-43ef-992f-138608391bdc"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance-53ff8cff-bc00-4cb7-84f8-99f7b1e25e36"
+	  },
+	  "first": {
+		"type": "boolean",
+		"value": true
+	  }
+	},
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-50374a30-b22b-453e-9e7c-9edeac241abd"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindResearchers-fb19bc83-a494-4598-9b94-c6cc32948d38"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance-53ff8cff-bc00-4cb7-84f8-99f7b1e25e36"
+        },
+  	  "first": {
+  		"type": "boolean",
+  		"value": false
+  	  }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-50374a30-b22b-453e-9e7c-9edeac241abd"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-7857f612-7702-47fb-8c8e-a0d870d78e75"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/bgo-2051fcf4-a122-4b17-94d6-064e198909ac"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/BetweennessCentrality-4f76ba77-40be-41de-a79f-95f9230277a5"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance-53ff8cff-bc00-4cb7-84f8-99f7b1e25e36"
+        },
+  	  "first": {
+  		"type": "boolean",
+  		"value": false
+  	  }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-7857f612-7702-47fb-8c8e-a0d870d78e75"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-742e362a-fead-4ad4-8dc5-de7b73c91051"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/ComputeMostPopularResearcher-f26e90ad-1800-49d8-ab47-6a54a7f78be5"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance-53ff8cff-bc00-4cb7-84f8-99f7b1e25e36"
+        },
+  	  "first": {
+  		"type": "boolean",
+  		"value": false
+  	  }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-742e362a-fead-4ad4-8dc5-de7b73c91051"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindConnectionBetweenResearchers-9ca45eeb-8068-404f-9778-5704c1809c84"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindPath-209a050d-3bef-4539-bb78-7780a71b805e"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance-53ff8cff-bc00-4cb7-84f8-99f7b1e25e36"
+        },
+  	  "first": {
+  		"type": "boolean",
+  		"value": false
+  	  }
+      }
+    ]
+  }
+}
