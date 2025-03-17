@@ -19,6 +19,7 @@ class DAGTest(TestCase):
  inputPath = './tests/resources/subgraph.nt'  
  inputEdgelist = './tests/resources/subgraph.el'  
  ioFile = './tests/resources/graph'
+ BGOArgs = {'inputNode':'A5006947708'}
 
  def getUserInput():
   f = open("./tests/resources/workflow.json")
@@ -79,7 +80,7 @@ class DAGTest(TestCase):
 
   #Run task
   taskClassInstance = firstAvailableTaskAlgorithm['class'](init if init else pathlib.Path(self.ioFile),pathlib.Path(self.ioFile))
-  taskClassInstance.run()
+  taskClassInstance.run(self.BGOArgs)
 
   # check if more tasks
   if 'next' not in task: pass
