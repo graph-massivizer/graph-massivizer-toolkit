@@ -1,0 +1,11 @@
+<template-fragment export id='imageQuery'>
+  {{log this}}
+  Select ?element ?image where { 
+    
+    bind(&lt;https://yt3.googleusercontent.com/YPbquyz9eSKi1GH59ezi7NdiJpBe7CEwNXAbMicgdpuEo4aI5TatE2Q8qWYiXhLNZN98BXCJ18M=s900-c-k-c0x00ffffff-no-rj&gt; as ?temp ) . 
+    bind(if (exists{?element a schema:Person},&lt;https://cdn-icons-png.flaticon.com/512/2815/2815428.png>, ?temp) as ?defaultImage) .
+    optional {?element schema:image ?imageOpt } .
+    bind(coalesce(?imageOpt,?defaultImage) as ?image) .
+
+  }
+</template-fragment>

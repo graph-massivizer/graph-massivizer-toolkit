@@ -1,0 +1,5 @@
+iri = https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query
+disabled = false
+responseformat = application/x-turtle
+aclPermission = qaas:execute:*
+publisher = http://www.metaphacts.com/resource/user/admin
