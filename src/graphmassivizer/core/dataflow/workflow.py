@@ -1,10 +1,6 @@
-import os
-import hashlib
-from typing import List
-
 from src.graphmassivizer.core.dataflow.data_manager import DataManager
 from src.graphmassivizer.core.dataflow.graph_handle import GraphHandle
-
+from src.graphmassivizer.core.dataflow.BGO import BGO
 
 class WorkflowStep:
     def __init__(self, data_manager: DataManager, operation: BGO):
