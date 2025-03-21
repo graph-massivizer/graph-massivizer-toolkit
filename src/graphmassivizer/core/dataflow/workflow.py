@@ -1,41 +1,30 @@
 import os
 import hashlib
+from typing import List
+
+from src.graphmassivizer.core.dataflow.data_manager import DataManager
+from src.graphmassivizer.core.dataflow.graph_handle import GraphHandle
 
 
 class WorkflowStep:
-    def __init__(self, name, operation):
-        """A step in the workflow.
-
-        :param name: Name of the step (unique).
-        :param operation: A callable function that processes the input.
-        """
-        self.name = name
+    def __init__(self, data_manager: DataManager, operation: BGO):
+        self.data_manager = data_manager
         self.operation = operation
 
-    def process(self, input_file, output_dir):
+    def process(self, input: GraphHandle, dry_run=False) -> GraphHandle:
         """Executes the operation and determines output directory."""
-        step_hash = hashlib.md5(self.name.encode()).hexdigest()[:8]
-        step_output_dir = os.path.join(output_dir, f"{self.name}_{step_hash}")
-        os.makedirs(step_output_dir, exist_ok=True)
-        return step_output_dir
-
+        return self.operation.execute(self.data_manager, input, dry_run)
 
 class Workflow:
-    def __init__(self, steps, base_output_dir):
-        """Initializes the workflow with a sequence of steps.
-
-        :param steps: List of WorkflowStep objects.
-        :param base_output_dir: Root output directory.
-        """
+    def __init__(self, steps):
         self.steps = steps
-        self.base_output_dir = base_output_dir
 
-    def run(self, input_file):
+    def run(self, input: GraphHandle, dry_run=False) -> GraphHandle:
         """Runs the workflow on the input file and determines output paths."""
-        current_input = input_file
-        current_output_dir = self.base_output_dir
+        current_input = input
+
+        # TODO: is this meant to be a DAG? Adapt the looping to respect that.
         for step in self.steps:
-            step_output_dir = step.process(current_input, current_output_dir)
+            step_output_dir = step.process(current_input, dry_run=dry_run)
             current_input = step_output_dir  # Assume next step uses this output
-            current_output_dir = step_output_dir  # Update output location
-        return current_output_dir  # Final output directory
+        return current_input  # Final output directory
