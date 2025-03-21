@@ -1,5 +1,5 @@
 from src.graphmassivizer.core.dataflow.data_manager import DataManager
-from src.graphmassivizer.core.dataflow.graph_handle import GraphHandle
+from src.graphmassivizer.core.dataflow.graph_handle import ObjectHandle
 from src.graphmassivizer.core.dataflow.BGO import BGO
 
 class WorkflowStep:
@@ -7,7 +7,7 @@ class WorkflowStep:
         self.data_manager = data_manager
         self.operation = operation
 
-    def process(self, input: GraphHandle, dry_run=False) -> GraphHandle:
+    def process(self, input: ObjectHandle, dry_run=False) -> ObjectHandle:
         """Executes the operation and determines output directory."""
         return self.operation.execute(self.data_manager, input, dry_run)
 
@@ -15,7 +15,7 @@ class Workflow:
     def __init__(self, steps):
         self.steps = steps
 
-    def run(self, input: GraphHandle, dry_run=False) -> GraphHandle:
+    def run(self, input: ObjectHandle, dry_run=False) -> ObjectHandle:
         """Runs the workflow on the input file and determines output paths."""
         current_input = input
 
