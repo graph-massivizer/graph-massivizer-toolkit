@@ -40,20 +40,30 @@ class TaskManager:
         self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
         
     def demo_hdfs_io(self) -> None:
-        """Write and read a small file to HDFS (PyArrow style)."""
-        file_path = '/tmp/task_manager_hello.txt'
-        data_to_write = b'Hello from TaskManager!\n'
+        file_path = f"/tmp/task_manager_hello_{self.machine.ID}.txt"
+        data_to_write = f"Hello from TaskManager {self.machine.ID}!\n".encode("utf-8")
+
         self.logger.info(f"Writing to HDFS path: {file_path}")
-        with self.fs.open_output_stream(file_path, overwrite=True) as f:
+
+        # If you want to simulate "overwrite", manually delete the existing file first
+        # try:
+        #     self.fs.delete_file(file_path)
+        # except FileNotFoundError:
+        #     pass
+
+        # Now just call open_output_stream() without 'overwrite'
+        with self.fs.open_output_stream(file_path) as f:
             f.write(data_to_write)
-        self.logger.info(f"Reading back from HDFS path: {file_path}")
-        with self.fs.open_input_stream(file_path) as f:
-            contents = f.read()
-        self.logger.info(f"Content read from HDFS:\n{contents}")
+
+        # self.logger.info(f"Reading the same file back from HDFS.")
+        # with self.fs.open_input_stream(file_path) as f:
+        #     contents = f.read()
+
+        # self.logger.info(f"Read from HDFS: {contents}")
 
     def shutdown(self) -> None:
-        self.zk.stop()
-        self.logger.info("Shutdown TaskManager.")
+            self.zk.stop()
+            self.logger.info("Shutdown TaskManager.")
 
 
 def main() -> None:

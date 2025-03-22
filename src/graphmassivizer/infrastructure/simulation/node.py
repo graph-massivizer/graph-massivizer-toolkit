@@ -150,7 +150,7 @@ class SimulatedNode(Node, Thread):
             "ROLE": role,
             "ZOOKEEPER_HOST": zookeeper_host,
             "NODE_ID": str(machine.ID),
-            "HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020",
+            "HDFS_NAMENODE": f"hdfs://{hdfs_host}:9000",
         }
 
         # If you need separate fields for Task vs. Workflow,
@@ -284,47 +284,78 @@ class HDFSNode(SimulatedNode):
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__hdfs_environment
+    
+    def create_hdfs_directory(self, directory: str) -> None:
+        """
+        Creates the given directory in HDFS within this container,
+        ignoring if it already exists.
+        """
+        logger = logging.getLogger(__name__)
+        mkdir_cmd = f"hdfs dfs -mkdir -p {directory}"
+        chmod_cmd = f"hdfs dfs -chmod 777 {directory}"
+
+        # 1) Make the directory (with -p so it won’t fail if it already exists)
+        result = self.docker_container.exec_run(mkdir_cmd)
+        if result.exit_code != 0:
+            logger.warning(f"Could not create directory {directory}: {result.output}")
+
+        # 2) Adjust permissions (optional, if you want to be sure it’s writable)
+        result = self.docker_container.exec_run(chmod_cmd)
+        if result.exit_code != 0:
+            logger.warning(f"Could not chmod 777 on {directory}: {result.output}")
 
     def wait_for_hdfs(self, timeout: int = 200) -> None:
         """
-        Wait up to 'timeout' seconds for HDFS to become ready by running
-        'hdfs dfs -ls /' *inside* this container. If the command succeeds
-        and returns an expected line of output, we assume HDFS is up.
+        Wait up to 'timeout' seconds for HDFS to become ready by:
+        - Successfully running 'hdfs dfs -ls /' (showing NameNode is up).
+        - Confirming 'hdfs dfsadmin -safemode get' shows "Safe mode is OFF".
         """
         logger = logging.getLogger(__name__)
 
         polling_interval = 2
         total_wait = 0
 
-        # Make sure self.docker_container is the Container object
-        # for your 'sequenceiq/hadoop-docker' container
         if not self.docker_container:
             raise RuntimeError("docker_container not set; cannot run HDFS checks.")
 
         while total_wait < timeout:
             try:
-                # This runs "hdfs dfs -ls /" inside the same container
-                # that is running the NameNode + DataNode
+                # 1) Check if 'hdfs dfs -ls /' succeeds
                 exec_result = self.docker_container.exec_run("hdfs dfs -ls /")
                 output_bytes = exec_result.output
 
-                # If exit_code == 0, command succeeded. Then check output for typical markers.
                 if exec_result.exit_code == 0:
-                # We look for typical strings that show the NameNode responded
-                # e.g. "Found X items" or "No such file" or "drwx" for directory listings
+                    # Look for typical strings that show the NameNode responded
                     if (b"Found" in output_bytes or 
                         b"No such file" in output_bytes or 
                         b"drwx" in output_bytes):
                         logger.info("HDFS is up and responding to 'hdfs dfs -ls /'")
-                        return
+                        
+                        self.docker_container.exec_run("hdfs dfsadmin -safemode leave")
 
-                # If the code got here, either exit_code was non-zero or no expected substring
-                logger.debug(f"'hdfs dfs -ls /' output so far: {output_bytes!r}")
+                        # 2) Now also ensure safe mode is OFF
+                        # Pseudocode from earlier:
+                        while True:
+                            safe_mode_result = self.docker_container.exec_run("hdfs dfsadmin -safemode get")
+                            if b"Safe mode is OFF" in safe_mode_result.output:
+                                logger.info("Safe mode is OFF, HDFS is fully ready for writes!")
+                                return
+                            else:
+                                logger.info("NameNode still in safe mode; sleeping 2s")
+                                time.sleep(2)
+                                total_wait += 2
+
+                            if total_wait >= timeout:
+                                raise TimeoutError(f"HDFS is stuck in safe mode after {timeout} seconds.")
+                    # If we didn't return inside the safe-mode check above,
+                    # we'll reach here and keep polling again.
+                else:
+                    logger.debug(f"'hdfs dfs -ls /' exit_code={exec_result.exit_code}, output={output_bytes!r}")
 
             except Exception as ex:
                 logger.debug(f"HDFS not ready yet: {ex}")
 
-            logger.info(f"HDFS not up yet; sleeping {polling_interval}s")
+            logger.info(f"HDFS not up (or still in safe mode); sleeping {polling_interval}s")
             time.sleep(polling_interval)
             total_wait += polling_interval
 

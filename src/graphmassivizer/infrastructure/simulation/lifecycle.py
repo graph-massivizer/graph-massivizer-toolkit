@@ -119,6 +119,7 @@ class Simulation:
             hdfs_node.deploy()
             hdfs_node.wait_for_hdfs(timeout=200)
             self.logger.info("HDFS node is ready")
+            hdfs_node.create_hdfs_directory("/tmp")
 
             workflow_manager.deploy()
             self.logger.info("Workflow Manager started")
