@@ -22,7 +22,8 @@ class SimulatedNode(Node, Thread):
                  container_name: str,
                  image_name: str,
                  tag: str,
-                 ports: dict[str, int | list[int]]
+                 ports: dict[str, int | list[int]],
+                 command: Optional[str] = None
                  ) -> None:
         """network must be of type graphmassivizer.infrastructure.simulation.network import Network
         but we have a cyclic import left
@@ -37,6 +38,7 @@ class SimulatedNode(Node, Thread):
         self.__container_name = container_name
         self.__image_name = image_name
         self.__tag = tag
+        self._command = command
 
     def run(self) -> None:
         while self.status.current_state == NodeStatus.RUNNING:
@@ -72,7 +74,8 @@ class SimulatedNode(Node, Thread):
                 name=self.__container_name,
                 network=self.docker_network_name,
                 environment=self._get_docker_environment(),
-                labels={'node': str(self.node_id)}
+                labels={'node': str(self.node_id)},
+                command = self._command
             )
             # TODO In the past we added some aliases as well. Are they still needed?
 
@@ -252,8 +255,8 @@ class ZookeeperNode(SimulatedNode):
 class HDFSNode(SimulatedNode):
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
         self.__container_name = f"hdfs_{machine.ID}"
-        self.__image_name = "bitnami/hadoop"
-        self.__tag = "3.3.4-debian-11-r12" # or a pinned version
+        self.__image_name = "sequenceiq/hadoop-docker"
+        self.__tag = "2.7.0" # or a pinned version
 
         super().__init__(
             machine,
@@ -266,59 +269,66 @@ class HDFSNode(SimulatedNode):
                 # '8020/tcp': 8020,  # RPC
                 # '9870/tcp': 9870,  # NameNode web UI
                 # etc.
-            }
+            },
+            command="/etc/bootstrap.sh -d && tail -f /dev/null"
         )
 
         # For single-node usage, bitnami/hadoop typically needs:
         self.__hdfs_environment = {
-            "HADOOP_MODE": "single",
-            "HADOOP_DAEMON_TYPE": "namenode",
-            "ALLOW_PSEUDODISTRIBUTED": "yes",
-            # optionally define more variables
+            # "HADOOP_MODE": "single",
+            # "HADOOP_DAEMON_TYPE": "namenode",
+            # "ALLOW_PSEUDODISTRIBUTED": "yes",
+            # optionally define more variables,
+            "PATH": "/usr/local/hadoop/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         }
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__hdfs_environment
 
-    def wait_for_hdfs(self, timeout: int = 60) -> None:
+    def wait_for_hdfs(self, timeout: int = 200) -> None:
         """
-        Wait up to 'timeout' seconds for HDFS to become ready.
-        A typical approach is to run 'hdfs dfs -ls /' in the container
-        or try connecting to port 8020. 
+        Wait up to 'timeout' seconds for HDFS to become ready by running
+        'hdfs dfs -ls /' *inside* this container. If the command succeeds
+        and returns an expected line of output, we assume HDFS is up.
         """
-        import time
-        import math
-        import logging
+        logger = logging.getLogger(__name__)
 
         polling_interval = 2
         total_wait = 0
-        logger = logging.getLogger(__name__)
+
+        # Make sure self.docker_container is the Container object
+        # for your 'sequenceiq/hadoop-docker' container
+        if not self.docker_container:
+            raise RuntimeError("docker_container not set; cannot run HDFS checks.")
 
         while total_wait < timeout:
             try:
-                # We'll run an 'hdfs dfs -ls /' command inside the container to see if it responds.
-                command = 'hdfs dfs -ls /'
-                output = self.docker_client.containers.run(
-                    "bitnami/hadoop:latest",
-                    command=command,
-                    network=self.docker_network_name,
-                    remove=True,  # remove container after running
-                    # override entrypoint, or pass some environment variables if needed
-                    environment=self.__hdfs_environment,
-                )
-                if b"Found" in output or b"No such file" in output or b"drwx" in output:
-                    logger.info("HDFS is up and responding to 'hdfs dfs -ls /'")
-                    return
+                # This runs "hdfs dfs -ls /" inside the same container
+                # that is running the NameNode + DataNode
+                exec_result = self.docker_container.exec_run("hdfs dfs -ls /")
+                output_bytes = exec_result.output
+
+                # If exit_code == 0, command succeeded. Then check output for typical markers.
+                if exec_result.exit_code == 0:
+                # We look for typical strings that show the NameNode responded
+                # e.g. "Found X items" or "No such file" or "drwx" for directory listings
+                    if (b"Found" in output_bytes or 
+                        b"No such file" in output_bytes or 
+                        b"drwx" in output_bytes):
+                        logger.info("HDFS is up and responding to 'hdfs dfs -ls /'")
+                        return
+
+                # If the code got here, either exit_code was non-zero or no expected substring
+                logger.debug(f"'hdfs dfs -ls /' output so far: {output_bytes!r}")
+
             except Exception as ex:
                 logger.debug(f"HDFS not ready yet: {ex}")
-            
+
             logger.info(f"HDFS not up yet; sleeping {polling_interval}s")
             time.sleep(polling_interval)
             total_wait += polling_interval
 
-        raise TimeoutError(
-            f"HDFS still not ready after {timeout} seconds."
-        )
+        raise TimeoutError(f"HDFS still not ready after {timeout} seconds.")
 
 # ----------------------------------------
 # WORKFLOW MANAGER NODE

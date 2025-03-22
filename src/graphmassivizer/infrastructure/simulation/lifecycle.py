@@ -117,7 +117,7 @@ class Simulation:
             # 3. Deploy the HDFS node
             self.logger.info("Deploying HDFS node...")
             hdfs_node.deploy()
-            hdfs_node.wait_for_hdfs(timeout=60)
+            hdfs_node.wait_for_hdfs(timeout=200)
             self.logger.info("HDFS node is ready")
 
             workflow_manager.deploy()
