@@ -139,7 +139,7 @@ class SimulatedNode(Node, Thread):
         role: str,
         machine: Machine,
         zookeeper_host: str = "zookeeper",
-        hdfs_host: str = "hdfs_2"
+        hdfs_host: str = "hdfs2"
     ) -> dict[str, str]:
         """
         Returns environment variables for either a Task Manager or a Workflow Manager,
@@ -254,7 +254,7 @@ class ZookeeperNode(SimulatedNode):
 # ----------------------------------------                
 class HDFSNode(SimulatedNode):
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
-        self.__container_name = f"hdfs_{machine.ID}"
+        self.__container_name = f"hdfs{machine.ID}"
         self.__image_name = "sequenceiq/hadoop-docker"
         self.__tag = "2.7.0" # or a pinned version
 
