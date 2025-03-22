@@ -120,13 +120,13 @@ class WorkloadManager:
         file_path = '/tmp/workload_manager_hello.txt'
         data_to_write = b'Hello from WorkloadManager!\n'
         self.logger.info(f"Writing to HDFS path: {file_path}")
-        with self.fs.open_output_stream(file_path, overwrite=True) as f:
+        with self.fs.open_output_stream(file_path) as f:
             f.write(data_to_write)
 
-        self.logger.info(f"Reading the same file back from HDFS.")
-        with self.fs.open_input_stream(file_path) as f:
-            contents = f.read()
-        self.logger.info(f"Read from HDFS: {contents}")
+        # self.logger.info(f"Reading the same file back from HDFS.")
+        # with self.fs.open_input_stream(file_path) as f:
+        #     contents = f.read()
+        # self.logger.info(f"Read from HDFS: {contents}")
 
         
     def register_self(self) -> None: 
