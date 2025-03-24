@@ -1,0 +1,10 @@
+version: "2.2"
+services:
+  metaphactory:
+    # metaphactory overwrites here
+    environment:
+    ports:
+      - "10214:8080"
+    volumes:
+        - ./apps/graph-massivizer-toolkit:/apps/graph-massivizer-toolkit
+

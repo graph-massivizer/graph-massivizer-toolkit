@@ -1,0 +1,2 @@
+source.format = Turtle
+namedGraph.iri = file:/graph-handle-ontology.ttl

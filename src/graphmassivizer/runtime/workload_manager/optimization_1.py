@@ -1,6 +1,6 @@
 
 # this contains the optimization parts from the optimizer, the greenifier is in optimization_2
-#BGO selection 
+#BGO selection
 import random
 import uuid
 
@@ -35,12 +35,12 @@ class Optimizer_1:
 
 	def get_optimization_result():
 		return {'cost_time': random.randint(86645, 6096529), 'cost_energy': random.randint(21661, 2580000), 'algorithm_id': str(uuid.uuid4())}
-		
+
 	def optimize(DAG):
-        
+
 		available_infrastructure = Optimizer_1.get_hardware_descriptors()
 
-		for node in DAG.nodes:
+		for node in DAG['nodes'].values():
 		    optimization_decorations={}
 		    # TODO: we get the infrastructure information from somewhere: API call?
 		    # QUESTION - THIS SHOULD GO INTO THE GRAPH OR IS RETRIEVED ELSEWHERE?: optimization_decorations['available_infrastructure']=available_infrastructure
@@ -48,6 +48,6 @@ class Optimizer_1:
 		    # TODO: the step below simulates the optimization results
 		    for hardware_id in [x['ID'] for x in available_infrastructure]:
 		    	optimization_decorations[hardware_id]=Optimizer_1.get_optimization_result()
-		    DAG.nodes[node]['optimized']=optimization_decorations
-		
+		    node['optimized']=optimization_decorations
+
 		return DAG
