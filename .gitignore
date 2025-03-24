@@ -164,3 +164,7 @@ cython_debug/
 venv
 .DS_Store
 .idea
+
+/metaphactory/graph-massivizer-toolkit/graphdb-data
+/tests/resources
+untitled.*
