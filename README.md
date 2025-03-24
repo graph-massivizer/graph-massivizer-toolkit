@@ -36,6 +36,12 @@ Furthermore, you have to build the runtime-container. Therfore, go to the projec
 docker build -t gm/runtime:latest .
 ```
 
+When you want to run the simulation, you must build differently for Apple Silicon
+
+```bash
+docker buildx build --platform=linux/amd64 -t gm/runtime:latest .
+```
+
 You can try if the workload_manager / task_manager runs with 
 
 ```bash

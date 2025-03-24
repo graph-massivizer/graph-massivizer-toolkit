@@ -12,7 +12,9 @@ from docker.models.containers import Container
 from graphmassivizer.core.descriptors.descriptors import Machine, MachineDescriptor
 from graphmassivizer.infrastructure.components import Node, NodeStatus
 
-
+# ----------------------------------------
+# SIMULATED NODE
+# ----------------------------------------
 class SimulatedNode(Node, Thread):
     def __init__(self, 
                  machine: Machine, 
@@ -20,7 +22,8 @@ class SimulatedNode(Node, Thread):
                  container_name: str,
                  image_name: str,
                  tag: str,
-                 ports: dict[str, int | list[int]]
+                 ports: dict[str, int | list[int]],
+                 command: Optional[str] = None
                  ) -> None:
         """network must be of type graphmassivizer.infrastructure.simulation.network import Network
         but we have a cyclic import left
@@ -35,6 +38,7 @@ class SimulatedNode(Node, Thread):
         self.__container_name = container_name
         self.__image_name = image_name
         self.__tag = tag
+        self._command = command
 
     def run(self) -> None:
         while self.status.current_state == NodeStatus.RUNNING:
@@ -70,7 +74,8 @@ class SimulatedNode(Node, Thread):
                 name=self.__container_name,
                 network=self.docker_network_name,
                 environment=self._get_docker_environment(),
-                labels={'node': str(self.node_id)}
+                labels={'node': str(self.node_id)},
+                command = self._command
             )
             # TODO In the past we added some aliases as well. Are they still needed?
 
@@ -133,7 +138,8 @@ class SimulatedNode(Node, Thread):
     def create_runtime_environment(
         role: str,
         machine: Machine,
-        zookeeper_host: str = "zookeeper"
+        zookeeper_host: str = "zookeeper",
+        hdfs_host: str = "hdfs2"
     ) -> dict[str, str]:
         """
         Returns environment variables for either a Task Manager or a Workflow Manager,
@@ -144,6 +150,7 @@ class SimulatedNode(Node, Thread):
             "ROLE": role,
             "ZOOKEEPER_HOST": zookeeper_host,
             "NODE_ID": str(machine.ID),
+            "HDFS_NAMENODE": f"hdfs://{hdfs_host}:9000",
         }
 
         # If you need separate fields for Task vs. Workflow,
@@ -163,7 +170,9 @@ class SimulatedNode(Node, Thread):
 
         return env
 
-
+# ----------------------------------------
+# ZOOKEEPER NODE
+# ----------------------------------------
 class ZookeeperNode(SimulatedNode):
 
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
@@ -240,7 +249,121 @@ class ZookeeperNode(SimulatedNode):
             if total_waiting_time + current_waiting_time > timeout:
                 current_waiting_time = timeout - total_waiting_time
 
+# ----------------------------------------
+# HDFS NODE
+# ----------------------------------------                
+class HDFSNode(SimulatedNode):
+    def __init__(self, machine: Machine, docker_network_name: str) -> None:
+        self.__container_name = f"hdfs{machine.ID}"
+        self.__image_name = "sequenceiq/hadoop-docker"
+        self.__tag = "2.7.0" # or a pinned version
 
+        super().__init__(
+            machine,
+            docker_network_name,
+            container_name=self.__container_name,
+            image_name=self.__image_name,
+            tag=self.__tag,
+            ports={
+                # If you want to expose HDFS outside Docker, you can map:
+                # '8020/tcp': 8020,  # RPC
+                # '9870/tcp': 9870,  # NameNode web UI
+                # etc.
+            },
+            command="/etc/bootstrap.sh -d && tail -f /dev/null"
+        )
+
+        # For single-node usage, bitnami/hadoop typically needs:
+        self.__hdfs_environment = {
+            # "HADOOP_MODE": "single",
+            # "HADOOP_DAEMON_TYPE": "namenode",
+            # "ALLOW_PSEUDODISTRIBUTED": "yes",
+            # optionally define more variables,
+            "PATH": "/usr/local/hadoop/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        }
+
+    def _get_docker_environment(self) -> dict[str, str]:
+        return self.__hdfs_environment
+    
+    def create_hdfs_directory(self, directory: str) -> None:
+        """
+        Creates the given directory in HDFS within this container,
+        ignoring if it already exists.
+        """
+        logger = logging.getLogger(__name__)
+        mkdir_cmd = f"hdfs dfs -mkdir -p {directory}"
+        chmod_cmd = f"hdfs dfs -chmod 777 {directory}"
+
+        # 1) Make the directory (with -p so it won’t fail if it already exists)
+        result = self.docker_container.exec_run(mkdir_cmd)
+        if result.exit_code != 0:
+            logger.warning(f"Could not create directory {directory}: {result.output}")
+
+        # 2) Adjust permissions (optional, if you want to be sure it’s writable)
+        result = self.docker_container.exec_run(chmod_cmd)
+        if result.exit_code != 0:
+            logger.warning(f"Could not chmod 777 on {directory}: {result.output}")
+
+    def wait_for_hdfs(self, timeout: int = 200) -> None:
+        """
+        Wait up to 'timeout' seconds for HDFS to become ready by:
+        - Successfully running 'hdfs dfs -ls /' (showing NameNode is up).
+        - Confirming 'hdfs dfsadmin -safemode get' shows "Safe mode is OFF".
+        """
+        logger = logging.getLogger(__name__)
+
+        polling_interval = 2
+        total_wait = 0
+
+        if not self.docker_container:
+            raise RuntimeError("docker_container not set; cannot run HDFS checks.")
+
+        while total_wait < timeout:
+            try:
+                # 1) Check if 'hdfs dfs -ls /' succeeds
+                exec_result = self.docker_container.exec_run("hdfs dfs -ls /")
+                output_bytes = exec_result.output
+
+                if exec_result.exit_code == 0:
+                    # Look for typical strings that show the NameNode responded
+                    if (b"Found" in output_bytes or 
+                        b"No such file" in output_bytes or 
+                        b"drwx" in output_bytes):
+                        logger.info("HDFS is up and responding to 'hdfs dfs -ls /'")
+                        
+                        self.docker_container.exec_run("hdfs dfsadmin -safemode leave")
+
+                        # 2) Now also ensure safe mode is OFF
+                        # Pseudocode from earlier:
+                        while True:
+                            safe_mode_result = self.docker_container.exec_run("hdfs dfsadmin -safemode get")
+                            if b"Safe mode is OFF" in safe_mode_result.output:
+                                logger.info("Safe mode is OFF, HDFS is fully ready for writes!")
+                                return
+                            else:
+                                logger.info("NameNode still in safe mode; sleeping 2s")
+                                time.sleep(2)
+                                total_wait += 2
+
+                            if total_wait >= timeout:
+                                raise TimeoutError(f"HDFS is stuck in safe mode after {timeout} seconds.")
+                    # If we didn't return inside the safe-mode check above,
+                    # we'll reach here and keep polling again.
+                else:
+                    logger.debug(f"'hdfs dfs -ls /' exit_code={exec_result.exit_code}, output={output_bytes!r}")
+
+            except Exception as ex:
+                logger.debug(f"HDFS not ready yet: {ex}")
+
+            logger.info(f"HDFS not up (or still in safe mode); sleeping {polling_interval}s")
+            time.sleep(polling_interval)
+            total_wait += polling_interval
+
+        raise TimeoutError(f"HDFS still not ready after {timeout} seconds.")
+
+# ----------------------------------------
+# WORKFLOW MANAGER NODE
+# ----------------------------------------   
 class WorkflowManagerNode(SimulatedNode):
 
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
@@ -267,7 +390,9 @@ class WorkflowManagerNode(SimulatedNode):
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__workflow_manager_environment
 
-
+# ----------------------------------------
+# TASK MANAGER NODE
+# ----------------------------------------   
 class TaskManagerNode(SimulatedNode):
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
         self.__container_name = f"task_manager_{machine.ID}"
@@ -291,4 +416,30 @@ class TaskManagerNode(SimulatedNode):
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__task_manager_environment
-    
+
+# ----------------------------------------
+# DASHBOARD NODE
+# ----------------------------------------      
+class DashboardNode(SimulatedNode):
+    def __init__(self, machine: Machine, docker_network_name: str) -> None:
+        self.__container_name = f"dashboard_{machine.ID}"
+        print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR TM")
+        self.__image_name = "gm/runtime"
+        self.__tag = "latest"  # Or whatever version you prefer
+
+        super().__init__(machine, 
+                         docker_network_name,
+                         self.__container_name, 
+                         self.__image_name, 
+                         self.__tag,
+                         {}
+                         )
+
+        self.__task_manager_environment = SimulatedNode.create_runtime_environment(
+            role="dashboard",
+            machine=machine,
+            zookeeper_host="zookeeper"
+        )
+
+    def _get_docker_environment(self) -> dict[str, str]:
+        return self.__task_manager_environment 

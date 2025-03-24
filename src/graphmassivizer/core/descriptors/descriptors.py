@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import os
+import json
 import hashlib
 import uuid
 from abc import ABC, abstractmethod
@@ -63,7 +64,7 @@ class MachineDescriptor(Descriptor):
 
     def get_descriptor_category(self):
         return "env"
-    
+
     @staticmethod
     def parse_from_env(prefix: str) -> "MachineDescriptor":
         addr = os.environ.get(prefix + "ADDR", "unknown")
@@ -89,16 +90,16 @@ class MachineDescriptor(Descriptor):
 class Machine:
     ID: int
     descriptor: MachineDescriptor
-    
+
     def to_dict(self) -> dict:
         return {
             "ID": self.ID,
             "descriptor": self.descriptor.to_dict()
         }
-        
+
     def to_utf8(self) -> bytes:
-        return str(self.to_dict()).encode('utf-8')
-    
+        return json.dumps(self.to_dict()).encode("utf-8")
+
     @staticmethod
     def parse_from_env(prefix: str) -> "Machine":
         return Machine(
