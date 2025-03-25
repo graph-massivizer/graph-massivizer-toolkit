@@ -1,0 +1,184 @@
+@prefix gmi: <https://graph-massivizer.metaphacts.net/instance/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix bgo: <https://ontologies.metaphacts.com/bgo-ontology/> .
+@prefix gh: <https://ontologies.metaphacts.com/graph-handle/> .
+@prefix gm: <http://ontologies.metaphacts.com/graph-massivizer_ontology/> .
+@prefix bgoi: <https://ontologies.metaphacts.com/bgo-ontology/instances/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+bgoi:workflow-deae5723-dafb-4e79-8648-0510f0312958 a bgo:Workflow;
+ rdfs:label "Scholarly KG Use Case Workflow";
+ bgo:hasFirstTask bgoi:task-47fbd9da-6117-4dbb-877a-67dbf8018eb0 .
+
+bgoi:task-47fbd9da-6117-4dbb-877a-67dbf8018eb0 a bgo:Task;
+ rdfs:label "Load SemOpenAlex Subgraph";
+ bgo:correspondsToBgoDescription bgoi:LoadRDFGraph;
+ bgo:hasNextTask bgoi:task-97e571a6-345c-4bab-84f9-8dca32ea2422 .
+
+ bgoi:LoadRDFGraph a bgo:Bgo;
+  rdfs:label "Load RDF Graph";
+  bgo:associatedWithGraphHandle gmi:graph-handle-instance;
+  bgo:hasImplementation bgoi:metaphactsETLPipeline, bgoi:ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd .
+
+  gmi:graph-handle-instance a gh:GraphHandle;
+   rdfs:label "Graph Handle Instance";
+   gh:baseGraph <https://semopenalex.org/ontology/> .
+
+  bgoi:metaphactsETLPipeline a bgo:AlgorithmImplementation;
+   rdfs:label "metaphacts ETL Pipeline";
+   bgo:hasOutput bgoi:Graph-RDF;
+   bgo:hasInput bgoi:File;
+   bgo:streaming false;
+   bgo:implementationLanguage "Java";
+   bgo:platformIdentifier "CPU";
+   bgo:requiresHardware bgoi:AWS .
+
+   bgoi:AWS a bgo:Hardware;
+    rdfs:label "AWS" .
+
+   bgoi:Graph-RDF a bgo:DataProperty;
+    rdfs:label "RDF Graph";
+    bgo:dataType "Turtle" .
+
+   bgoi:File a bgo:DataProperty;
+    rdfs:label "File";
+    bgo:dataType "File" .
+
+  bgoi:ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd a bgo:AlgorithmImplementation;
+   rdfs:label "NetworkX Load Graph";
+   bgo:hasOutput bgoi:Graph-NetworkX;
+   bgo:hasInput bgoi:Query-JSON;
+   bgo:implementationLanguage "Python";
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU" .
+
+   bgoi:Graph-NetworkX a bgo:DataProperty;
+    rdfs:label "NetworkX graph";
+    bgo:dataType "NetworkX graph" .
+
+   bgoi:Query-JSON a bgo:DataProperty;
+    rdfs:label "Query result - JSON";
+    bgo:dataType "JSON" .
+
+bgoi:task-97e571a6-345c-4bab-84f9-8dca32ea2422 a bgo:Task;
+ rdfs:label "Search for researchers";
+ bgo:correspondsToBgoDescription bgoi:FindResearchersInSubgraph;
+ bgo:hasNextTask bgoi:task-50374a30-b22b-453e-9e7c-9edeac241abd .
+
+ bgoi:FindResearchersInSubgraph a bgo:Bgo;
+  rdfs:label "Breadth First Search";
+  bgo:associatedWithGraphHandle gmi:graph-handle-instance;
+  bgo:hasImplementation bgoi:BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f .
+
+  bgoi:BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f a bgo:AlgorithmImplementation;
+   rdfs:label "NetworkX Breadth First Search";
+   bgo:hasOutput bgoi:Graph-NetworkX;
+   bgo:hasInput bgoi:Graph-NetworkX, bgoi:Node-NetworkX;
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU";
+   bgo:implementationLanguage "Python" .
+
+bgoi:task-50374a30-b22b-453e-9e7c-9edeac241abd a bgo:Task;
+ rdfs:label "Compute centrality";
+ bgo:correspondsToBgoDescription bgoi:BetweennessCentrality;
+ bgo:hasNextTask bgoi:task-7857f612-7702-47fb-8c8e-a0d870d78e75 .
+
+ bgoi:BetweennessCentrality a bgo:Bgo;
+  rdfs:label "Betweenness Centrality";
+  bgo:associatedWithGraphHandle gmi:graph-handle-instance;
+  bgo:hasImplementation bgoi:BetweennessCentrality-4f76ba77-40be-41de-a79f-95f9230277a5 .
+
+  bgoi:BetweennessCentrality-4f76ba77-40be-41de-a79f-95f9230277a5 a bgo:AlgorithmImplementation;
+   rdfs:label "NetworkX Betweenness Centrality";
+   bgo:hasOutput bgoi:Graph-NetworkX;
+   bgo:hasInput bgoi:Graph-NetworkX;
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU";
+   bgo:implementationLanguage "Python" .
+
+bgoi:task-7857f612-7702-47fb-8c8e-a0d870d78e75 a bgo:Task;
+ rdfs:label "Find most central researcher";
+ bgo:correspondsToBgoDescription bgoi:ComputeMostPopularResearcher;
+ bgo:hasNextTask bgoi:task-742e362a-fead-4ad4-8dc5-de7b73c91051 .
+
+ bgoi:ComputeMostPopularResearcher a bgo:Bgo;
+  rdfs:label "Find Max";
+  bgo:associatedWithGraphHandle gmi:graph-handle-instance;
+  bgo:hasImplementation bgoi:FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697 .
+
+  bgoi:FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697 a bgo:AlgorithmImplementation;
+   rdfs:label "Find Max";
+   bgo:hasOutput bgoi:Node-NetworkX;
+   bgo:hasInput bgoi:Graph-NetworkX;
+   bgo:implementationLanguage "Python";
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU" .
+
+   bgoi:Node-NetworkX a bgo:DataProperty;
+    rdfs:label "NetworkX node";
+    bgo:dataType "Node" .
+
+bgoi:task-742e362a-fead-4ad4-8dc5-de7b73c91051 a bgo:Task;
+ rdfs:label "Connect researchers";
+ bgo:correspondsToBgoDescription bgoi:FindConnectionBetweenResearchers .
+
+ bgoi:FindConnectionBetweenResearchers a bgo:Bgo;
+  rdfs:label "Find Path";
+  bgo:associatedWithGraphHandle gmi:graph-handle-instance;
+  bgo:hasImplementation bgoi:FindPath-209a050d-3bef-4539-bb78-7780a71b805e .
+
+  bgoi:FindPath-209a050d-3bef-4539-bb78-7780a71b805e a bgo:AlgorithmImplementation;
+   rdfs:label "Find Path";
+   bgo:hasOutput bgoi:Graph-NetworkX;
+   bgo:hasInput bgoi:Graph-NetworkX, bgoi:Node-NetworkX;
+   bgo:implementationLanguage "Python";
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU" .
+
+bgoi:PageRank a bgo:AlgorithmImplementation;
+ rdfs:label "Page Rank";
+ bgo:hasOutput bgoi:Graph-RDF;
+ bgo:hasInput bgoi:Graph-RDF;
+ bgo:implementationLanguage "Java";
+ bgo:streaming false;
+ bgo:platformIdentifier "CPU" .
+
+bgoi:QuerySubGraphs a bgo:Bgo;
+ rdfs:label "Extract SubGraphs";
+ bgo:associatedWithGraphHandle gmi:graph-handle-instance;
+ bgo:hasImplementation bgoi:GraphMaSubgraphExtraction, bgoi:algorithm-809b71d1-d5d3-4981-a9cc-789d0586ca6b .
+
+bgoi:algorithm-809b71d1-d5d3-4981-a9cc-789d0586ca6b a bgo:AlgorithmImplementation;
+ rdfs:label "CONSTRUCT query";
+ bgo:hasOutput bgoi:Graph-RDF;
+ bgo:hasInput bgoi:Graph-RDF;
+ bgo:implementationLanguage "SPARQL";
+ bgo:streaming false;
+ bgo:platformIdentifier "CPU" .
+
+bgoi:GraphMaSubgraphExtraction a bgo:AlgorithmImplementation;
+ rdfs:label "GraphMa Subgraph Extraction";
+ bgo:hasOutput bgoi:Graph-RDF;
+ bgo:streaming false;
+ bgo:hasInput bgoi:Graph-RDF;
+ bgo:implementationLanguage "Java";
+ bgo:platformIdentifier "CPU" .
+
+bgoi:Integer a bgo:DataProperty;
+ rdfs:label "Integer";
+ bgo:dataType "Integer" .
+
+bgoi:Float a bgo:DataProperty;
+ rdfs:label "Float";
+ bgo:dataType "Float" .
+
+bgoi:localhost a bgo:Hardware;
+ rdfs:label "localhost" .
+
+bgoi:Node-RDF a bgo:DataProperty;
+ rdfs:label "RDF node";
+ bgo:dataType "Turtle" .
+
+bgoi:Node-RDF a bgo:DataProperty;
+ rdfs:label "RDF node";
+ bgo:dataType "Turtle" .

@@ -1,0 +1,31 @@
+version: "2.2"
+services:
+ graphdb:
+  container_name: "${COMPOSE_PROJECT_NAME}-graphdb"
+  image: "${GRAPHDB_IMAGE}"
+  restart: unless-stopped
+  mem_limit: 2g
+  mem_reservation: 1g
+  stop_grace_period: 1m
+  environment:
+    GDB_JAVA_OPTS: >-
+        -XX:+UseContainerSupport -XX:InitialRAMPercentage=30.0 -XX:MaxRAMPercentage=75.0
+        -Dgraphdb.workbench.importDirectory=/opt/graphdb/home/graphdb-import
+        -Dorg.eclipse.rdf4j.rio.encode_rdf_star=false
+  networks:
+      - graphmassivizer_simulation_net
+#     - metaphactory_network
+  volumes:
+     - graphdb_data:/opt/graphdb/home
+  logging:
+   driver: json-file
+   options:
+    max-size: "200k"
+    max-file: "10"
+
+ metaphactory:
+  depends_on:
+    - graphdb
+
+volumes:
+  graphdb_data:

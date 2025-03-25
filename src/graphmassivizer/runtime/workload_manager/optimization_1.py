@@ -1,6 +1,6 @@
 
 # this contains the optimization parts from the optimizer, the greenifier is in optimization_2
-#BGO selection 
+#BGO selection
 import random
 import uuid
 
@@ -33,21 +33,16 @@ class Optimizer_1:
 				"Location": "Rack 2, Unit 3"
 			}]
 
-	def get_optimization_result():
-		return {'cost_time': random.randint(86645, 6096529), 'cost_energy': random.randint(21661, 2580000), 'algorithm_id': str(uuid.uuid4())}
-		
-	def optimize(DAG):
-        
-		available_infrastructure = Optimizer_1.get_hardware_descriptors()
+	def get_optimization_result(algorithmDict,hardwareID):
+		randValForAlg = {'hardware_ID':hardwareID,'cost_time':random.randint(86645, 6096529),'cost_energy':random.randint(21661, 2580000)}
+		if 'optimized' in algorithmDict: algorithmDict['optimized'].append(randValForAlg)
+		else: algorithmDict['optimized'] = [randValForAlg]
 
-		for node in DAG.nodes:
-		    optimization_decorations={}
-		    # TODO: we get the infrastructure information from somewhere: API call?
-		    # QUESTION - THIS SHOULD GO INTO THE GRAPH OR IS RETRIEVED ELSEWHERE?: optimization_decorations['available_infrastructure']=available_infrastructure
-		    # TODO: we run the optimization on the node
-		    # TODO: the step below simulates the optimization results
-		    for hardware_id in [x['ID'] for x in available_infrastructure]:
-		    	optimization_decorations[hardware_id]=Optimizer_1.get_optimization_result()
-		    DAG.nodes[node]['optimized']=optimization_decorations
-		
-		return DAG
+	def optimize(DAG):
+
+		DAG['available_hardware'] = Optimizer_1.get_hardware_descriptors()
+
+		for taskId,node in DAG['nodes'].items():
+			for algId, algMetadata in node['implementations'].items():
+				for hardwareData in DAG['available_hardware']:
+					Optimizer_1.get_optimization_result(algMetadata,hardwareData['ID'])

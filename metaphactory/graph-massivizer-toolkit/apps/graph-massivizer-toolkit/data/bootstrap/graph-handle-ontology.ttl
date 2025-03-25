@@ -1,0 +1,154 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sp: <http://spinrdf.org/sp#> .
+
+<https://ontologies.metaphacts.com/graph-handle/0.1> a owl:Ontology;
+  <http://purl.org/dc/terms/title> "Graph Handle";
+  <http://www.linkedmodel.org/1.2/schema/vaem#namespace> <https://ontologies.metaphacts.com/graph-handle/>;
+  rdfs:label "Graph Handle";
+  owl:versionInfo "0.1";
+  <http://purl.org/ontology/bibo/status> <http://purl.org/spar/pso/draft> .
+
+<https://ontologies.metaphacts.com/graph-handle/SourceGraph> a owl:Class;
+  rdfs:subClassOf <https://ontologies.metaphacts.com/graph-handle/Graph>;
+  rdfs:label "Source Graph"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>.
+
+<https://ontologies.metaphacts.com/graph-handle/sourceGraph> a owl:ObjectProperty;
+  rdfs:label "source graph";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1> .
+
+<https://ontologies.metaphacts.com/graph-handle/Graph> a owl:Class;
+  rdfs:label "Graph"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1> .
+
+<https://ontologies.metaphacts.com/graph-handle/GraphHandle> a owl:Class;
+  rdfs:label "Graph Handle"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1> .
+
+<https://ontologies.metaphacts.com/graph-handle/GraphHandleShape> a sh:NodeShape;
+  sh:property [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/SourceGraph>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/sourceGraph>;
+      sh:minCount 1
+    ], [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/Graph>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/referencesGraph>;
+      sh:minCount 1
+    ], [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/BaseGraph>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/baseGraph>;
+      sh:minCount 1;
+      sh:maxCount 1
+    ];
+  sh:targetClass <https://ontologies.metaphacts.com/graph-handle/GraphHandle> .
+
+<https://ontologies.metaphacts.com/graph-handle/referencesGraph> a owl:ObjectProperty;
+  rdfs:label "references graph";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1> .
+
+<https://ontologies.metaphacts.com/graph-handle/Node> a owl:Class;
+  rdfs:subClassOf <https://ontologies.metaphacts.com/graph-handle/Graph>;
+  rdfs:label "Node"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1> .
+
+<https://ontologies.metaphacts.com/graph-handle/contains> a owl:ObjectProperty;
+  rdfs:label "contains";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/betweennessCentrality> a owl:DatatypeProperty;
+  rdfs:label "betweenness centrality";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/GraphShape> a sh:NodeShape;
+  sh:property [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/Edge>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/contains>
+    ], [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/Node>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/contains>
+    ];
+  sh:targetClass <https://ontologies.metaphacts.com/graph-handle/Graph> .
+
+<https://ontologies.metaphacts.com/graph-handle/NodeShape> a sh:NodeShape;
+  sh:property [
+      sh:path <https://ontologies.metaphacts.com/graph-handle/betweennessCentrality>;
+      sh:datatype xsd:float
+    ];
+  sh:targetClass <https://ontologies.metaphacts.com/graph-handle/Node> .
+
+<https://ontologies.metaphacts.com/graph-handle/BaseGraph> a owl:Class;
+  rdfs:subClassOf <https://ontologies.metaphacts.com/graph-handle/SourceGraph>;
+  rdfs:label "Base Graph"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/baseGraph> a owl:ObjectProperty;
+  rdfs:label "base graph";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/SourceType> a owl:Class;
+  rdfs:label "Source Type"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/sourceType> a owl:ObjectProperty;
+  rdfs:label "source type";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/SourceGraphShape> a sh:NodeShape;
+  sh:property [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/SourceType>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/sourceType>;
+      sh:minCount 1
+    ], [
+      sh:path <https://ontologies.metaphacts.com/graph-handle/edgeCount>;
+      sh:datatype xsd:integer
+    ], [
+      sh:path rdfs:label;
+      sh:datatype xsd:string
+    ], [
+      sh:path <https://ontologies.metaphacts.com/graph-handle/version>;
+      sh:datatype xsd:string
+    ], [
+      sh:path <https://ontologies.metaphacts.com/graph-handle/immutable>;
+      sh:datatype xsd:boolean;
+      sh:minCount 1;
+      sh:maxCount 1
+    ];
+  sh:targetClass <https://ontologies.metaphacts.com/graph-handle/SourceGraph> .
+
+<https://ontologies.metaphacts.com/graph-handle/edgeCount> a owl:DatatypeProperty;
+  rdfs:label "edge count";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/Edge> a owl:Class;
+  rdfs:label "Edge"@en;
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/degreeDistribution> a owl:DatatypeProperty;
+  rdfs:label "degree distribution";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/connects> a owl:ObjectProperty;
+  rdfs:label "connects";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1> .
+
+<https://ontologies.metaphacts.com/graph-handle/EdgeShape> a sh:NodeShape;
+  sh:property [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/Node>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/connects>;
+      sh:minCount 2;
+      sh:maxCount 2
+    ];
+  sh:targetClass <https://ontologies.metaphacts.com/graph-handle/Edge> .
+
+<https://ontologies.metaphacts.com/graph-handle/immutable> a owl:DatatypeProperty;
+  rdfs:label "immutable";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .
+
+<https://ontologies.metaphacts.com/graph-handle/version> a owl:DatatypeProperty;
+  rdfs:label "version";
+  rdfs:isDefinedBy <https://ontologies.metaphacts.com/graph-handle/0.1>  .

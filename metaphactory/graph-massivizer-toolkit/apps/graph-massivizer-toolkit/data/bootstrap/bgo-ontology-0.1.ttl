@@ -1,0 +1,526 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix bgo: <https://ontologies.metaphacts.com/bgo-ontology/> .
+
+<https://ontologies.metaphacts.com/graph-handle/GraphHandleShape> a sh:NodeShape;
+  sh:property [
+      sh:class bgo:DataProperty;
+      sh:path bgo:hasDataProperty
+    ];
+  sh:targetClass <https://ontologies.metaphacts.com/graph-handle/GraphHandle> .
+
+bgo:DataProperty a owl:Class;
+  rdfs:label "Data Property"@en;
+  dct:created "2024-07-24T09:22:05.528Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-12-16T15:33:06.820Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:hasDataProperty a owl:ObjectProperty;
+  rdfs:label "has data property";
+  dct:created "2024-09-27T09:10:52.048Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-09-27T09:10:52.048Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:0.1 a owl:Ontology;
+  rdfs:label "BGO Ontology"@en;
+  <http://www.linkedmodel.org/1.2/schema/vaem#namespace> <https://ontologies.metaphacts.com/bgo-ontology/>;
+  dct:created "2024-07-24T09:04:51.768Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  owl:imports <https://ontologies.metaphacts.com/graph-handle/0.1>, <https://ontologies.metaphacts.com/use-case-ontology/0.1>;
+  owl:versionInfo "0.1";
+  dct:description "The BGO ontology represents the structure and relationships between classes of graph algorithms, inputs and outputs for the algorithms, as well as workflows and tasks that may be created with the algorithms by a use case in the Graph-Masivizer project."@en;
+  dct:title "BGO Ontology"@en;
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2025-03-24T11:43:42.460Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  <http://purl.org/ontology/bibo/status> <http://purl.org/spar/pso/draft>;
+  <http://www.metaphacts.com/ontologies/platform/repository#reductionDefaultSemantics>
+    "exclude" .
+
+bgo:Bgo a owl:Class;
+  rdfs:label "BGO"@en;
+  dct:created "2024-07-24T09:06:35.405Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-12-05T10:20:40.757Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1;
+  rdfs:comment "A basic graph operation is a descriptor of an algorithm for graph processing."@en;
+  skos:altLabel "Basic Graph Operation" .
+
+bgo:IOBgo a owl:Class;
+  rdfs:subClassOf bgo:Bgo;
+  rdfs:label "Creation BGO"@en;
+  dct:created "2024-07-24T09:12:02.600Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-07-24T10:18:14.606Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:IOBgoShape a sh:NodeShape;
+  sh:targetClass bgo:IOBgo .
+
+bgo:hasOutput a owl:ObjectProperty;
+  rdfs:label "has output data property"@en;
+  dct:created "2024-07-24T09:18:09.030Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-09-27T09:00:18.493Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:hasInput a owl:ObjectProperty;
+  rdfs:label "has input data property"@en;
+  dct:created "2024-07-24T09:18:09.030Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-09-27T09:00:18.493Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:BgoShape a sh:NodeShape;
+  sh:property [
+      sh:path rdfs:label;
+      sh:datatype xsd:string
+    ], [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/GraphHandle>;
+      sh:path bgo:associatedWithGraphHandle;
+      sh:minCount 1
+    ], [
+      sh:class bgo:AlgorithmImplementation;
+      sh:path bgo:hasImplementation;
+      sh:minCount 1
+    ], [
+      sh:class <https://ontologies.metaphacts.com/graph-handle/Graph>;
+      sh:path <https://ontologies.metaphacts.com/graph-handle/referencesGraph>;
+      sh:minCount 1
+    ];
+  sh:targetClass bgo:Bgo .
+
+bgo:associatedWithGraphHandle a owl:ObjectProperty;
+  rdfs:label "graph handle"@en;
+  dct:created "2024-07-24T10:18:40.670Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-07-24T10:20:25.845Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:AlgorithmImplementation a owl:Class;
+  rdfs:label "Algorithm Implementation"@en;
+  dct:created "2024-09-27T08:46:41.819Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2025-03-24T11:43:42.460Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:hasImplementation a owl:ObjectProperty;
+  rdfs:label "has implementation";
+  dct:created "2024-09-27T08:53:40.577Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-09-27T08:53:40.577Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:streaming a owl:DatatypeProperty;
+  rdfs:label "streaming";
+  dct:created "2024-07-24T09:47:32.593Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2024-07-24T09:47:32.593Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:batch a owl:DatatypeProperty;
+  rdfs:label "batch";
+  dct:created "2024-07-24T09:47:32.593Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2024-07-24T09:47:32.593Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:dataType a owl:DatatypeProperty;
+  rdfs:label "data type";
+  dct:created "2024-07-24T09:22:05.528Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2024-07-24T09:22:05.528Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:size a owl:DatatypeProperty;
+  rdfs:label "size";
+  dct:created "2024-07-24T09:22:05.528Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2024-07-24T09:22:05.528Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:DataShape a sh:NodeShape;
+  sh:property [
+      sh:class bgo:DataProperty;
+      sh:path bgo:hasPart
+    ], [
+      sh:path rdfs:label;
+      sh:datatype xsd:string
+    ], [
+      sh:path bgo:size;
+      sh:datatype xsd:double
+    ], [
+      sh:path bgo:dataType;
+      sh:datatype xsd:string
+    ];
+  sh:targetClass bgo:DataProperty .
+
+bgo:hasPart a owl:ObjectProperty;
+  rdfs:label "Has Part"@en;
+  dct:created "2024-11-08T12:28:22.572Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-11-08T12:28:22.572Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:ReductionBgo a owl:Class;
+  rdfs:subClassOf bgo:Bgo;
+  rdfs:label "Reduction BGO"@en;
+  dct:created "2024-07-24T09:27:03.027Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2024-07-24T09:27:03.027Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:TransformationBgo a owl:Class;
+  rdfs:subClassOf bgo:Bgo;
+  rdfs:label "Transformation BGO"@en;
+  dct:created "2024-07-24T09:27:03.027Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2024-07-24T09:27:03.027Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:MetricBgo a owl:Class;
+  rdfs:subClassOf bgo:ReductionBgo;
+  rdfs:label "Aggregation BGO"@en;
+  dct:created "2024-07-24T09:39:26.844Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-07-26T08:11:48.176Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:SamplingBgo a owl:Class;
+  rdfs:subClassOf bgo:TransformationBgo;
+  rdfs:label "Sampling BGO"@en;
+  dct:created "2024-07-24T09:39:26.844Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-07-26T08:13:32.014Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:SummarizationBgo a owl:Class;
+  rdfs:subClassOf bgo:ReductionBgo;
+  rdfs:label "Summarization BGO"@en;
+  dct:created "2024-07-24T09:39:26.844Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous", "aaronEberhart";
+  dct:modified "2024-09-27T09:16:55.656Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:CharacterizationBgo a owl:Class;
+  rdfs:subClassOf bgo:ReductionBgo;
+  rdfs:label "Characterization BGO"@en;
+  dct:created "2024-07-26T08:10:17.045Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-07-26T08:10:17.045Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:AugmentationBgo a owl:Class;
+  rdfs:subClassOf bgo:TransformationBgo;
+  rdfs:label "Augmentation BGO"@en;
+  dct:created "2024-07-26T08:17:37.676Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-07-26T08:17:37.676Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:platformIdentifier a owl:DatatypeProperty;
+  rdfs:label "platform identifier";
+  dct:created "2024-07-26T08:21:10.989Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-07-26T08:21:10.989Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:ConversionBgo a owl:Class;
+  rdfs:subClassOf bgo:TransformationBgo;
+  rdfs:label "Conversion BGO"@en;
+  dct:created "2024-07-26T08:45:36.240Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-07-26T08:45:36.240Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:Hardware a owl:Class;
+  rdfs:label "Hardware"@en;
+  dct:created "2024-08-30T08:30:21.723Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T08:36:55.010Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:requiresHardware a owl:ObjectProperty;
+  rdfs:label "requires hardware";
+  dct:created "2024-08-30T08:30:21.723Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-08-30T08:30:21.723Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:AlgorithmImplementationShape a sh:NodeShape;
+  sh:property [
+      sh:path bgo:streaming;
+      sh:datatype xsd:boolean;
+      sh:minCount 1;
+      sh:maxCount 1
+    ], [
+      sh:path rdfs:label;
+      sh:datatype xsd:string;
+      sh:maxCount 1
+    ], [
+      sh:path bgo:programmingLanguage;
+      sh:datatype xsd:string;
+      sh:minCount 1;
+      sh:maxCount 1
+    ], [
+      sh:class bgo:DataProperty;
+      sh:path bgo:hasOutput;
+      sh:maxCount 1
+    ], [
+      sh:class bgo:Hardware;
+      sh:path bgo:requiresHardware
+    ], [
+      sh:path bgo:streaming;
+      sh:datatype xsd:boolean;
+      sh:minCount 1;
+      sh:maxCount 1
+    ], [
+      sh:path bgo:platformIdentifier;
+      sh:datatype xsd:string;
+      sh:minCount 1;
+      sh:maxCount 1
+    ], [
+      sh:class bgo:DataProperty;
+      sh:path bgo:hasInput
+    ];
+  sh:targetClass bgo:AlgorithmImplementation .
+
+bgo:programmingLanguage a owl:DatatypeProperty;
+  rdfs:label "programming language"@en;
+  dct:created "2024-07-26T08:21:10.989Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-29T11:18:33.774Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1;
+  rdfs:comment "The programming language that was used in the implementation"@en .
+
+bgo:HardwareShape a sh:NodeShape;
+  sh:property [
+      sh:path rdfs:label;
+      sh:datatype xsd:string
+    ];
+  sh:targetClass bgo:Hardware .
+
+bgo:usesBgo a owl:ObjectProperty;
+  rdfs:label "uses BGO"@en;
+  dct:created "2024-10-11T08:49:47.962Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T08:49:47.962Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:BgoWorkflowShape a sh:NodeShape;
+  sh:property [
+      sh:path rdfs:label;
+      sh:datatype xsd:string
+    ], [
+      sh:class bgo:Task;
+      sh:path bgo:hasFirstTask;
+      sh:maxCount 1
+    ], [
+      sh:path bgo:id;
+      sh:datatype xsd:integer
+    ];
+  sh:targetClass bgo:Workflow .
+
+bgo:Task a owl:Class;
+  rdfs:label "Task"@en;
+  dct:created "2024-10-11T08:54:48.626Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-22T13:25:04.312Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:hasFirstTask a owl:ObjectProperty;
+  rdfs:label "has first task"@en;
+  dct:created "2024-10-25T07:29:38.389Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-25T07:29:38.389Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:id a owl:DatatypeProperty;
+  rdfs:label "id"@en;
+  dct:created "2024-10-11T08:54:48.626Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T08:54:48.626Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:Workflow a owl:Class;
+  rdfs:label "Workflow"@en;
+  dct:created "2024-10-11T08:49:17.250Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-11-08T11:50:09.669Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:RunnableBgoShape a sh:NodeShape;
+  sh:property [
+      sh:class bgo:Task;
+      sh:path bgo:hasNextTask
+    ], [
+      sh:class bgo:Bgo;
+      sh:path bgo:correspondsToBgoDescription;
+      sh:minCount 1;
+      sh:maxCount 1
+    ], [
+      sh:path rdfs:label;
+      sh:datatype xsd:string
+    ];
+  sh:targetClass bgo:Task .
+
+bgo:hasNextTask a owl:ObjectProperty;
+  rdfs:label "has next task"@en;
+  dct:created "2024-10-11T08:55:36.455Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-22T13:26:02.197Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:correspondsToBgoDescription a owl:ObjectProperty;
+  rdfs:label "corresponds to BGO description"@en;
+  dct:created "2024-10-11T08:58:56.662Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T09:09:49.381Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:OptimizerPrediction a owl:Class;
+  rdfs:label "Optimizer Prediction"@en;
+  dct:created "2024-10-11T09:15:00.636Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T09:16:36.547Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:associatedWithPrediction a owl:ObjectProperty;
+  rdfs:label "associated with prediction"@en, "associated with prediction";
+  dct:created "2024-10-11T09:16:36.547Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T09:16:36.547Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:OptimizerPredictionShape a sh:NodeShape;
+  sh:property [
+      sh:class bgo:AlgorithmImplementation;
+      sh:path bgo:associatedWithPrediction
+    ];
+  sh:targetClass bgo:OptimizerPrediction .
+
+bgo:GreenifierPrediction a owl:Class;
+  rdfs:label "Greenifier Prediction"@en;
+  dct:created "2024-10-11T09:18:20.821Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-10-11T09:18:20.821Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:GreenifierPredictionShape a sh:NodeShape;
+  sh:property [
+      sh:class bgo:AlgorithmImplementation;
+      sh:path bgo:associatedWithPrediction
+    ];
+  sh:targetClass bgo:GreenifierPrediction .
+
+bgo:partOfCollection a owl:ObjectProperty;
+  rdfs:label "Part Of Collection"@en;
+  dct:created "2024-11-08T12:28:22.572Z"^^xsd:dateTime;
+  dct:creator "aaronEberhart";
+  dct:contributor "aaronEberhart";
+  dct:modified "2024-11-08T12:28:22.572Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart";
+  rdfs:isDefinedBy bgo:0.1 .
+
+bgo:sequential a owl:DatatypeProperty;
+  rdfs:label "sequential"@en;
+  dct:created "2025-03-24T11:25:38.518Z"^^xsd:dateTime;
+  dct:creator "anonymous";
+  dct:contributor "anonymous";
+  dct:modified "2025-03-24T11:25:38.518Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "anonymous";
+  rdfs:isDefinedBy bgo:0.1 .
+
+<https://ontologies.metaphacts.com/graph-handle/GraphHandle> dct:contributor "aaronEberhart";
+  dct:modified "2024-09-27T09:10:52.048Z"^^xsd:dateTime;
+  <http://open-services.net/ns/core#modifiedBy> "aaronEberhart" .
+
+dct:contributor <http://www.metaphacts.com/ontologies/platform/repository#exclude>
+    true .
+
+dct:modified <http://www.metaphacts.com/ontologies/platform/repository#exclude> true .
+
+<http://open-services.net/ns/core#modifiedBy> <http://www.metaphacts.com/ontologies/platform/repository#exclude>
+    true .
+
+rdfs:isDefinedBy <http://www.metaphacts.com/ontologies/platform/repository#exclude>
+    true .

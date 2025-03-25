@@ -5,12 +5,9 @@ class Optimizer_2:
 	def get_greenified_plans_for_bgos(G):
 		for node in G.nodes:
 			hardware_ids = sorted(list(G.nodes[node]['optimized'].keys()))
-		
+
 	def optimize(DAG):
-    
-    # TODO Ana, Duncan, Dante
-       # THIS CAN BE STATIC 
-		for node in DAG.nodes:
-			hardware_ids = sorted(list(DAG.nodes[node]['optimized'].keys()))
-			DAG.nodes[node]['greenified']={'1': hardware_ids[0], '2': hardware_ids[1], '3': hardware_ids[random.randint(0, 1)]}
-		return DAG
+		for node in DAG['nodes'].values():
+			for alg in node['implementations'].values():
+				greenVals = [x['hardware_ID'] for x in sorted(alg['optimized'],key=lambda x: x['cost_energy']+x['cost_time'])]
+				alg['greenified']={'1': greenVals[0], '2': greenVals[1], '3': greenVals[random.randint(0, 1)]}

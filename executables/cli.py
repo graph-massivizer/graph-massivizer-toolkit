@@ -15,7 +15,7 @@ from graphmassivizer.runtime.workload_manager import main as workload_manager_ma
 # ----------------------------
 # Logging Server Code
 # ----------------------------
-
+# TODO: I think this can be removed
 class LogRecordStreamHandler(socketserver.StreamRequestHandler):
     """
     Receives a pickled LogRecord and reconstitutes it.

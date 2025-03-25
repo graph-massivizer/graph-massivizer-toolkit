@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Container started with role: ${ROLE}"
+echo "Starting container with ROLE=$ROLE"
+echo "HDFS_NAMENODE=$HDFS_NAMENODE"
 
 case "$ROLE" in
   "task_manager")

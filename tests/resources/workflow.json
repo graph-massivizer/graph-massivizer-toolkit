@@ -1,0 +1,260 @@
+{
+  "head": {
+    "vars": [
+      "task",
+      "first",
+      "next",
+      "bgo",
+      "algorithm",
+      "graph",
+      "language",
+      "platform",
+      "sequential",
+      "hardwareRequirement"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-47fbd9da-6117-4dbb-877a-67dbf8018eb0"
+        },
+        "first": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "true"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/LoadRDFGraph"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/metaphactsETLPipeline"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Java"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        },
+        "hardwareRequirement": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/AWS"
+        }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-47fbd9da-6117-4dbb-877a-67dbf8018eb0"
+        },
+        "first": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "true"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/LoadRDFGraph"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-97e571a6-345c-4bab-84f9-8dca32ea2422"
+        },
+        "first": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-50374a30-b22b-453e-9e7c-9edeac241abd"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindResearchersInSubgraph"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-50374a30-b22b-453e-9e7c-9edeac241abd"
+        },
+        "first": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-7857f612-7702-47fb-8c8e-a0d870d78e75"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/BetweennessCentrality"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/BetweennessCentrality-4f76ba77-40be-41de-a79f-95f9230277a5"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-7857f612-7702-47fb-8c8e-a0d870d78e75"
+        },
+        "first": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        },
+        "next": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-742e362a-fead-4ad4-8dc5-de7b73c91051"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/ComputeMostPopularResearcher"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        }
+      },
+      {
+        "task": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/task-742e362a-fead-4ad4-8dc5-de7b73c91051"
+        },
+        "first": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        },
+        "bgo": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindConnectionBetweenResearchers"
+        },
+        "algorithm": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/FindPath-209a050d-3bef-4539-bb78-7780a71b805e"
+        },
+        "graph": {
+          "type": "uri",
+          "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        }
+      }
+    ]
+  }
+}
