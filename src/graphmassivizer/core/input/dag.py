@@ -1,6 +1,6 @@
 class DAG:
 
- def __init__(self,init={"directed": False, "multigraph": False, "graph":None, "nodes":{}, "edges":{} }):
+ def __init__(self,init={"directed": False, "multigraph": False, "graph":None, "nodes":{}, "edges":{}}):
   self.dag = init
 
  def add(self,key,value=None):
