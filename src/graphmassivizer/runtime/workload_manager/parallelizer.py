@@ -11,5 +11,3 @@ class Parallelizer:
 
         for node in DAG['nodes'].values():
         	node['data_parallel']=True
-
-        return DAG

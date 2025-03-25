@@ -29,8 +29,8 @@ bgoi:task-47fbd9da-6117-4dbb-877a-67dbf8018eb0 a bgo:Task;
    bgo:hasOutput bgoi:Graph-RDF;
    bgo:hasInput bgoi:File;
    bgo:streaming false;
-   bgo:batch true;
    bgo:implementationLanguage "Java";
+   bgo:platformIdentifier "CPU";
    bgo:requiresHardware bgoi:AWS .
 
    bgoi:AWS a bgo:Hardware;
@@ -48,7 +48,9 @@ bgoi:task-47fbd9da-6117-4dbb-877a-67dbf8018eb0 a bgo:Task;
    rdfs:label "NetworkX Load Graph";
    bgo:hasOutput bgoi:Graph-NetworkX;
    bgo:hasInput bgoi:Query-JSON;
-   bgo:implementationLanguage "Python" .
+   bgo:implementationLanguage "Python";
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU" .
 
    bgoi:Graph-NetworkX a bgo:DataProperty;
     rdfs:label "NetworkX graph";
@@ -71,12 +73,14 @@ bgoi:task-97e571a6-345c-4bab-84f9-8dca32ea2422 a bgo:Task;
   bgoi:BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f a bgo:AlgorithmImplementation;
    rdfs:label "NetworkX Breadth First Search";
    bgo:hasOutput bgoi:Graph-NetworkX;
-   bgo:hasInput bgoi:Graph-NetworkX;
+   bgo:hasInput bgoi:Graph-NetworkX, bgoi:Node-NetworkX;
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU";
    bgo:implementationLanguage "Python" .
 
 bgoi:task-50374a30-b22b-453e-9e7c-9edeac241abd a bgo:Task;
  rdfs:label "Compute centrality";
- bgo:correspondsToBgoDescription bgoi:bgo-2051fcf4-a122-4b17-94d6-064e198909ac;
+ bgo:correspondsToBgoDescription bgoi:BetweennessCentrality;
  bgo:hasNextTask bgoi:task-7857f612-7702-47fb-8c8e-a0d870d78e75 .
 
  bgoi:BetweennessCentrality a bgo:Bgo;
@@ -88,6 +92,8 @@ bgoi:task-50374a30-b22b-453e-9e7c-9edeac241abd a bgo:Task;
    rdfs:label "NetworkX Betweenness Centrality";
    bgo:hasOutput bgoi:Graph-NetworkX;
    bgo:hasInput bgoi:Graph-NetworkX;
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU";
    bgo:implementationLanguage "Python" .
 
 bgoi:task-7857f612-7702-47fb-8c8e-a0d870d78e75 a bgo:Task;
@@ -103,7 +109,10 @@ bgoi:task-7857f612-7702-47fb-8c8e-a0d870d78e75 a bgo:Task;
   bgoi:FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697 a bgo:AlgorithmImplementation;
    rdfs:label "Find Max";
    bgo:hasOutput bgoi:Node-NetworkX;
-   bgo:hasInput bgoi:Graph-NetworkX .
+   bgo:hasInput bgoi:Graph-NetworkX;
+   bgo:implementationLanguage "Python";
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU" .
 
    bgoi:Node-NetworkX a bgo:DataProperty;
     rdfs:label "NetworkX node";
@@ -122,12 +131,17 @@ bgoi:task-742e362a-fead-4ad4-8dc5-de7b73c91051 a bgo:Task;
    rdfs:label "Find Path";
    bgo:hasOutput bgoi:Graph-NetworkX;
    bgo:hasInput bgoi:Graph-NetworkX, bgoi:Node-NetworkX;
-   bgo:implementationLanguage "Python" .
+   bgo:implementationLanguage "Python";
+   bgo:streaming false;
+   bgo:platformIdentifier "CPU" .
 
 bgoi:PageRank a bgo:AlgorithmImplementation;
  rdfs:label "Page Rank";
  bgo:hasOutput bgoi:Graph-RDF;
- bgo:hasInput bgoi:Graph-RDF .
+ bgo:hasInput bgoi:Graph-RDF;
+ bgo:implementationLanguage "Java";
+ bgo:streaming false;
+ bgo:platformIdentifier "CPU" .
 
 bgoi:QuerySubGraphs a bgo:Bgo;
  rdfs:label "Extract SubGraphs";
@@ -137,12 +151,18 @@ bgoi:QuerySubGraphs a bgo:Bgo;
 bgoi:algorithm-809b71d1-d5d3-4981-a9cc-789d0586ca6b a bgo:AlgorithmImplementation;
  rdfs:label "CONSTRUCT query";
  bgo:hasOutput bgoi:Graph-RDF;
- bgo:hasInput bgoi:Graph-RDF .
+ bgo:hasInput bgoi:Graph-RDF;
+ bgo:implementationLanguage "SPARQL";
+ bgo:streaming false;
+ bgo:platformIdentifier "CPU" .
 
 bgoi:GraphMaSubgraphExtraction a bgo:AlgorithmImplementation;
  rdfs:label "GraphMa Subgraph Extraction";
  bgo:hasOutput bgoi:Graph-RDF;
- bgo:hasInput bgoi:Graph-RDF .
+ bgo:streaming false;
+ bgo:hasInput bgoi:Graph-RDF;
+ bgo:implementationLanguage "Java";
+ bgo:platformIdentifier "CPU" .
 
 bgoi:Integer a bgo:DataProperty;
  rdfs:label "Integer";

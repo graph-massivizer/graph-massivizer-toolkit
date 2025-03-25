@@ -5,7 +5,7 @@ import re
 from networkx.readwrite import json_graph
 import sys, os, inspect
 from unittest import TestCase
-from functools import reduce,partial
+from functools import reduce, partial
 import pathlib
 import requests
 import pickle
@@ -16,12 +16,13 @@ from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
 import graphmassivizer.runtime.task_manager.BGO.networkx_bgos
 
 class DAGTest(TestCase):
- inputPath = './tests/resources/subgraph.nt'  
- inputEdgelist = './tests/resources/subgraph.el'  
+
+ inputPath = './tests/resources/subgraph.nt'
+ inputEdgelist = './tests/resources/subgraph.el'
  ioFile = './tests/resources/graph'
  BGOArgs = {'inputNode':'A5006947708'}
 
- def getUserInput():
+ def getUserInput(available):
   f = open("./tests/resources/workflow.json")
   queryResult = json.load(f)
   DAG = {"directed": False, "multigraph": False, "graph":DAGTest.formatIRI(queryResult['results']['bindings'][0]['graph']['value']), "nodes":{}, "edges":{} } # need to determine source of the graph metadata
@@ -29,10 +30,14 @@ class DAGTest(TestCase):
   for queryItem in queryResult['results']['bindings']:
 
    id = DAGTest.formatIRI(queryItem["task"]['value'])
+   algorithm = DAGTest.formatIRI(queryItem["algorithm"]['value'])
+
+   if not any(map(lambda x: algorithm == x,available.keys())): continue # skip unavailable BGOs
 
    if id in DAG['nodes']:
-    DAG['nodes'][id]["implementationIds"][DAGTest.formatIRI(queryItem["algorithm"]['value'])] = None
-    DAG['nodes'][id]["next"].add(DAGTest.formatIRI(queryItem["next"]['value']))
+    DAG['nodes'][id]['implementations'][algorithm] = {"class":available[algorithm]["class"],"platform":queryItem["platform"]['value'],"sequential":queryItem["sequential"]['value'],"language":queryItem["language"]['value']}
+    if "hardwareRequirement" in queryItem:
+     DAG['nodes'][id]['implementations'][algorithm]["hardwareRequirement"] = DAGTest.formatIRI(queryItem["hardwareRequirement"]["value"])
     continue
 
    node = {}
@@ -40,8 +45,11 @@ class DAGTest(TestCase):
    DAG['nodes'][id] = node
 
    node["bgo"] = DAGTest.formatIRI(queryItem["bgo"]['value'])
-   node["implementationIds"] = {DAGTest.formatIRI(queryItem["algorithm"]['value']):None}
    node["first"] = True if queryItem["first"]['value'] == 'true' else False
+
+   node['implementations'] = {algorithm:{"class":available[algorithm]["class"],"platform":queryItem["platform"]['value'],"sequential":queryItem["sequential"]['value'],"language":queryItem["language"]['value']}}
+   if "hardwareRequirement" in queryItem:
+    node['implementations'][algorithm]["hardwareRequirement"] = DAGTest.formatIRI(queryItem["hardwareRequirement"]["value"])
 
    if "next" in queryItem:
     node["next"] = {DAGTest.formatIRI(queryItem["next"]['value'])}
@@ -64,19 +72,21 @@ class DAGTest(TestCase):
  def associateDAGWithAvalableFunctions(DAG,availableBGOs):
   for id,node in DAG['nodes'].items():
    rems = []
-   for impId in node['implementationIds']:
-    for name,BGO in availableBGOs.items():
+   for impId in node['implementations']:
+    for BGO in availableBGOs:
      if BGO['implementationId'] == impId:
-      node['implementationIds'][impId] = BGO
+      node['implementations'][impId]['class'] = BGO['class']
       break
-    if not node['implementationIds'][impId]: rems.append(impId) #check for and remove impossible algorithms
-   for rem in rems: node['implementationIds'].pop(rem,None)
-
+    if not node['implementations'][impId]:
+     print(node['implementations'][impId])
+     rems.append(impId) #check for and remove impossible algorithms
+     print(node['implementations'][impId])
+   for rem in rems: node['implementations'].pop(rem,None)
   return DAG
 
  def choreograph(self,DAG,task,init=None):
 
-  firstAvailableTaskAlgorithm = list(task['implementationIds'].values())[0] 
+  firstAvailableTaskAlgorithm = list(task['implementations'].values())[0]
 
   #Run task
   taskClassInstance = firstAvailableTaskAlgorithm['class'](init if init else pathlib.Path(self.ioFile),pathlib.Path(self.ioFile))
@@ -122,22 +132,19 @@ class DAGTest(TestCase):
 
  def test_main(self) -> None:
 
-  bgoClasses = [x for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"]
-  bgoMetadata = {x[0]:dict({"class":x[1]},**self.fetchMetadata(x[1])) for x in bgoClasses}
+  available = {x[1].implementationId:{'name':x[0],'class':x[1]} for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"}
 
-  userInput = DAGTest.getUserInput()
+  DAG = DAGTest.getUserInput(available)
 
-  parallelization = Parallelizer.parallelize(userInput)
+  Parallelizer.parallelize(DAG)
 
-  optimization1 = Optimizer_1.optimize(parallelization)
+  Optimizer_1.optimize(DAG)
 
-  optimization2 = Optimizer_2.optimize(optimization1)
-
-  DAG = DAGTest.associateDAGWithAvalableFunctions(optimization2,bgoMetadata)
+  Optimizer_2.optimize(DAG)
 
   first = reduce(lambda x,y: y if y[1]['first'] == True else x,DAG['nodes'].items(),None)[1]
-  
+
   self.updateInputGraph()
-  
+
   print("Start Node: A5006947708")
   self.choreograph(DAG,first,self.inputEdgelist)

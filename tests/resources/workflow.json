@@ -6,7 +6,11 @@
       "next",
       "bgo",
       "algorithm",
-      "graph"
+      "graph",
+      "language",
+      "platform",
+      "sequential",
+      "hardwareRequirement"
     ]
   },
   "results": {
@@ -36,6 +40,23 @@
         "graph": {
           "type": "uri",
           "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Java"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
+        },
+        "hardwareRequirement": {
+          "type": "uri",
+          "value": "https://ontologies.metaphacts.com/bgo-ontology/instances/AWS"
         }
       },
       {
@@ -63,6 +84,19 @@
         "graph": {
           "type": "uri",
           "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
         }
       },
       {
@@ -90,6 +124,19 @@
         "graph": {
           "type": "uri",
           "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
         }
       },
       {
@@ -117,6 +164,19 @@
         "graph": {
           "type": "uri",
           "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
         }
       },
       {
@@ -144,6 +204,19 @@
         "graph": {
           "type": "uri",
           "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
         }
       },
       {
@@ -167,6 +240,19 @@
         "graph": {
           "type": "uri",
           "value": "https://graph-massivizer.metaphacts.net/instance/graph-handle-instance"
+        },
+        "language": {
+          "type": "literal",
+          "value": "Python"
+        },
+        "platform": {
+          "type": "literal",
+          "value": "CPU"
+        },
+        "sequential": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+          "type": "literal",
+          "value": "false"
         }
       }
     ]

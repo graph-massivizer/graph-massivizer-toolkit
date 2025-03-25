@@ -10,12 +10,9 @@ from graphmassivizer.runtime.task_manager.task_execution_unit import BGO
 class ToNetworkX(BGO):
 
  implementationId = "ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd"
- platform = "CPU"
- sequential = True
- language = "Python"
 
  def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
-  
+
   self.input_path = input_path
   self.out = './tests/resources/'+self.implementationId
 
@@ -29,9 +26,6 @@ class ToNetworkX(BGO):
 class BFS(BGO):
 
  implementationId = "BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f"
- platform = "CPU"
- sequential = True
- language = "Python"
 
  def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
   self.input_path = './tests/resources/'+ToNetworkX.implementationId
@@ -40,7 +34,7 @@ class BFS(BGO):
  def run(self,args={}):
   if 'inputNode' not in args: return
 
-  with open(self.input_path, "rb") as input:   
+  with open(self.input_path, "rb") as input:
    graph = pickle.load(input)
    bfs_graph = nx.bfs_tree(graph,source=args['inputNode'],depth_limit=3)
    print("BFS: {}".format(bfs_graph))
@@ -50,9 +44,6 @@ class BFS(BGO):
 class BetweennessCentrality(BGO):
 
  implementationId = "BetweennessCentrality-4f76ba77-40be-41de-a79f-95f9230277a5"
- platform = "CPU"
- sequential = True
- language = "Python"
 
  def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
   self.input_path = './tests/resources/'+ToNetworkX.implementationId
@@ -71,9 +62,6 @@ class FindMax(BGO):
  """Find Max betweenness"""
 
  implementationId = "FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697"
- platform = "CPU"
- sequential = True
- language = "Python"
 
  def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
   self.input_path = './tests/resources/'+BetweennessCentrality.implementationId
@@ -94,9 +82,6 @@ class FindMax(BGO):
 class FindPath(BGO):
 
  implementationId = "FindPath-209a050d-3bef-4539-bb78-7780a71b805e"
- platform = "CPU"
- sequential = True
- language = "Python"
 
  def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
   self.input_path = './tests/resources/'+FindMax.implementationId

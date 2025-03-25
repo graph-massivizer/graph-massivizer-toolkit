@@ -2,7 +2,7 @@ import networkx as nx
 import hashlib
 import json
 
-from src.graphmassivizer.core.dataflow.graph_metadata import GraphMetadata
+from graphmassivizer.core.dataflow.graph_metadata import GraphMetadata
 
 
 class GraphWrapper:

@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 from kazoo.client import KazooClient
 from kazoo.recipe.watchers import ChildrenWatch
 from kazoo.recipe.watchers import DataWatch
 import time
 
-from src.graphmassivizer.core.descriptors.descriptor_listener import DescriptorListener
-from src.graphmassivizer.core.descriptors.descriptors import Descriptor
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+	from graphmassivizer.core.descriptors.descriptor_listener import DescriptorListener
+	from graphmassivizer.core.descriptors.descriptors import Descriptor
 
 
 class ZookeeperStateManager:

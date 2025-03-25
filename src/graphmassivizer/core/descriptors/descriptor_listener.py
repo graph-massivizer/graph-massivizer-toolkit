@@ -1,5 +1,5 @@
-from src.graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
-from src.graphmassivizer.core.descriptors.descriptors import Descriptor
+#from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
+from graphmassivizer.core.descriptors.descriptors import Descriptor
 from kazoo.recipe.watchers import DataWatch
 from kazoo.client import KazooClient
 from abc import ABC, abstractmethod

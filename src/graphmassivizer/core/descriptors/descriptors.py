@@ -5,7 +5,7 @@ import hashlib
 import uuid
 from abc import ABC, abstractmethod
 
-from src.graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
+from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
 
 
 class Descriptor(ABC):
