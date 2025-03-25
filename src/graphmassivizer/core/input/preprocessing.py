@@ -13,7 +13,7 @@ class InputPipeline:
 	defaultMetaphactoryAddress = "http://localhost:10214/"
 	defaultBGOs = {x[1].implementationId:{'name':x[0],'class':x[1]} for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"}
 
-	def __init__(self,metaphactoryAddress="http://localhost:10214/",workflowIRI=defaultWorkflow,availableBGOs=defaultBGOs):
+	def __init__(self,metaphactoryAddress=defaultMetaphactoryAddress,workflowIRI=defaultWorkflow,availableBGOs=defaultBGOs):
 		self.userInputHandler = UserInputHandler(metaphactoryAddress)
 		self.workflowIRI = workflowIRI
 		self.availableBGOs = availableBGOs

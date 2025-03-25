@@ -15,17 +15,17 @@ class UserInputHandler:
 	def formatIRI(iriString):
 		return re.split(r"/",iriString)[-1]
 
-	def formatWorkflow(self,queryResult,workflowIRI,available):
+	def formatWorkflow(self,queryResult,workflowIRI,availableBGOs):
 		self.DAG["graph"] = UserInputHandler.formatIRI(workflowIRI)
 
 		for queryItem in queryResult['results']['bindings']:
 			id = UserInputHandler.formatIRI(queryItem["task"]['value'])
 			algorithm = UserInputHandler.formatIRI(queryItem["algorithm"]['value'])
 
-			if not any(map(lambda x: algorithm == x,available.keys())): continue # skip unavailable BGOs
+			if not any(map(lambda x: algorithm == x,availableBGOs.keys())): continue # skip unavailable BGOs
 
 			if id in self.DAG['nodes']:
-				self.DAG['nodes'][id]['implementations'][algorithm] = {"class":available[algorithm]["class"],"platform":queryItem["platform"]['value'],"sequential":queryItem["sequential"]['value'],"language":queryItem["language"]['value']}
+				self.DAG['nodes'][id]['implementations'][algorithm] = {"class":availableBGOs[algorithm]["class"],"platform":queryItem["platform"]['value'],"sequential":queryItem["sequential"]['value'],"language":queryItem["language"]['value']}
 				if "hardwareRequirement" in queryItem:
 					self.DAG['nodes'][id]['implementations'][algorithm]["hardwareRequirement"] = UserInputHandler.formatIRI(queryItem["hardwareRequirement"]["value"])
 					continue
@@ -37,7 +37,7 @@ class UserInputHandler:
 			node["bgo"] = UserInputHandler.formatIRI(queryItem["bgo"]['value'])
 			node["first"] = True if queryItem["first"]['value'] == 'true' else False
 
-			node['implementations'] = {algorithm:{"class":available[algorithm]["class"],"platform":queryItem["platform"]['value'],"sequential":queryItem["sequential"]['value'],"language":queryItem["language"]['value']}}
+			node['implementations'] = {algorithm:{"class":availableBGOs[algorithm]["class"],"platform":queryItem["platform"]['value'],"sequential":queryItem["sequential"]['value'],"language":queryItem["language"]['value']}}
 			if "hardwareRequirement" in queryItem:
 			 node['implementations'][algorithm]["hardwareRequirement"] = UserInputHandler.formatIRI(queryItem["hardwareRequirement"]["value"])
 
