@@ -16,7 +16,7 @@ class DAGTest(TestCase):
 
  inputPath = './tests/resources/subgraph.nt'
  inputEdgelist = './tests/resources/subgraph.el'
- ioFile = './tests/resources/graph'
+ ioFile = './tests/resources/file'
  BGOArgs = {'inputNode':'A5006947708'}
 
  def choreograph(self,DAG,task,init=None):
@@ -45,7 +45,7 @@ class DAGTest(TestCase):
     for line in input.readlines():
      k = re.findall(rb"\<([^\>]+)\>",line)
      if len(k) > 0:
-      output.write("{} {}\n".format(DAGTest.formatIRI(str(k[0]))[:-1],DAGTest.formatIRI(str(k[2]))[:-1]))
+      output.write("{} {}\n".format(userInputHandler.formatIRI(str(k[0]))[:-1],userInputHandler.formatIRI(str(k[2]))[:-1]))
 
  def test_main(self) -> None:
 
@@ -54,6 +54,10 @@ class DAGTest(TestCase):
   DAG,first = inputPipeline.composeDAG()
 
   self.updateInputGraph(inputPipeline.userInputHandler)
+
+  f = open("DAG.py-dict","w")
+  f.write(str(DAG))
+  f.close()
 
   print("Start Node: A5006947708")
   self.choreograph(DAG,first,self.inputEdgelist)

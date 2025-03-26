@@ -38,11 +38,13 @@ class Optimizer_1:
 		if 'optimized' in algorithmDict: algorithmDict['optimized'].append(randValForAlg)
 		else: algorithmDict['optimized'] = [randValForAlg]
 
+	def algorithmsInDAG(DAG):
+		return [y for x in DAG['nodes'].values() for y in x['implementations'].values()]
+
 	def optimize(DAG):
 
 		DAG['available_hardware'] = Optimizer_1.get_hardware_descriptors()
 
-		for taskId,node in DAG['nodes'].items():
-			for algId, algMetadata in node['implementations'].items():
-				for hardwareData in DAG['available_hardware']:
-					Optimizer_1.get_optimization_result(algMetadata,hardwareData['ID'])
+		for algMetadata in Optimizer_1.algorithmsInDAG(DAG):
+			for hardwareData in DAG['available_hardware']:
+				Optimizer_1.get_optimization_result(algMetadata,hardwareData['ID'])

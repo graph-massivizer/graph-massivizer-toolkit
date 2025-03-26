@@ -6,8 +6,10 @@ class Optimizer_2:
 		for node in G.nodes:
 			hardware_ids = sorted(list(G.nodes[node]['optimized'].keys()))
 
+	def algorithmsInDAG(DAG):
+		return [y for x in DAG['nodes'].values() for y in x['implementations'].values()]
+
 	def optimize(DAG):
-		for node in DAG['nodes'].values():
-			for alg in node['implementations'].values():
-				greenVals = [x['hardware_ID'] for x in sorted(alg['optimized'],key=lambda x: x['cost_energy']+x['cost_time'])]
-				alg['greenified']={'1': greenVals[0], '2': greenVals[1], '3': greenVals[random.randint(0, 1)]}
+		for algMetadata in Optimizer_2.algorithmsInDAG(DAG):
+			greenVals = [x['hardware_ID'] for x in sorted(algMetadata['optimized'],key=lambda x: x['cost_energy']+x['cost_time'])]
+			algMetadata['greenified']={'1': greenVals[0], '2': greenVals[1], '3': greenVals[random.randint(0, 1)]}
