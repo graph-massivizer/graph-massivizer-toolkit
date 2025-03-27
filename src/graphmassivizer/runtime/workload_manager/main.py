@@ -19,62 +19,62 @@ from graphmassivizer.core.descriptors.descriptors import Machine
     
 logging.basicConfig(level=logging.INFO)
     
-#     # ----------------------------------------
-#     # WORKLOAD MANAGER STATE MACHINE
-#     # ----------------------------------------
-#     # This is the most basic state machine for the 
-#     # Workload Manager I could think of. Has most likely 
-#     # to be refined and extended.
-# class WorkloadManagerState(StateMachine):
+    # ----------------------------------------
+    # WORKLOAD MANAGER STATE MACHINE
+    # ----------------------------------------
+    # This is the most basic state machine for the 
+    # Workload Manager I could think of. Has most likely 
+    # to be refined and extended.
+class WorkloadManagerState(StateMachine):
     
-#     # STATES
-#     # ----------------------------------------
-#     # initial
-#     CREATED = State(initial=True)
-#     # transition 
-#     INITIALIZED = State()
-#     PARALLELIZED = State()
-#     OPTIMIZED = State()
-#     GREENIFIED = State()
-#     SCHEDULED = State()
-#     DEPLOYED = State()
-#     RUNNING_PROGRAM = State()
-#     RUNNING_ONBOARDING = State()
-#     FAILED = State()
-#     RECOVER = State()
-#     # final
-#     CANCELLED = State(final=True)
-#     FINISHED = State(final=True)
-#     # TRANSITIONS: workflow lifecycle
-#     # ----------------------------------------
-#     initialize = Event(CREATED.to(INITIALIZED))
-#     receive_workflow = Event(INITIALIZED.to(PARALLELIZED))
-#     optimize = Event(PARALLELIZED.to(OPTIMIZED))
-#     optimization_failed = Event(OPTIMIZED.to(FAILED))
-#     greenify = Event(OPTIMIZED.to(GREENIFIED))
-#     greenification_failed = Event(GREENIFIED.to(FAILED))
-#     schedule = Event(GREENIFIED.to(SCHEDULED))
-#     schedule_failed = Event(SCHEDULED.to(FAILED))
-#     deploy = Event(SCHEDULED.to(DEPLOYED))
-#     deploy_failed = Event(DEPLOYED.to(FAILED))
-#     start_execution = Event(INITIALIZED.to(RUNNING_PROGRAM))
-#     execution_failed = Event(RUNNING_PROGRAM.to(FAILED))
-#     finish = Event(RUNNING_PROGRAM.to(FINISHED))
-#     # TRANSITIONS: data onboarding
-#     # ----------------------------------------
-#     onboard_data = Event(INITIALIZED.to(RUNNING_ONBOARDING))
-#     onboarding_failed = Event(RUNNING_ONBOARDING.to(FAILED))
-#     # TRANSITIONS: failure
-#     # ----------------------------------------
-#     recover = Event(FAILED.to(RECOVER))
-#     cancel = Event(FAILED.to(CANCELLED))
+    # STATES
+    # ----------------------------------------
+    # initial
+    CREATED = State(initial=True)
+    # transition 
+    INITIALIZED = State()
+    PARALLELIZED = State()
+    OPTIMIZED = State()
+    GREENIFIED = State()
+    SCHEDULED = State()
+    DEPLOYED = State()
+    RUNNING_PROGRAM = State()
+    RUNNING_ONBOARDING = State()
+    FAILED = State()
+    RECOVER = State()
+    # final
+    CANCELLED = State(final=True)
+    FINISHED = State(final=True)
+    # TRANSITIONS: workflow lifecycle
+    # ----------------------------------------
+    initialize = Event(CREATED.to(INITIALIZED))
+    receive_workflow = Event(INITIALIZED.to(PARALLELIZED))
+    optimize = Event(PARALLELIZED.to(OPTIMIZED))
+    optimization_failed = Event(OPTIMIZED.to(FAILED))
+    greenify = Event(OPTIMIZED.to(GREENIFIED))
+    greenification_failed = Event(GREENIFIED.to(FAILED))
+    schedule = Event(GREENIFIED.to(SCHEDULED))
+    schedule_failed = Event(SCHEDULED.to(FAILED))
+    deploy = Event(SCHEDULED.to(DEPLOYED))
+    deploy_failed = Event(DEPLOYED.to(FAILED))
+    start_execution = Event(INITIALIZED.to(RUNNING_PROGRAM))
+    execution_failed = Event(RUNNING_PROGRAM.to(FAILED))
+    finish = Event(RUNNING_PROGRAM.to(FINISHED))
+    # TRANSITIONS: data onboarding
+    # ----------------------------------------
+    onboard_data = Event(INITIALIZED.to(RUNNING_ONBOARDING))
+    onboarding_failed = Event(RUNNING_ONBOARDING.to(FAILED))
+    # TRANSITIONS: failure
+    # ----------------------------------------
+    recover = Event(FAILED.to(RECOVER))
+    cancel = Event(FAILED.to(CANCELLED))
 
-# class LoggingListener:
-#     def __init__(self, logger: logging.Logger) -> None:
-#         self.logger = logger
+class LoggingListener:
+    def __init__(self, logger: logging.Logger) -> None:
+        self.logger = logger
         
-#     def after_transition(self, event: Event, state: State) -> None:
-#         self.logger.info(f"With event {event} to state {state}")
+    def after_transition(self, event: Event, state: State) -> None:
+        self.logger.info(f"With event {event} to state {state}")
 
 
 class WorkloadManager:
