@@ -17,27 +17,19 @@ import pyarrow.fs as pafs
 
 from graphmassivizer.core.descriptors.descriptors import Machine
 
+from src.graphmassivizer.core.descriptors.descriptors import TaskManagerDescriptor
+from src.graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
+
 logging.basicConfig(level=logging.INFO)
 
 
 class TaskManager:
-    def __init__(self, zookeeper_host, machine, hdfs_filesystem) -> None:
+    def __init__(self, zookeper_state_manager: ZookeeperStateManager, machine, hdfs_filesystem) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.zookeeper_host = zookeeper_host
         self.machine = machine
-        self.zk = KazooClient(hosts=self.zookeeper_host)
+        self.descriptor = TaskManagerDescriptor.create(zookeper_state_manager, machine)
         self.fs = hdfs_filesystem
-        self.zk.start()
-        self.register_self()
-
-    def register_self(self) -> None: 
-        node_path = f'/taskmanagers/{self.machine.ID}'
-        mashine_utf8 = self.machine.to_utf8()
-        if self.zk.exists(node_path):
-            self.zk.set(node_path, mashine_utf8)
-        else:
-            self.zk.create(node_path, mashine_utf8, makepath=True)
-        self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
         
     def demo_hdfs_io(self) -> None:
         file_path = f"/tmp/task_manager_hello_{self.machine.ID}.txt"
@@ -62,8 +54,7 @@ class TaskManager:
         # self.logger.info(f"Read from HDFS: {contents}")
 
     def shutdown(self) -> None:
-            self.zk.stop()
-            self.logger.info("Shutdown TaskManager.")
+        self.logger.info("Shutdown TaskManager.")
 
 
 def main() -> None:
@@ -71,12 +62,11 @@ def main() -> None:
         # Initialize logging using our helper
         logger = logging.getLogger('TaskManager')
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
+        zookeper_state_manager = ZookeeperStateManager(zookeeper_host)
         
         # Retrieve HDFS endpoint from environment
         hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://namenode:8020')
         logger.info(f"HDFS_NAMENODE = {hdfs_namenode}")
-        
-        
         
         
 
@@ -96,14 +86,9 @@ def main() -> None:
         # Create a PyArrow HadoopFileSystem
         fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port, user='root')
         
-        
-        
-        
-        
-        
-        
-        machine = Machine.parse_from_env(prefix="TM_")
-        task_manager = TaskManager(zookeeper_host, machine, fs)
+
+        machine = Machine.parse_from_env(zookeper_state_manager, prefix="TM_")
+        task_manager = TaskManager(zookeper_state_manager, machine, fs)
         logger.info("I am Task Manager " + str(machine.ID))
         
         # Optional: demonstrate HDFS I/O
