@@ -109,6 +109,7 @@ def main() -> None:
         # Keep the Task Manager running
         while True:
             pass
+
     except Exception as e:
         logging.error(f"An error occurred: {e}")
     finally:
