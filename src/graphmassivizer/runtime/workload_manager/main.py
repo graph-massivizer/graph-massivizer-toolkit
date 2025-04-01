@@ -123,7 +123,6 @@ class WorkloadManager:
         with self.fs.open_output_stream(file_path) as f:
             f.write(data_to_write)
 
-
         # self.logger.info(f"Reading the same file back from HDFS.")
         # with self.fs.open_input_stream(file_path) as f:
         #     contents = f.read()

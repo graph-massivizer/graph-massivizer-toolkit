@@ -132,7 +132,7 @@ class Simulation:
             hdfs_data_node.deploy()
             self.logger.info("HDFS data node is ready")
 
-            hdfs_node.wait_for_hdfs(timeout=20000)
+            hdfs_node.wait_for_hdfs(timeout=20000) # might be unnecessary
             self.logger.info("HDFS is ready")
             hdfs_node.create_hdfs_directory("/tmp")
 
