@@ -11,51 +11,54 @@ class ToNetworkX(BGO):
 
  implementationId = "ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd"
 
- def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
-
-  self.input_path = input_path
+ def __init__(self,hdfs):
   self.out = './tests/resources/'+self.implementationId
+  self.fs = hdfs
 
  def run(self,args={}):
-  with open(self.input_path, "rb") as input:
-   ingraph = nx.read_edgelist(input)
-   print("NXGraph: {}".format(ingraph))
-  with open(self.out, "wb") as out:
-   pickle.dump(ingraph, out)
+  print(self)
+  print(args)
+  args['graph'] = nx.read_edgelist(args['graph'],delimiter=',',create_using=nx.Graph)
+
+  print("NXGraph: {}".format(args['graph']))
+
+  with fs.open_output_stream(self.out) as out:
+   out.write(args['graph'])
 
 class BFS(BGO):
 
  implementationId = "BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f"
 
- def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
-  self.input_path = './tests/resources/'+ToNetworkX.implementationId
-  self.out = './tests/resources/'+self.implementationId
+ def __init__(self,hdfs):
+  self.out = '/tests/resources/'+self.implementationId
+  self.fs = hdfs
 
  def run(self,args={}):
-  if 'inputNode' not in args: return
+  if 'inputNode' not in args or 'graph' not in args: return
 
-  with open(self.input_path, "rb") as input:
-   graph = pickle.load(input)
-   bfs_graph = nx.bfs_tree(graph,source=args['inputNode'],depth_limit=3)
-   print("BFS: {}".format(bfs_graph))
-  with open(self.out, "wb") as out:
-   pickle.dump(bfs_graph,out)
+  args['bfs_graph'] = nx.bfs_tree(args['graph'],source=args['inputNode'],depth_limit=3)
+  print("BFS: {}".format(args['bfs_graph']))
+
+  with fs.open_output_stream(self.out) as out:
+   out.write(args['bfs_graph'])
 
 class BetweennessCentrality(BGO):
 
  implementationId = "BetweennessCentrality-4f76ba77-40be-41de-a79f-95f9230277a5"
 
- def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
-  self.input_path = './tests/resources/'+ToNetworkX.implementationId
+ def __init__(self,hdfs):
   self.out = './tests/resources/'+self.implementationId
+  self.fs = hdfs
 
  def run(self,args={}):
-  with open(self.input_path, "rb") as input:
-   graph = pickle.load(input)
-  betweenness = nx.betweenness_centrality(graph)
-  print("BetweennessCentrality (truncated): {}".format([x for x in betweenness.items()][:10]))
-  with open(self.out, "wb") as out:
-   pickle.dump(betweenness, out)
+  if 'graph' not in args: return
+
+  args['betweenness'] = nx.betweenness_centrality(args['graph'])
+
+  print("BetweennessCentrality (truncated): {}".format([x for x in args['betweenness'].items()][:10]))
+
+  with fs.open_output_stream(self.out) as out:
+   out.write(args['betweenness'])
 
 
 class FindMax(BGO):
@@ -63,40 +66,34 @@ class FindMax(BGO):
 
  implementationId = "FindMax-ac2a4cf7-111f-414c-ab6f-8bd15b4c2697"
 
- def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
-  self.input_path = './tests/resources/'+BetweennessCentrality.implementationId
+ def __init__(self,hdfs):
   self.out = './tests/resources/'+self.implementationId
+  self.fs = hdfs
 
  def run(self,args={}):
-  if 'inputNode' not in args: return
-
-  with open(self.input_path, "rb") as input:
-   betweenness = pickle.load(input)
+  if 'inputNode' not in args or 'betweenness' not in args: return
 
   def f(k_v): return k_v[1]
-  max_betweenness = max(filter(lambda x: x[0] != args['inputNode'],betweenness.items()), key=f)
-  print("Max: {}".format(max_betweenness))
-  with open(self.out, "wb") as out:
-   pickle.dump(max_betweenness, out)
+  args['max_betweenness'] = max(filter(lambda x: x[0] != args['inputNode'],args['betweenness'].items()), key=f)
+
+  print("Max: {}".format(args['max_betweenness']))
+
+  with fs.open_output_stream(self.out) as out:
+   out.write(args['max_betweenness'])
 
 class FindPath(BGO):
 
  implementationId = "FindPath-209a050d-3bef-4539-bb78-7780a71b805e"
 
- def __init__(self, input_path: pathlib.Path, output_path: pathlib.Path) -> None:
-  self.input_path = './tests/resources/'+FindMax.implementationId
+ def __init__(self,hdfs):
   self.out = './tests/resources/'+self.implementationId
+  self.fs = hdfs
 
  def run(self,args={}):
-  if 'inputNode' not in args: return
+  if 'inputNode' not in args or 'graph' not in args: return
 
-  with open(self.input_path, "rb") as input:
-   max_betweenness = pickle.load(input)
+  args['path'] = nx.shortest_path(args['graph'],source=args['inputNode'],target=args['max_betweenness'][0])
+  print("Path: {}".format(args['path']))
 
-  with open('./tests/resources/'+ToNetworkX.implementationId,"rb") as gf:
-   graph = pickle.load(gf)
-   path = nx.shortest_path(graph,source=args['inputNode'],target=max_betweenness[0])
-   print("Path: {}".format(path))
-
-  with open(self.out, "wb") as out:
-   pickle.dump(path, out)
+  with fs.open_output_stream(self.out) as out:
+   out.write(args['path'])

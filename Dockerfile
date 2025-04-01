@@ -15,7 +15,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV LD_LIBRARY_PATH="${JAVA_HOME}/lib/server:${LD_LIBRARY_PATH}"
 
 # 3) Download & Install Hadoop 3.3.6
-ENV HADOOP_VERSION=3.3.6
+ENV HADOOP_VERSION=3.4.1
 RUN wget "https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz" \
     && tar -xzf "hadoop-$HADOOP_VERSION.tar.gz" \
     && mv "hadoop-$HADOOP_VERSION" /usr/local/hadoop \

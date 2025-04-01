@@ -5,7 +5,7 @@
 # - installTask: Installs and schedules a task (BGOs) received from the Workload Manager.
 # - addOutputBinding: Adds output bindings to datasets, specifying how data is transferred to subsequent tasks.
 # - getDataset, getMutableDataset: Provides access to datasets managed by the Task Manager.
-
+import ast
 import os
 import json
 import logging
@@ -30,7 +30,7 @@ class TaskManager:
         self.zk.start()
         self.register_self()
 
-    def register_self(self) -> None: 
+    def register_self(self) -> None:
         node_path = f'/taskmanagers/{self.machine.ID}'
         mashine_utf8 = self.machine.to_utf8()
         if self.zk.exists(node_path):
@@ -38,7 +38,7 @@ class TaskManager:
         else:
             self.zk.create(node_path, mashine_utf8, makepath=True)
         self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
-        
+
     def demo_hdfs_io(self) -> None:
         file_path = f"/tmp/task_manager_hello_{self.machine.ID}.txt"
         data_to_write = f"Hello from TaskManager {self.machine.ID}!\n".encode("utf-8")
@@ -71,14 +71,14 @@ def main() -> None:
         # Initialize logging using our helper
         logger = logging.getLogger('TaskManager')
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
-        
+
         # Retrieve HDFS endpoint from environment
         hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://namenode:8020')
         logger.info(f"HDFS_NAMENODE = {hdfs_namenode}")
-        
-        
-        
-        
+
+
+
+
 
         # PyArrow: parse the host and port from the URI
         # e.g. "hdfs://my-hdfs-host:8020"
@@ -95,20 +95,18 @@ def main() -> None:
 
         # Create a PyArrow HadoopFileSystem
         fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port, user='root')
-        
-        
-        
-        
-        
-        
-        
+
         machine = Machine.parse_from_env(prefix="TM_")
         task_manager = TaskManager(zookeeper_host, machine, fs)
-        logger.info("I am Task Manager " + str(machine.ID))
-        
-        # Optional: demonstrate HDFS I/O
-        task_manager.demo_hdfs_io()
-        
+        task = ast.literal_eval(os.environ.get('TASK'))
+        args = ast.literal_eval(os.environ.get('ARGS'))
+        print(task)
+        logger.info(f"I am Task Manager {str(machine.ID)}")
+        #logger.info(f"executing task in task manager {task_manager.__container_name} for BGO {task_manager.task['bgo']}")
+        cl = list(task['implementations'].values())[0]
+        print(f"This is my function {cl}")
+        if task['first'] == True: cl['class'](fs).run(args)
+
         # Keep the Task Manager running
         while True:
             pass

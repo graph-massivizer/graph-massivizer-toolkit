@@ -20,7 +20,7 @@
 
 <https://graph-massivizer.metaphacts.net/queryTemplateContainer/graph-handle/context> {
   Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/graph-handle> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryTemplateContainer/graph-handle> a ldp:Resource,
       prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#ConstructTemplate>;
     rdfs:label "Graph Handle";
@@ -31,7 +31,7 @@
     <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/graph-handle/arg/4>,
       <http://metaphacts.com/query/graph-handle/arg/2>, <http://metaphacts.com/query/graph-handle/arg/3>,
       <http://metaphacts.com/query/graph-handle/arg/1>, <http://metaphacts.com/query/graph-handle/arg/0> .
-  
+
   <http://metaphacts.com/query/graph-handle/arg/4> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "source";
     rdfs:comment "";
@@ -39,14 +39,14 @@
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/source>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI;
     <http://spinrdf.org/spl#defaultValue> <file:/citation_network.ttl> .
-  
+
   <http://metaphacts.com/query/graph-handle/arg/2> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "predicateEdge";
     rdfs:comment "";
     <http://spinrdf.org/spl#optional> true;
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/predicateEdge>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI .
-  
+
   <http://metaphacts.com/query/graph-handle/arg/3> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "graphHandle";
     rdfs:comment "";
@@ -54,14 +54,14 @@
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/graphHandle>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI;
     <http://spinrdf.org/spl#defaultValue> gmi:graph-handle-instance .
-  
+
   <http://metaphacts.com/query/graph-handle/arg/1> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "objectNode";
     rdfs:comment "";
     <http://spinrdf.org/spl#optional> true;
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/objectNode>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI .
-  
+
   <http://metaphacts.com/query/graph-handle/arg/0> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "subjectNode";
     rdfs:comment "";
@@ -72,7 +72,7 @@
 
 <https://graph-massivizer.metaphacts.net/queryTemplateContainer/semopenalex-citation-subgraph/context> {
   Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/semopenalex-citation-subgraph> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryTemplateContainer/semopenalex-citation-subgraph>
     a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#ConstructTemplate>;
     rdfs:label "SemOpenAlex Citation Subgraph";
@@ -82,7 +82,7 @@
     <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/SemOpenAlex_Citation_Subgraph>;
     <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/1>,
       <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/0>, <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/2> .
-  
+
   <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/1> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "topic";
     rdfs:comment "";
@@ -90,14 +90,14 @@
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/semopenalex-citation-subgraph/predicate/topic>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI;
     <http://spinrdf.org/spl#defaultValue> <https://semopenalex.org/concept/C41008148> .
-  
+
   <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/0> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "publication";
     rdfs:comment "";
     <http://spinrdf.org/spl#optional> true;
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/semopenalex-citation-subgraph/predicate/publication>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI .
-  
+
   <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/2> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "author";
     rdfs:comment "";
@@ -109,7 +109,7 @@
 
 <https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network/context> {
   Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network>
     a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#ConstructTemplate>;
     rdfs:label "Co-Author Network";
@@ -119,7 +119,7 @@
     <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/lVrXCJLTgpTWBUUcNrGlrqdGXJQrmyVfOoKbLpBS>;
     <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/co-author-network/arg/0>,
       <http://metaphacts.com/query/co-author-network/arg/1> .
-  
+
   <http://metaphacts.com/query/co-author-network/arg/1> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "topic";
     rdfs:comment "";
@@ -127,7 +127,7 @@
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/co-author-network/predicate/topic>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI;
     <http://spinrdf.org/spl#defaultValue> <https://semopenalex.org/concept/C41008148> .
-  
+
   <http://metaphacts.com/query/co-author-network/arg/0> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "author";
     rdfs:comment "";
@@ -139,7 +139,7 @@
 
 <https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query/context> {
   Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query>
     a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#SelectTemplate>;
     rdfs:label "Workflow Metadata Query";
@@ -148,7 +148,7 @@
     rdfs:comment "Workflow Metadata Query";
     <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query>;
     <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/workflow-metadata-query/arg/0> .
-  
+
   <http://metaphacts.com/query/workflow-metadata-query/arg/0> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "Workflow";
     rdfs:comment "";
@@ -161,7 +161,7 @@
 
 <https://graph-massivizer.metaphacts.net/queryContainer/Co-Author_Network/context> {
   Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/Co-Author_Network> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryContainer/Co-Author_Network> a ldp:Resource,
       prov:Entity, sp:Query, sp:Construct;
     rdfs:label "Co-Author Network";
@@ -174,11 +174,7 @@ PREFIX soaa: <https://semopenalex.org/author/>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX soa: <https://semopenalex.org/ontology/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-CONSTRUCT {
-  ?author1 gm:hasCoauthor ?author2.
-  soaa:A5006947708 gm:hasCoauthor ?author1.
-}
-WHERE {
+SELECT ?author1 ?author2 WHERE {
   SERVICE Repository:semopenalex {
     SELECT ?author1 ?author1Name WHERE {
       ?work dct:creator soaa:A5006947708, ?author1;
@@ -201,7 +197,7 @@ WHERE {
 
 <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query/context> {
   Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query> a
       ldp:Resource, prov:Entity, sp:Query, sp:Select;
     rdfs:label "Workflow Metadata Query";
@@ -218,14 +214,14 @@ WHERE {
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?task ?first ?next ?bgo ?algorithm ?graph ?language ?platform ?sequential ?hardwareRequirement WHERE {
       graph <file:/workflow.ttl> {
-       ?workflow bgo:hasFirstTask/ bgo:hasNextTask* ?task .    
+       ?workflow bgo:hasFirstTask/ bgo:hasNextTask* ?task .
         BIND(EXISTS{?workflow bgo:hasFirstTask ?task} as ?first)
         ?task bgo:correspondsToBgoDescription ?bgo .
         OPTIONAL{?task bgo:hasNextTask ?next}
         ?bgo bgo:hasImplementation ?algorithm;
              bgo:associatedWithGraphHandle ?graph .
-     ?algorithm bgo:implementationLanguage ?language; 
-                bgo:platformIdentifier ?platform; 
+     ?algorithm bgo:implementationLanguage ?language;
+                bgo:platformIdentifier ?platform;
                 bgo:streaming ?sequential .
      OPTIONAL{?algorithm bgo:requiresHardware ?hardwareRequirement }
       }

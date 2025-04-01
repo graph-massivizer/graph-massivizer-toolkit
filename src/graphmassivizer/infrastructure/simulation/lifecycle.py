@@ -5,8 +5,8 @@ from typing import Any, Optional, Type
 from statemachine import Event, State, StateMachine
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode)
-
+from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode)
+from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
 
 class LifecycleState(StateMachine):
 
@@ -32,8 +32,7 @@ class LoggingListener:
 
 class Simulation:
 
-    def __init__(self, number_of_task_nodes: int) -> None:
-        self.number_of_task_nodes = number_of_task_nodes
+    def __init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.INFO)
         self.state: LifecycleState = LifecycleState()
@@ -84,19 +83,28 @@ class Simulation:
             zookeeper = ZookeeperNode(Machine(0, self.__machine_descriptor), self.__network_name)
 
             workflow_manager = WorkflowManagerNode(Machine(1, self.__machine_descriptor), self.__network_name)
-            
+
             hdfs_node = HDFSNode(Machine(2, self.__machine_descriptor), self.__network_name)
 
-            # adding the task managers
+            hdfs_data_node = HDFSDataNode(Machine(2, self.__machine_descriptor), self.__network_name)
+
+            inputPipeline = InputPipeline()
+
+            DAG,first = inputPipeline.composeDAG()
+
+			# adding the task managers
             task_managers: list[TaskManagerNode] = []
+            task = first
             offset = 3
-            for i in range(self.number_of_task_nodes):
-                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name)
+            for i in range(len(DAG['nodes'])):
+                self.logger.info(f"Creating task manager for task {task} with args {DAG['args']}")
+                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name,task,DAG['args'])
                 task_managers.append(tm)
+                task = DAG['nodes'][list(first['next'])[0]]
             self.cluster = Cluster(
-                zookeeper, 
-                workflow_manager, 
-                task_managers, 
+                zookeeper,
+                workflow_manager,
+                task_managers,
                 self.__network_name,
                 hdfs_node)
 
@@ -113,20 +121,27 @@ class Simulation:
             self.logger.info("Zookeeper deployed")
             zookeeper.wait_for_zookeeper(10)
             self.logger.info("Zookeeper ready")
-            
+
             # 3. Deploy the HDFS node
             self.logger.info("Deploying HDFS node...")
             hdfs_node.deploy()
-            hdfs_node.wait_for_hdfs(timeout=200)
-            self.logger.info("HDFS node is ready")
+            #hdfs_node.wait_for_hdfs(timeout=20000)
+
+            # 3. Deploy the HDFS node
+            self.logger.info("Deploying HDFS data node...")
+            hdfs_data_node.deploy()
+            self.logger.info("HDFS data node is ready")
+
+            hdfs_node.wait_for_hdfs(timeout=20000)
+            self.logger.info("HDFS is ready")
             hdfs_node.create_hdfs_directory("/tmp")
 
             workflow_manager.deploy()
             self.logger.info("Workflow Manager started")
 
-            for tm in task_managers:
-                tm.deploy()
-                self.logger.info(f"Task Manager started on {tm.node_id}")
+            for task_manager in task_managers:
+                task_manager.deploy()
+                self.logger.info(f"Task Manager started on Node {task_manager.node_id} for BGO {task_manager.task['bgo']}")
 
         except Exception:
             self.fail()

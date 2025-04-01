@@ -1,22 +1,30 @@
 import json
 import re
+import io
 
 from graphmassivizer.core.connectors.metaphactory import MetaphactoryConnector
 
 class UserInputHandler:
 
-	def __init__(self,metaphactoryAddress):
+	def __init__(self,
+				 metaphactoryAddress,
+				 bgoArgs={'inputNode':'https://semopenalex.org/author/A5006947708','topic':'https://semopenalex.org/concept/C41008148','author':'https://semopenalex.org/author/A5006947708'}):
 		self.metaphactory = MetaphactoryConnector(metaphactoryAddress)
-		self.DAG = {"directed": False, "multigraph": False, "graph":None, "nodes":{}, "edges":{}}
+		self.DAG = {"args":bgoArgs, "directed": False, "multigraph": False, "nodes":{}, "edges":{}}
+		if 'graph' not in self.DAG['args']:
+			self.DAG['args']['graph'] = self.defaultGraph()
 
 	def getWorkflow(self,workflowIRI,availableBGOs):
 		return self.formatWorkflow(json.loads(self.metaphactory.workflowQuery(workflowIRI)),workflowIRI,availableBGOs)
+
+	def defaultGraph(self):
+		return io.TextIOWrapper(io.BytesIO(self.metaphactory.coauthorQueryCSV(self.DAG['args']['topic'],self.DAG['args']['author'])[17:]))
 
 	def formatIRI(self,iriString):
 		return re.split(r"/",iriString)[-1]
 
 	def formatWorkflow(self,queryResult,workflowIRI,availableBGOs):
-		self.DAG["graph"] = self.formatIRI(queryResult['results']['bindings'][0]['graph']['value'])
+		#self.DAG["graph"] = self.formatIRI(queryResult['results']['bindings'][0]['graph']['value'])
 
 		for queryItem in queryResult['results']['bindings']:
 			id = self.formatIRI(queryItem["task"]['value'])

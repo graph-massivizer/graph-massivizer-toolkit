@@ -1,4 +1,4 @@
-from graphmassivizer.core.input.userInputHandler import UserInputHandler
+from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
@@ -9,11 +9,10 @@ import inspect, sys
 
 class InputPipeline:
 
-	defaultWorkflow = "https://ontologies.metaphacts.com/bgo-ontology/instances/workflow-deae5723-dafb-4e79-8648-0510f0312958"
-	defaultMetaphactoryAddress = "http://localhost:10214/"
-	defaultBGOs = {x[1].implementationId:{'name':x[0],'class':x[1]} for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"}
-
-	def __init__(self,metaphactoryAddress=defaultMetaphactoryAddress,workflowIRI=defaultWorkflow,availableBGOs=defaultBGOs):
+	def __init__(self,
+				 metaphactoryAddress="http://localhost:10214/",
+				 workflowIRI="https://ontologies.metaphacts.com/bgo-ontology/instances/workflow-deae5723-dafb-4e79-8648-0510f0312958",
+				 availableBGOs={x[1].implementationId:{'name':x[0],'class':x[1]} for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"}):
 		self.userInputHandler = UserInputHandler(metaphactoryAddress)
 		self.workflowIRI = workflowIRI
 		self.availableBGOs = availableBGOs

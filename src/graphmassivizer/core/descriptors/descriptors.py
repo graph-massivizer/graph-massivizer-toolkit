@@ -38,7 +38,7 @@ class Descriptor(ABC):
 
 
 @dataclass
-class MachineDescriptor(Descriptor):
+class MachineDescriptor:
     address: str
     host_name: str
     hardware: str

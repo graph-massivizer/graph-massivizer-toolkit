@@ -62,14 +62,14 @@ def run_simulation():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
     logging.getLogger("docker.utils.config").setLevel(logging.ERROR)
-    with Simulation(10) as simulation:
+    with Simulation() as simulation:
         # simulation.wait_for_completion()
-        
-        # DO STUFF HERE 
+
+        # DO STUFF HERE
         time.sleep(60)
-        
+
         print("Simulation has started, now something useful should happen.")
-        
+
 
 def start_task_manager():
     task_manager_main.main()
@@ -107,7 +107,7 @@ def wf_start():
 def interactive():
     """
     Starts an interactive command loop with the logging server running in the background.
-    
+
     Available commands:
       - simulate      (to run a simulation)
       - tm start      (to start the task manager)
@@ -121,7 +121,7 @@ def interactive():
 
     click.echo("Entering interactive CLI mode. Available commands: simulate, 'tm start', 'wf start'")
     click.echo("Type 'exit' or 'quit' to leave interactive mode.\n")
-    
+
     while True:
         try:
             cmd = input("Command> ").strip().lower()
@@ -140,7 +140,7 @@ def interactive():
             start_workflow_manager()
         else:
             click.echo("Unknown command. Try 'simulate', 'tm start', 'wf start', or 'exit'.")
-        
+
         # Optionally, sleep a short time to yield to background threads.
         time.sleep(0.1)
 
