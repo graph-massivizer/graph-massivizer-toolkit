@@ -179,6 +179,13 @@ def main() -> None:
             machine=machine
         )
         
+        
+        
+        
+        # execute_use_case_0();
+        
+        
+        
         # TODO Zookeeper listener for triggering workflow execution
 
         # The InfrastructureManager will handle storing the environment model into ZooKeeper
@@ -194,23 +201,43 @@ def main() -> None:
         if 'infrastructure_manager' in locals():
             infrastructure_manager.shutdown_infrastructure_manager()
             
+            
 def execute_dataflow_job(user_defined_json_DAG) -> None:
-    
     # TODO Daniel
-    
     # Statemachine to manage the lifecycle of the Workload Manager
-    
     # Transformation PHASE 1 - 5
     # parallelizer
     # optimization_1
     # optimization_2
     # ??
     # scheduler
-    
-    
     # Phase 6 EXECUTION
+    pass
+
+
+def execute_use_case_0() -> None:
+    
+    
+    # 1. INITIALIZE (the new job) load the the DAG from file
+    
+    # 2. PARALLELIZE
+    
+    # 3. OPTIMIZE I (optimize the DAG)
+    
+    # 4. OPTIMIZE II (greenify the DAG)
+    
+    # 5. SCHEDULE (schedule the DAG)
+    # 5.1 Assignemend of DAG BGO descriptors to machine descriptors
+    # 5.2 BGO descriptor + machine descriptor mapping = deploymentdescriptor
+    # 5.3 Put deployment descriptor into Zookeeper
+    
+    # 6. DEPLOY (deploy the DAG)
+    
+    # 7. RUN (run the DAG)
     
     pass
+
+
 
 if __name__ == '__main__':
     main()
