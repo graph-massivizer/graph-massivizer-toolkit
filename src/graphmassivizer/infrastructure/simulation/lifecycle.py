@@ -98,7 +98,7 @@ class Simulation:
             offset = 3
             for i in range(len(DAG['nodes'])):
                 self.logger.info(f"Creating task manager for task {task} with args {DAG['args']}")
-                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name,task,DAG['args'])
+                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name)
                 task_managers.append(tm)
                 task = DAG['nodes'][list(first['next'])[0]]
             self.cluster = Cluster(
@@ -141,7 +141,7 @@ class Simulation:
 
             for task_manager in task_managers:
                 task_manager.deploy()
-                self.logger.info(f"Task Manager started on Node {task_manager.node_id} for BGO {task_manager.task['bgo']}")
+                self.logger.info(f"Task Manager started on Node {task_manager.node_id}")
 
         except Exception:
             self.fail()

@@ -98,9 +98,6 @@ def main() -> None:
 
         machine = Machine.parse_from_env(prefix="TM_")
         task_manager = TaskManager(zookeeper_host, machine, fs)
-        task = ast.literal_eval(os.environ.get('TASK'))
-        args = ast.literal_eval(os.environ.get('ARGS'))
-        print(task)
         logger.info(f"I am Task Manager {str(machine.ID)}")
         #logger.info(f"executing task in task manager {task_manager.__container_name} for BGO {task_manager.task['bgo']}")
         cl = list(task['implementations'].values())[0]
