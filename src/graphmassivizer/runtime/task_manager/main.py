@@ -16,28 +16,31 @@ import pyarrow as pa
 import pyarrow.fs as pafs
 
 from graphmassivizer.core.descriptors.descriptors import Machine
+from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
 
 logging.basicConfig(level=logging.INFO)
 
 
 class TaskManager:
-    def __init__(self, zookeeper_host, machine, hdfs_filesystem) -> None:
+    def __init__(self, zookeeper_host, hdfs_filesystem) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.zookeeper_host = zookeeper_host
-        self.machine = machine
-        self.zk = KazooClient(hosts=self.zookeeper_host)
+        self.zk = ZookeeperStateManager(hosts=self.zookeeper_host)
+        self.machine = Machine.parse_from_env(self.zk,prefix="TM_")
         self.fs = hdfs_filesystem
-        self.zk.start()
         self.register_self()
 
     def register_self(self) -> None:
         node_path = f'/taskmanagers/{self.machine.ID}'
         mashine_utf8 = self.machine.to_utf8()
-        if self.zk.exists(node_path):
-            self.zk.set(node_path, mashine_utf8)
+        if self.zk.zk.exists(node_path):
+            self.zk.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.create(node_path, mashine_utf8, makepath=True)
+            self.zk.zk.create(node_path, mashine_utf8, makepath=True)
         self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
+
+    def run(self,alg,args):
+        alg(args)
 
     def demo_hdfs_io(self) -> None:
         file_path = f"/tmp/task_manager_hello_{self.machine.ID}.txt"
@@ -94,17 +97,10 @@ def main() -> None:
         hdfs_port = int(hdfs_port)
 
         # Create a PyArrow HadoopFileSystem
-        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port, user='root')
+        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
 
-
-
-
-
-
-
-        machine = Machine.parse_from_env(prefix="TM_")
-        task_manager = TaskManager(zookeeper_host, machine, fs)
-        logger.info("I am Task Manager " + str(machine.ID))
+        task_manager = TaskManager(zookeeper_host, fs)
+        logger.info("I am Task Manager " + str(task_manager.machine.ID))
 
         # Optional: demonstrate HDFS I/O
         task_manager.demo_hdfs_io()
@@ -114,6 +110,7 @@ def main() -> None:
             pass
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+        raise e
     finally:
         if 'task_manager' in locals():
             task_manager.shutdown()

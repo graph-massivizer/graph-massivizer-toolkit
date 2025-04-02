@@ -1,9 +1,15 @@
 import logging
 import socket
+import time
 from types import TracebackType
 from typing import Any, Optional, Type
 from statemachine import Event, State, StateMachine
-from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor)
+import docker
+from functools import reduce
+import pyarrow.fs as pafs
+import pyarrow as pa
+
+from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
 from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode)
 from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
@@ -12,12 +18,20 @@ class LifecycleState(StateMachine):
 
     CREATED = State(initial=True)
     INITIALIZED = State()
+    INPUT_RECEIVED = State()
+    PARALLELIZED = State()
+    OPTIMIZED = State()
+    GREENIFIED = State()
     RUNNING = State()
     FAILED = State(final=True)
     COMPLETED = State(final=True)
 
     initialize = Event(CREATED.to(INITIALIZED))
-    run = Event(INITIALIZED.to(RUNNING))
+    get_input = Event(INITIALIZED.to(INPUT_RECEIVED))
+    parallelize = Event(INPUT_RECEIVED.to(PARALLELIZED))
+    optimize = Event(PARALLELIZED.to(OPTIMIZED))
+    greenify = Event(OPTIMIZED.to(GREENIFIED))
+    run = Event(GREENIFIED.to(RUNNING))
     fail = Event(RUNNING.to(FAILED))
     complete = Event(RUNNING.to(COMPLETED))
 
@@ -30,6 +44,28 @@ class LoggingListener:
         self.logger.info(f"With event {event} to state {state}")
 
 
+def is_container_running(container_name: str) -> Optional[bool]:
+    """Verify the status of a container by it's name
+
+    :param container_name: the name of the container
+    :return: boolean or None
+    """
+    RUNNING = "running"
+    # Connect to Docker using the default socket or the configuration
+    # in your environment
+    docker_client = docker.from_env()
+    # Or give configuration
+    # docker_socket = "unix://var/run/docker.sock"
+    # docker_client = docker.DockerClient(docker_socket)
+
+    try:
+        container = docker_client.containers.get(container_name)
+    except docker.errors.NotFound as exc:
+        print(f"Check container name!\n{exc.explanation}")
+    else:
+        container_state = container.attrs["State"]
+        return container_state["Status"] == RUNNING
+
 class Simulation:
 
     def __init__(self) -> None:
@@ -37,7 +73,7 @@ class Simulation:
         self.logger.setLevel(logging.INFO)
         self.state: LifecycleState = LifecycleState()
         self.state.add_listener(LoggingListener(self.logger))  # type: ignore
-        self.__machine_descriptor = MachineDescriptor(
+        self.__machine_descriptor = SimulationMachineDescriptor(
             address="",
             host_name=socket.gethostname(),
             hardware="simulated",
@@ -77,6 +113,8 @@ class Simulation:
         # TODO consider using the state transition as a trigger to execute the logic.
         self.state.initialize()
 
+        DAG,first = InputPipeline(self.state).composeDAG() # state optional for tracing state, args can be added to compose DAG, default is to run UC0
+
         try:
 
             # create zookeeper
@@ -88,19 +126,15 @@ class Simulation:
 
             hdfs_data_node = HDFSDataNode(Machine(2, self.__machine_descriptor), self.__network_name)
 
-            inputPipeline = InputPipeline()
-
-            DAG,first = inputPipeline.composeDAG()
-
-			# adding the task managers
+            # adding the task managers
             task_managers: list[TaskManagerNode] = []
             task = first
             offset = 3
             for i in range(len(DAG['nodes'])):
-                self.logger.info(f"Creating task manager for task {task} with args {DAG['args']}")
-                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name)
+                self.logger.info(f"Creating task manager for BGO {task['bgo']} ")
+                tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name,task)
                 task_managers.append(tm)
-                task = DAG['nodes'][list(first['next'])[0]]
+                task = DAG['nodes'][list(task['next'])[0]] if 'next' in task else None
             self.cluster = Cluster(
                 zookeeper,
                 workflow_manager,
@@ -148,6 +182,7 @@ class Simulation:
             raise
 
         self.logger.info("Full simulation is running...")
+		
 
     def fail(self) -> None:
         self._try_complete_nodes()

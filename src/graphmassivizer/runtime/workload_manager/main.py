@@ -15,6 +15,7 @@ from kazoo.client import KazooClient
 from statemachine import Event, State, StateMachine
 from typing import Any, Optional, Type
 from graphmassivizer.runtime.workload_manager.infrastructure_manager import InfrastructureManager
+from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
 from graphmassivizer.core.descriptors.descriptors import Machine
 
 logging.basicConfig(level=logging.INFO)
@@ -79,15 +80,14 @@ logging.basicConfig(level=logging.INFO)
 
 class WorkloadManager:
 
-    def __init__(self, zookeeper_host, machine, hdfs_fs) -> None:
+    def __init__(self, zookeeper_host, hdfs_fs) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         # self.state: WorkloadManagerState = WorkloadManagerState()
         # self.state.add_listener(LoggingListener(self.logger))  # type: ignore
         self.zookeeper_host = zookeeper_host
-        self.machine = machine
         self.fs = hdfs_fs
-        self.zk = KazooClient(hosts=self.zookeeper_host)
-        self.zk.start()
+        self.zk = ZookeeperStateManager(self.zookeeper_host)
+        self.machine = Machine.parse_from_env(self.zk,prefix="WM_")
         self.register_self()
         self.infrastructure_manager = None
 
@@ -132,10 +132,10 @@ class WorkloadManager:
     def register_self(self) -> None:
         node_path = f'/workloadmanagers/{self.machine.ID}'
         mashine_utf8 = self.machine.to_utf8()
-        if self.zk.exists(node_path):
-            self.zk.set(node_path, mashine_utf8)
+        if self.zk.zk.exists(node_path):
+            self.zk.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.create(node_path, mashine_utf8, makepath=True)
+            self.zk.zk.create(node_path, mashine_utf8, makepath=True)
         self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
 
 
@@ -157,26 +157,17 @@ def main() -> None:
             raise ValueError(f"Could not parse HDFS_NAMENODE={hdfs_namenode}")
         hdfs_host, hdfs_port = match.groups()
         hdfs_port = int(hdfs_port)
-        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port, user='root')
+        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
 
-
-
-        machine = Machine.parse_from_env(prefix="WM_")
-        workload_manager = WorkloadManager(zookeeper_host, machine, fs)
-        logger.info("I am Workload Manager " + str(machine.ID))
-
-
+        workload_manager = WorkloadManager(zookeeper_host, fs)
+        logger.info("I am Workload Manager " + str(workload_manager.machine.ID))
 
         # Optional: demonstrate HDFS I/O
         workload_manager.demo_hdfs_io()
 
-
-
         # Instantiate the InfrastructureManager
         infrastructure_manager = InfrastructureManager(
-            workload_manager=workload_manager,
-            zookeeper_host=zookeeper_host,
-            machine=machine
+            workload_manager=workload_manager
         )
 
         # TODO Zookeeper listener for triggering workflow execution
@@ -189,6 +180,7 @@ def main() -> None:
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+        raise e
     finally:
         # Ensure that the infrastructure manager shuts down properly
         if 'infrastructure_manager' in locals():

@@ -435,11 +435,12 @@ class WorkflowManagerNode(SimulatedNode):
 # TASK MANAGER NODE
 # ----------------------------------------
 class TaskManagerNode(SimulatedNode):
-    def __init__(self, machine: Machine, docker_network_name: str) -> None:
+    def __init__(self, machine: Machine, docker_network_name: str, task) -> None:
         self.__container_name = f"task_manager_{machine.ID}"
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR TM")
         self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
+        self.task = task
 
         super().__init__(machine,
                          docker_network_name,
@@ -454,6 +455,9 @@ class TaskManagerNode(SimulatedNode):
             machine=machine,
             zookeeper_host="zookeeper"
         )
+
+    def run(self,args) -> None:
+        list(self.task['implementations'].values())[0]['class'].run(args) # ONLY WORKS WITH SEQUENTIAL WORKFLOWS
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__task_manager_environment

@@ -10,22 +10,31 @@ import inspect, sys
 class InputPipeline:
 
 	def __init__(self,
+				 state=None,
 				 metaphactoryAddress="http://localhost:10214/",
 				 workflowIRI="https://ontologies.metaphacts.com/bgo-ontology/instances/workflow-deae5723-dafb-4e79-8648-0510f0312958",
 				 availableBGOs={x[1].implementationId:{'name':x[0],'class':x[1]} for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"}):
 		self.userInputHandler = UserInputHandler(metaphactoryAddress)
 		self.workflowIRI = workflowIRI
 		self.availableBGOs = availableBGOs
+		self.state = state
 
 	def composeDAG(self):
 
-		DAG = self.userInputHandler.getWorkflow(self.workflowIRI,self.availableBGOs)
+		if self.state: self.state.get_input()
 
+		DAG = self.userInputHandler.getWorkflow(self.workflowIRI,self.availableBGOs)
 		firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,DAG['nodes'].items(),None)[1]
+
+		if self.state: self.state.parallelize()
 
 		Parallelizer.parallelize(DAG)
 
+		if self.state: self.state.optimize()
+
 		Optimizer_1.optimize(DAG)
+
+		if self.state: self.state.greenify()
 
 		Optimizer_2.optimize(DAG)
 
