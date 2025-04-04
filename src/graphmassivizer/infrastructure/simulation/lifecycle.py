@@ -1,23 +1,45 @@
 import logging
 import socket
+import time
 from types import TracebackType
 from typing import Any, Optional, Type
 from statemachine import Event, State, StateMachine
-from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor)
-from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode)
+import docker
+from functools import reduce
+import pyarrow.fs as pafs
+import pyarrow as pa
+import inspect
+import json
+import pickle
 
+from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
+from graphmassivizer.infrastructure.simulation.cluster import Cluster
+from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode)
+from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
+from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
+from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
+from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
+from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
 
 class LifecycleState(StateMachine):
 
     CREATED = State(initial=True)
     INITIALIZED = State()
+    INPUT_RECEIVED = State()
+    PARALLELIZED = State()
+    OPTIMIZED = State()
+    GREENIFIED = State()
     RUNNING = State()
     FAILED = State(final=True)
     COMPLETED = State(final=True)
 
     initialize = Event(CREATED.to(INITIALIZED))
-    run = Event(INITIALIZED.to(RUNNING))
+    get_input = Event(INITIALIZED.to(INPUT_RECEIVED))
+    parallelize = Event(INPUT_RECEIVED.to(PARALLELIZED))
+    optimize = Event(PARALLELIZED.to(OPTIMIZED))
+    greenify = Event(OPTIMIZED.to(GREENIFIED))
+    run = Event(GREENIFIED.to(RUNNING))
     fail = Event(RUNNING.to(FAILED))
     complete = Event(RUNNING.to(COMPLETED))
 
@@ -30,15 +52,36 @@ class LoggingListener:
         self.logger.info(f"With event {event} to state {state}")
 
 
+def is_container_running(container_name: str) -> Optional[bool]:
+    """Verify the status of a container by it's name
+
+    :param container_name: the name of the container
+    :return: boolean or None
+    """
+    RUNNING = "running"
+    # Connect to Docker using the default socket or the configuration
+    # in your environment
+    docker_client = docker.from_env()
+    # Or give configuration
+    # docker_socket = "unix://var/run/docker.sock"
+    # docker_client = docker.DockerClient(docker_socket)
+
+    try:
+        container = docker_client.containers.get(container_name)
+    except docker.errors.NotFound as exc:
+        print(f"Check container name!\n{exc.explanation}")
+    else:
+        container_state = container.attrs["State"]
+        return container_state["Status"] == RUNNING
+
 class Simulation:
 
-    def __init__(self, number_of_task_nodes: int) -> None:
-        self.number_of_task_nodes = number_of_task_nodes
+    def __init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.INFO)
         self.state: LifecycleState = LifecycleState()
         self.state.add_listener(LoggingListener(self.logger))  # type: ignore
-        self.__machine_descriptor = MachineDescriptor(
+        self.__machine_descriptor = SimulationMachineDescriptor(
             address="",
             host_name=socket.gethostname(),
             hardware="simulated",
@@ -84,27 +127,30 @@ class Simulation:
             zookeeper = ZookeeperNode(Machine(0, self.__machine_descriptor), self.__network_name)
 
             workflow_manager = WorkflowManagerNode(Machine(1, self.__machine_descriptor), self.__network_name)
-            
+
             hdfs_node = HDFSNode(Machine(2, self.__machine_descriptor), self.__network_name)
+
+            hdfs_data_node = HDFSDataNode(Machine(2, self.__machine_descriptor), self.__network_name)
 
             # adding the task managers
             task_managers: list[TaskManagerNode] = []
             offset = 3
-            for i in range(self.number_of_task_nodes):
+            for i in range(5):
+                self.logger.info(f"Creating task manager{offset+i}")
                 tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name)
                 task_managers.append(tm)
             self.cluster = Cluster(
-                zookeeper, 
-                workflow_manager, 
-                task_managers, 
+                zookeeper,
+                workflow_manager,
+                task_managers,
                 self.__network_name,
-                hdfs_node)
+                hdfs_node,
+                [hdfs_data_node])
 
         except Exception as e:
             self.state.fail()
             raise e
 
-        self.state.run()
         try:
             self.cluster.ensure_network()
 
@@ -113,20 +159,26 @@ class Simulation:
             self.logger.info("Zookeeper deployed")
             zookeeper.wait_for_zookeeper(10)
             self.logger.info("Zookeeper ready")
-            
+
             # 3. Deploy the HDFS node
             self.logger.info("Deploying HDFS node...")
             hdfs_node.deploy()
-            hdfs_node.wait_for_hdfs(timeout=200)
-            self.logger.info("HDFS node is ready")
-            hdfs_node.create_hdfs_directory("/tmp")
+            #hdfs_node.wait_for_hdfs(timeout=20000)
+
+            # 3. Deploy the HDFS node
+            self.logger.info("Deploying HDFS data node...")
+            hdfs_data_node.deploy()
 
             workflow_manager.deploy()
             self.logger.info("Workflow Manager started")
 
-            for tm in task_managers:
-                tm.deploy()
-                self.logger.info(f"Task Manager started on {tm.node_id}")
+            for task_manager in task_managers:
+                task_manager.deploy()
+                self.logger.info(f"Task Manager started on Node {task_manager.node_id}")
+
+            hdfs_node.wait_for_hdfs(timeout=20000)
+            hdfs_node.create_hdfs_directory("/tmp")
+            self.logger.info("HDFS is ready")
 
         except Exception:
             self.fail()
@@ -147,22 +199,46 @@ class Simulation:
         if (self.state.current_state != LifecycleState.FAILED):
             self.state.complete()
 
+    def run_default_input_pipeline(self):
+        self.get_input()
+        self.parallelize()
+        self.optimize()
+        self.greenify()
+        self.run()
+        self.complete()
+
+    def get_input(self) -> None:
+        self.DAG = InputPipeline().getWorkflow()
+        self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
+        self.state.get_input()
+
+    def parallelize(self) -> None:
+        Parallelizer.parallelize(self.DAG)
+        self.state.parallelize()
+
+    def optimize(self) -> None:
+        Optimizer_1.optimize(self.DAG)
+        self.state.optimize()
+
+    def greenify(self) -> None:
+        Optimizer_2.optimize(self.DAG)
+        self.state.greenify()
+
+    def run(self) -> None:
+        self.state.run()
+        task = self.firstTask
+        args = self.DAG['args']
+        i = 0
+        while task:
+            algorithm = list(task['implementations'].values())[0]['class'].run
+            self.cluster.task_managers[i].run(algorithm,args)
+            task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
+            i += 1
+
     def wait_for_completion(self) -> None:
         raise NotImplementedError()
 
     def _try_complete_nodes(self):
-        try:
-            self.cluster.zookeeper.shutdown()
-            self.logger.info("Zookeeper stopped")
-        except Exception as e:
-            self.logger.info("Closing the zookeeper failed. " + str(e))
-            self.state.fail()
-        try:
-            self.cluster.workload_manager.shutdown()
-            self.logger.info("Workload manager stopped")
-        except Exception as e:
-            self.logger.info("Closing the workload manager failed. " + str(e))
-            self.state.fail()
         for tm in self.cluster.task_managers:
             try:
                 tm.shutdown()
@@ -172,6 +248,27 @@ class Simulation:
                 self.logger.info(
                     f"Closing the task manager {tm.node_id} failed. " + str(e))
                 self.state.fail()
+        try:
+            self.cluster.workload_manager.shutdown()
+            self.logger.info("Workload manager stopped")
+        except Exception as e:
+            self.logger.info("Closing the workload manager failed. " + str(e))
+            self.state.fail()
+        try:
+            self.cluster.zookeeper.shutdown()
+            self.logger.info("Zookeeper stopped")
+        except Exception as e:
+            self.logger.info("Closing the zookeeper failed. " + str(e))
+            self.state.fail()
+        try:
+            for dataNode in self.cluster.hdfs_data_nodes:
+                dataNode.shutdown()
+                self.logger.info("HDFS Data Node stopped")
+            self.cluster.hdfs_node.shutdown()
+            self.logger.info("HDFS Name Node stopped")
+        except Exception as e:
+            self.logger.info("Closing the hdfs failed. " + str(e))
+            self.state.fail()
 
     def get_status(self) -> tuple[str, list[dict[str, Any]]]:
         # Collect status from the cluster and nodes

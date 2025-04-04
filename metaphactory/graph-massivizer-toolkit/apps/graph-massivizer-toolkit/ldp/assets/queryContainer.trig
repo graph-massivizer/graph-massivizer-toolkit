@@ -18,108 +18,19 @@
 @prefix dataset: <http://ontologies.metaphacts.com/dataset_ontology/> .
 @prefix sp: <http://spinrdf.org/sp#> .
 
-<https://graph-massivizer.metaphacts.net/queryTemplateContainer/graph-handle/context> {
-  Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/graph-handle> .
-  
-  <https://graph-massivizer.metaphacts.net/queryTemplateContainer/graph-handle> a ldp:Resource,
-      prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#ConstructTemplate>;
-    rdfs:label "Graph Handle";
-    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/aaronEberhart>;
-    prov:generatedAtTime "2024-06-13T11:00:06.283Z"^^xsd:dateTime;
-    rdfs:comment "Graph Handle";
-    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/Graph_Handle>;
-    <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/graph-handle/arg/4>,
-      <http://metaphacts.com/query/graph-handle/arg/2>, <http://metaphacts.com/query/graph-handle/arg/3>,
-      <http://metaphacts.com/query/graph-handle/arg/1>, <http://metaphacts.com/query/graph-handle/arg/0> .
-  
-  <http://metaphacts.com/query/graph-handle/arg/4> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "source";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/source>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI;
-    <http://spinrdf.org/spl#defaultValue> <file:/citation_network.ttl> .
-  
-  <http://metaphacts.com/query/graph-handle/arg/2> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "predicateEdge";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/predicateEdge>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI .
-  
-  <http://metaphacts.com/query/graph-handle/arg/3> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "graphHandle";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/graphHandle>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI;
-    <http://spinrdf.org/spl#defaultValue> gmi:graph-handle-instance .
-  
-  <http://metaphacts.com/query/graph-handle/arg/1> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "objectNode";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/objectNode>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI .
-  
-  <http://metaphacts.com/query/graph-handle/arg/0> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "subjectNode";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/graph-handle/predicate/subjectNode>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI .
-}
-
-<https://graph-massivizer.metaphacts.net/queryTemplateContainer/semopenalex-citation-subgraph/context> {
-  Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/semopenalex-citation-subgraph> .
-  
-  <https://graph-massivizer.metaphacts.net/queryTemplateContainer/semopenalex-citation-subgraph>
-    a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#ConstructTemplate>;
-    rdfs:label "SemOpenAlex Citation Subgraph";
-    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/aaronEberhart>;
-    prov:generatedAtTime "2024-11-05T09:27:57.554Z"^^xsd:dateTime;
-    rdfs:comment "SemOpenAlex Citation Subgraph";
-    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/SemOpenAlex_Citation_Subgraph>;
-    <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/1>,
-      <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/0>, <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/2> .
-  
-  <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/1> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "topic";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/semopenalex-citation-subgraph/predicate/topic>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI;
-    <http://spinrdf.org/spl#defaultValue> <https://semopenalex.org/concept/C41008148> .
-  
-  <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/0> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "publication";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/semopenalex-citation-subgraph/predicate/publication>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI .
-  
-  <http://metaphacts.com/query/semopenalex-citation-subgraph/arg/2> a <http://spinrdf.org/spl#Argument>;
-    rdfs:label "author";
-    rdfs:comment "";
-    <http://spinrdf.org/spl#optional> true;
-    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/semopenalex-citation-subgraph/predicate/author>;
-    <http://spinrdf.org/spl#valueType> xsd:anyURI;
-    <http://spinrdf.org/spl#defaultValue> <https://semopenalex.org/author/A5006947708> .
-}
-
 <https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network/context> {
   Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network>
-    a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#ConstructTemplate>;
+    a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#SelectTemplate>;
     rdfs:label "Co-Author Network";
-    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/aaronEberhart>;
+    prov:wasAttributedTo <http://www.metaphacts.com/ontologies/platform#anonymousUser>;
     prov:generatedAtTime "2025-03-07T10:40:24.082Z"^^xsd:dateTime;
     rdfs:comment "Co-Author Network";
-    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/lVrXCJLTgpTWBUUcNrGlrqdGXJQrmyVfOoKbLpBS>;
+    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/co-author-network>;
     <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/co-author-network/arg/0>,
       <http://metaphacts.com/query/co-author-network/arg/1> .
-  
+
   <http://metaphacts.com/query/co-author-network/arg/1> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "topic";
     rdfs:comment "";
@@ -127,7 +38,7 @@
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/co-author-network/predicate/topic>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI;
     <http://spinrdf.org/spl#defaultValue> <https://semopenalex.org/concept/C41008148> .
-  
+
   <http://metaphacts.com/query/co-author-network/arg/0> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "author";
     rdfs:comment "";
@@ -139,73 +50,67 @@
 
 <https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query/context> {
   Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query> .
-  
+
   <https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-metadata-query>
     a ldp:Resource, prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#SelectTemplate>;
     rdfs:label "Workflow Metadata Query";
-    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/aaronEberhart>;
+    prov:wasAttributedTo <http://www.metaphacts.com/ontologies/platform#anonymousUser>;
     prov:generatedAtTime "2025-03-14T09:10:30.844Z"^^xsd:dateTime;
     rdfs:comment "Workflow Metadata Query";
-    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query>;
+    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/workflow-metadata-query>;
     <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/workflow-metadata-query/arg/0> .
-  
+
   <http://metaphacts.com/query/workflow-metadata-query/arg/0> a <http://spinrdf.org/spl#Argument>;
     rdfs:label "Workflow";
     rdfs:comment "";
     <http://spinrdf.org/spl#optional> false;
     <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/workflow-metadata-query/predicate/workflow>;
     <http://spinrdf.org/spl#valueType> xsd:anyURI;
-    <http://spinrdf.org/spl#defaultValue> bgoi:workflow-deae5723-dafb-4e79-8648-0510f0312958 .
+    <http://spinrdf.org/spl#defaultValue> <https://ontologies.metaphacts.com/bgo-ontology/instances/workflow-deae5723-dafb-4e79-8648-0510f0312958> .
 }
 
 
-<https://graph-massivizer.metaphacts.net/queryContainer/Co-Author_Network/context> {
-  Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/Co-Author_Network> .
-  
-  <https://graph-massivizer.metaphacts.net/queryContainer/Co-Author_Network> a ldp:Resource,
-      prov:Entity, sp:Query, sp:Construct;
+<https://graph-massivizer.metaphacts.net/queryContainer/co-author-network/context> {
+  Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/co-author-network> .
+
+  <https://graph-massivizer.metaphacts.net/queryContainer/co-author-network> a ldp:Resource,
+      prov:Entity, sp:Query, sp:Select;
     rdfs:label "Co-Author Network";
-    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/aaronEberhart>;
+    prov:wasAttributedTo <http://www.metaphacts.com/ontologies/platform#anonymousUser>;
     prov:generatedAtTime "2024-06-28T09:00:28.158Z"^^xsd:dateTime;
-    sp:text """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX gm: <http://ontologies.metaphacts.com/graph-massivizer_ontology/>
-PREFIX soaa: <https://semopenalex.org/author/>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX soa: <https://semopenalex.org/ontology/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-CONSTRUCT {
-  ?author1 gm:hasCoauthor ?author2.
-  soaa:A5006947708 gm:hasCoauthor ?author1.
-}
-WHERE {
-  SERVICE Repository:semopenalex {
-    SELECT ?author1 ?author1Name WHERE {
-      ?work dct:creator soaa:A5006947708, ?author1;
-        rdf:type soa:Work;
-        soa:hasConcept <https://semopenalex.org/concept/C41008148>.
-      FILTER(soaa:A5006947708 != ?author1)
-    }
-  }
-  SERVICE Repository:semopenalex {
-    SELECT ?author2 ?author2Name WHERE {
-      ?work2 rdf:type soa:Work;
-        dct:creator ?author1, ?author2;
-        soa:hasConcept <https://semopenalex.org/concept/C41008148>.
-      FILTER(?author1 != ?author2)
-    }
-  }
-}""" .
+    sp:text """PREFIX Repository: <http://www.metaphacts.com/ontologies/repository#>
+	PREFIX soaa: <https://semopenalex.org/author/>
+	PREFIX dct: <http://purl.org/dc/terms/>
+	PREFIX soa: <https://semopenalex.org/ontology/>
+	PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	SELECT DISTINCT ?author1 ?author2 WHERE {
+	  SERVICE Repository:semopenalex {
+	    SELECT ?author1 ?author1Name WHERE {
+	      ?work dct:creator ?inputAuthor, ?author1;
+	        rdf:type soa:Work;
+	        soa:hasConcept ?topic.
+	      filter(?author1 != ?inputAuthor)
+	    }
+	  }
+	  SERVICE Repository:semopenalex {
+	    SELECT ?author2 ?author2Name WHERE {
+	      ?work2 rdf:type soa:Work;
+	        dct:creator ?author1, ?author2;
+	        soa:hasConcept ?topic.
+	      FILTER(?author1 != ?author2)
+	    }
+	  }
+	}""" .
 }
 
 
-<https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query/context> {
-  Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query> .
-  
-  <https://graph-massivizer.metaphacts.net/queryContainer/Workflow_Metadata_Query> a
+<https://graph-massivizer.metaphacts.net/queryContainer/workflow-metadata-query/context> {
+  Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/workflow-metadata-query> .
+
+  <https://graph-massivizer.metaphacts.net/queryContainer/workflow-metadata-query> a
       ldp:Resource, prov:Entity, sp:Query, sp:Select;
     rdfs:label "Workflow Metadata Query";
-    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/aaronEberhart>;
+    prov:wasAttributedTo <http://www.metaphacts.com/ontologies/platform#anonymousUser>;
     prov:generatedAtTime "2025-03-14T09:10:30.719Z"^^xsd:dateTime;
     sp:text """PREFIX bgo: <https://ontologies.metaphacts.com/bgo-ontology/>
     PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -218,14 +123,14 @@ WHERE {
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?task ?first ?next ?bgo ?algorithm ?graph ?language ?platform ?sequential ?hardwareRequirement WHERE {
       graph <file:/workflow.ttl> {
-       ?workflow bgo:hasFirstTask/ bgo:hasNextTask* ?task .    
+       ?workflow bgo:hasFirstTask/ bgo:hasNextTask* ?task .
         BIND(EXISTS{?workflow bgo:hasFirstTask ?task} as ?first)
         ?task bgo:correspondsToBgoDescription ?bgo .
         OPTIONAL{?task bgo:hasNextTask ?next}
         ?bgo bgo:hasImplementation ?algorithm;
              bgo:associatedWithGraphHandle ?graph .
-     ?algorithm bgo:implementationLanguage ?language; 
-                bgo:platformIdentifier ?platform; 
+     ?algorithm bgo:implementationLanguage ?language;
+                bgo:platformIdentifier ?platform;
                 bgo:streaming ?sequential .
      OPTIONAL{?algorithm bgo:requiresHardware ?hardwareRequirement }
       }

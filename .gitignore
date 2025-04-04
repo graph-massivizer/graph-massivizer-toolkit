@@ -166,5 +166,7 @@ venv
 .idea
 
 /metaphactory/graph-massivizer-toolkit/graphdb-data
-/tests/resources
+/tests/resources*
 untitled.*
+.tar
+.tgz

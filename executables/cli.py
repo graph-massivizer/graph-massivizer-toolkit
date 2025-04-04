@@ -5,10 +5,11 @@ import socketserver
 import pickle
 import struct
 import time
+import os
+
 from graphmassivizer.infrastructure.simulation.lifecycle import Simulation
 from graphmassivizer.runtime.task_manager import main as task_manager_main
 from graphmassivizer.runtime.workload_manager import main as workload_manager_main
-
 
 # https://docs.google.com/drawings/d/1FC5paw_2A3nFBcIW7s99Pk1I_bSUXy_2Uma1LtBmQ_c/edit?usp=sharing
 
@@ -62,14 +63,9 @@ def run_simulation():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
     logging.getLogger("docker.utils.config").setLevel(logging.ERROR)
-    with Simulation(10) as simulation:
+    with Simulation() as simulation:
         # simulation.wait_for_completion()
-        
-        # DO STUFF HERE 
-        time.sleep(60)
-        
-        print("Simulation has started, now something useful should happen.")
-        
+        simulation.run_default_input_pipeline()
 
 def start_task_manager():
     task_manager_main.main()
@@ -104,10 +100,15 @@ def wf_start():
     start_workflow_manager()
 
 @main.command()
+def simulate():
+    try: run_simulation()
+    except Exception as e: raise e
+
+@main.command()
 def interactive():
     """
     Starts an interactive command loop with the logging server running in the background.
-    
+
     Available commands:
       - simulate      (to run a simulation)
       - tm start      (to start the task manager)
@@ -121,7 +122,7 @@ def interactive():
 
     click.echo("Entering interactive CLI mode. Available commands: simulate, 'tm start', 'wf start'")
     click.echo("Type 'exit' or 'quit' to leave interactive mode.\n")
-    
+
     while True:
         try:
             cmd = input("Command> ").strip().lower()
@@ -133,14 +134,15 @@ def interactive():
             click.echo("Exiting interactive mode.")
             break
         elif cmd == "simulate":
-            run_simulation()
+            try: run_simulation()
+            except Exception as e: raise e
         elif cmd == "tm start":
             start_task_manager()
         elif cmd == "wf start":
             start_workflow_manager()
         else:
             click.echo("Unknown command. Try 'simulate', 'tm start', 'wf start', or 'exit'.")
-        
+
         # Optionally, sleep a short time to yield to background threads.
         time.sleep(0.1)
 

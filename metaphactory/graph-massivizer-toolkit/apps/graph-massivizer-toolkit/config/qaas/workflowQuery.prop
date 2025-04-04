@@ -2,4 +2,4 @@ iri = https://graph-massivizer.metaphacts.net/queryTemplateContainer/workflow-me
 disabled = false
 responseformat = application/x-turtle
 aclPermission = qaas:execute:*
-publisher = http://www.metaphacts.com/resource/user/admin
+publisher = http://www.metaphacts.com/ontologies/platform#anonymousUser

@@ -1,5 +1,5 @@
 iri = https://graph-massivizer.metaphacts.net/queryTemplateContainer/co-author-network
 disabled = false
-responseformat = application/x-turtle
+responseformat = text/csv
 aclPermission = qaas:execute:*
-publisher = http://www.metaphacts.com/resource/user/admin
+publisher = http://www.metaphacts.com/ontologies/platform#anonymousUser
