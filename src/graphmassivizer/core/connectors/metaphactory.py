@@ -3,7 +3,7 @@ from graphmassivizer.core.connectors.graphDatabaseConnector import GraphDatabase
 
 class MetaphactoryConnector:
 
-	coauthor = "/rest/qaas/coauthorGraphQueryCSV"
+	coauthor = "/rest/qaas/coauthorGraphQuery"
 	workflow = "/rest/qaas/workflowQuery"
 
 	def __init__(self,metaphactoryAddress):
@@ -21,22 +21,9 @@ class MetaphactoryConnector:
 		}
 		return self.endpoints[self.workflow].curl(headers,data)
 
-	def coauthorQueryCSV(self,topic,author):
-		headers = {
-			'Accept': 'text/csv',
-			'Content-Type': 'application/x-www-form-urlencoded',
-		}
-
-		data = {
-			'topic': topic,
-			'inputAuthor': author,
-		}
-
-		return self.endpoints[self.coauthor].curl(headers,data)
-
 	def coauthorQuery(self,topic,author):
 		headers = {
-			'Accept': 'application/ntriples',
+			'Accept': 'text/csv',
 			'Content-Type': 'application/x-www-form-urlencoded',
 		}
 

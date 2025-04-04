@@ -18,7 +18,7 @@ class UserInputHandler:
 		return self.formatWorkflow(json.loads(self.metaphactory.workflowQuery(workflowIRI)),workflowIRI,availableBGOs)
 
 	def defaultGraph(self):
-		return io.TextIOWrapper(io.BytesIO(self.metaphactory.coauthorQueryCSV(self.DAG['args']['topic'],self.DAG['args']['author'])[17:]))
+		return io.TextIOWrapper(io.BytesIO(self.metaphactory.coauthorQuery(self.DAG['args']['topic'],self.DAG['args']['author'])[17:]))
 
 	def formatIRI(self,iriString):
 		return re.split(r"/",iriString)[-1]
