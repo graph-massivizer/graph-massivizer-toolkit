@@ -11,6 +11,7 @@ import json
 import logging
 import socket
 import uuid
+import re
 from kazoo.client import KazooClient
 import pyarrow as pa
 import pyarrow.fs as pafs
@@ -37,10 +38,22 @@ class TaskManager:
             self.zk.zk.set(node_path, mashine_utf8)
         else:
             self.zk.zk.create(node_path, mashine_utf8, makepath=True)
-        self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
+        self.logger.info(f"Registered TaskManager {self.machine.ID} with ZooKeeper.")
 
-    def run(self,alg,args):
-        alg(args)
+    def run(self,algClass,args):
+        algClass.run(self.fs,args=args)
+
+    def get_fs(node):
+
+        pattern = r'hdfs://([^:]+):(\d+)'
+        match = re.match(pattern, node)
+        if not match:
+            raise ValueError(f"Could not parse HDFS_NAMENODE={node}")
+        hdfs_host, hdfs_port = match.groups()
+        hdfs_port = int(hdfs_port)
+
+        # Create a PyArrow HadoopFileSystem
+        return pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
 
     def demo_hdfs_io(self) -> None:
         file_path = f"/tmp/task_manager_hello_{self.machine.ID}.txt"
@@ -76,34 +89,15 @@ def main() -> None:
         zookeeper_host = os.environ.get('ZOOKEEPER_HOST', 'localhost:2181')
 
         # Retrieve HDFS endpoint from environment
-        hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://namenode:8020')
+        hdfs_namenode = os.environ.get('HDFS_NAMENODE', 'hdfs://hdfs2name:8020')
         logger.info(f"HDFS_NAMENODE = {hdfs_namenode}")
-
-
-
-
-
-        # PyArrow: parse the host and port from the URI
-        # e.g. "hdfs://my-hdfs-host:8020"
-        # If the user sets HDFS_NAMENODE = "hdfs://namenode:8020"
-        # we can parse the host="namenode", port=8020
-        # but let's cheat if it's always in the form hdfs://host:port
-        import re
-        pattern = r'hdfs://([^:]+):(\d+)'
-        match = re.match(pattern, hdfs_namenode)
-        if not match:
-            raise ValueError(f"Could not parse HDFS_NAMENODE={hdfs_namenode}")
-        hdfs_host, hdfs_port = match.groups()
-        hdfs_port = int(hdfs_port)
-
-        # Create a PyArrow HadoopFileSystem
-        fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
+        fs = TaskManager.get_fs(hdfs_namenode)
 
         task_manager = TaskManager(zookeeper_host, fs)
         logger.info("I am Task Manager " + str(task_manager.machine.ID))
 
         # Optional: demonstrate HDFS I/O
-        task_manager.demo_hdfs_io()
+        #task_manager.demo_hdfs_io()
 
         # Keep the Task Manager running
         while True:

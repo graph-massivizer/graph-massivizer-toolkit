@@ -3,9 +3,10 @@ from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
 import graphmassivizer.runtime.task_manager.BGO.networkx_bgos
+import tarfile
 
 from functools import reduce
-import inspect, sys
+import inspect, sys, os
 
 class InputPipeline:
 
@@ -19,11 +20,14 @@ class InputPipeline:
 		self.availableBGOs = availableBGOs
 		self.state = state
 
+	def getWorkflow(self):
+		return self.userInputHandler.getWorkflow(self.workflowIRI,self.availableBGOs)
+
 	def composeDAG(self):
 
 		if self.state: self.state.get_input()
 
-		DAG = self.userInputHandler.getWorkflow(self.workflowIRI,self.availableBGOs)
+		DAG = self.getWorkflow()
 		firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,DAG['nodes'].items(),None)[1]
 
 		if self.state: self.state.parallelize()

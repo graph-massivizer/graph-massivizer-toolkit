@@ -89,7 +89,7 @@ class WorkloadManager:
         self.zk = ZookeeperStateManager(self.zookeeper_host)
         self.machine = Machine.parse_from_env(self.zk,prefix="WM_")
         self.register_self()
-        self.infrastructure_manager = None
+        self.infrastructure_manager = InfrastructureManager(workload_manager=self)
 
     # def __enter__(self) -> "WorkloadManager":
     #     self.start()
@@ -163,12 +163,7 @@ def main() -> None:
         logger.info("I am Workload Manager " + str(workload_manager.machine.ID))
 
         # Optional: demonstrate HDFS I/O
-        workload_manager.demo_hdfs_io()
-
-        # Instantiate the InfrastructureManager
-        infrastructure_manager = InfrastructureManager(
-            workload_manager=workload_manager
-        )
+        #workload_manager.demo_hdfs_io()
 
         # TODO Zookeeper listener for triggering workflow execution
 

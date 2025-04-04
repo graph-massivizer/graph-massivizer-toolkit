@@ -168,3 +168,5 @@ venv
 /metaphactory/graph-massivizer-toolkit/graphdb-data
 /tests/resources*
 untitled.*
+.tar
+.tgz

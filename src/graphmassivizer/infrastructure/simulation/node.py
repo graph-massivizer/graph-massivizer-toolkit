@@ -2,15 +2,34 @@ import logging
 import math
 import time
 import threading
+import io
+import os,re
 from threading import Thread
 from abc import abstractmethod
 from typing import Any, Optional
+
+import pyarrow as pa
+import pyarrow.fs as pafs
 
 import docker
 from docker.models.containers import Container
 
 from graphmassivizer.core.descriptors.descriptors import Machine, MachineDescriptor
 from graphmassivizer.infrastructure.components import Node, NodeStatus
+from graphmassivizer.runtime.task_manager.main import TaskManager
+import inspect
+
+def get_fs(node):
+
+	pattern = r'hdfs://([^:]+):(\d+)'
+	match = re.match(pattern, node)
+	if not match:
+		raise ValueError(f"Could not parse HDFS_NAMENODE={node}")
+	hdfs_host, hdfs_port = match.groups()
+	hdfs_port = int(hdfs_port)
+
+	# Create a PyArrow HadoopFileSystem
+	return pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
 
 # ----------------------------------------
 # SIMULATED NODE
@@ -139,9 +158,7 @@ class SimulatedNode(Node, Thread):
         role: str,
         machine: Machine,
         zookeeper_host: str = "zookeeper",
-        hdfs_host: str = "hdfs2name",
-        task = None,
-        args = None) -> dict[str, str]:
+        hdfs_host: str = "hdfs2name") -> dict[str, str]:
         """
         Returns environment variables for either a Task Manager or a Workflow Manager,
         depending on `role` ('task_manager' or 'workflow_manager').
@@ -151,9 +168,7 @@ class SimulatedNode(Node, Thread):
             "ROLE": role,
             "ZOOKEEPER_HOST": zookeeper_host,
             "NODE_ID": str(machine.ID),
-            "HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020",
-            "TASK": task,
-            "ARGS":args
+            "HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020"
         }
 
         # If you need separate fields for Task vs. Workflow,
@@ -200,7 +215,7 @@ class ZookeeperNode(SimulatedNode):
             'KAFKA_OPTS': "-Dzookeeper.4lw.commands.whitelist=*"
         }
 
-        self.zookeeper_host = 'localhost' + str(self.__host_port)
+        self.zookeeper_host = 'localhost:' + str(self.__host_port)
 
         try:
             self.docker_client.images.pull(self.__image_name, tag=self.__tag)
@@ -435,12 +450,11 @@ class WorkflowManagerNode(SimulatedNode):
 # TASK MANAGER NODE
 # ----------------------------------------
 class TaskManagerNode(SimulatedNode):
-    def __init__(self, machine: Machine, docker_network_name: str, task) -> None:
+    def __init__(self, machine: Machine, docker_network_name: str) -> None:
         self.__container_name = f"task_manager_{machine.ID}"
         print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR TM")
         self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
-        self.task = task
 
         super().__init__(machine,
                          docker_network_name,
@@ -449,15 +463,17 @@ class TaskManagerNode(SimulatedNode):
                          self.__tag,
                          {}
                          )
-        logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
         self.__task_manager_environment = SimulatedNode.create_runtime_environment(
             role="task_manager",
             machine=machine,
             zookeeper_host="zookeeper"
         )
 
-    def run(self,args) -> None:
-        list(self.task['implementations'].values())[0]['class'].run(args) # ONLY WORKS WITH SEQUENTIAL WORKFLOWS
+    def run(self,alg,args): # TEMP RUN FOR VALIDATING WHILE FINISHING EXECUTION CONTROLLER AND DATA MANAGER
+        self.logger.info(f"Pretending to run {alg} in {self}")
+        out = alg(args)
+        self.logger.info(f"Pretend result: {out}")
 
     def _get_docker_environment(self) -> dict[str, str]:
         return self.__task_manager_environment
