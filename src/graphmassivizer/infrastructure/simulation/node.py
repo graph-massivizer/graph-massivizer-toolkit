@@ -185,6 +185,12 @@ class SimulatedNode(Node, Thread):
             env["WM_CPU_CORES"] = str(machine.descriptor.cpu_cores)
             env["WM_RAM_SIZE"] = str(machine.descriptor.ram_size)
             env["WM_HDD_SIZE"] = str(machine.descriptor.hdd)
+	elif role == "dashboard":
+            env["DASHBOARD_ADDR"] = machine.descriptor.address
+            env["DASHBOARD_HOSTNAME"] = machine.descriptor.host_name
+            env["DASHBOARD_CPU_CORES"] = str(machine.descriptor.cpu_cores)
+            env["DASHBOARD_RAM_SIZE"] = str(machine.descriptor.ram_size)
+            env["DASHBOARD_HDD_SIZE"] = str(machine.descriptor.hdd)
 
         return env
 
@@ -482,25 +488,27 @@ class TaskManagerNode(SimulatedNode):
 # DASHBOARD NODE
 # ----------------------------------------
 class DashboardNode(SimulatedNode):
+
     def __init__(self, machine: Machine, docker_network_name: str) -> None:
         self.__container_name = f"dashboard_{machine.ID}"
-        print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR TM")
+        print(__name__ + ": CURRENTLY USING ALPINE IMAGE FOR DASHBOARD")
         self.__image_name = "gm/runtime"
         self.__tag = "latest"  # Or whatever version you prefer
-
-        super().__init__(machine,
+        
+        super().__init__(machine, 
                          docker_network_name,
-                         self.__container_name,
-                         self.__image_name,
+                         self.__container_name, 
+                         self.__image_name, 
                          self.__tag,
                          {}
                          )
-
-        self.__task_manager_environment = SimulatedNode.create_runtime_environment(
+        
+        # Use the static helper function
+        self.__dashboard_environment = SimulatedNode.create_runtime_environment(
             role="dashboard",
-            machine=machine,
+            machine = machine,
             zookeeper_host="zookeeper"
         )
 
     def _get_docker_environment(self) -> dict[str, str]:
-        return self.__task_manager_environment
+        return self.__dashboard_environment
