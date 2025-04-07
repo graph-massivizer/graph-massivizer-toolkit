@@ -14,7 +14,7 @@ import pickle
 
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
-from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode)
+from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode, DashboardNode)
 from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
 from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
@@ -132,6 +132,9 @@ class Simulation:
 
             hdfs_data_node = HDFSDataNode(Machine(2, self.__machine_descriptor), self.__network_name)
 
+            # adding dashboard node
+            dashboard = DashboardNode(Machine(self.number_of_task_nodes + 2, self.__machine_descriptor), self.__network_name)
+
             # adding the task managers
             task_managers: list[TaskManagerNode] = []
             offset = 3
@@ -143,6 +146,7 @@ class Simulation:
                 zookeeper,
                 workflow_manager,
                 task_managers,
+                dashboard,
                 self.__network_name,
                 hdfs_node,
                 [hdfs_data_node])
@@ -175,6 +179,9 @@ class Simulation:
             for task_manager in task_managers:
                 task_manager.deploy()
                 self.logger.info(f"Task Manager started on Node {task_manager.node_id}")
+
+            dashboard.deploy()
+            self.logger.info("Dashboard started")
 
             hdfs_node.wait_for_hdfs(timeout=20000)
             hdfs_node.create_hdfs_directory("/tmp")
@@ -268,6 +275,12 @@ class Simulation:
             self.logger.info("HDFS Name Node stopped")
         except Exception as e:
             self.logger.info("Closing the hdfs failed. " + str(e))
+            self.state.fail()
+        try:
+            self.cluster.dashboard.shutdown()
+            self.logger.info("Dashboard stopped")
+        except Exception as e:
+            self.logger.info("Closing the dashboard failed. " + str(e))
             self.state.fail()
 
     def get_status(self) -> tuple[str, list[dict[str, Any]]]:
