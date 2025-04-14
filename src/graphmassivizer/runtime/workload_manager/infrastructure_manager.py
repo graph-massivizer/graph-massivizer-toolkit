@@ -34,7 +34,7 @@ class InfrastructureManager:
         self.store_environment_model_in_zookeeper()
 
         # Watch for changes in task managers
-        self.zk.zk.ChildrenWatch('/taskmanagers', self.zookeeper_task_manager_watcher)
+        self.zk.ChildrenWatch('/taskmanagers', self.zookeeper_task_manager_watcher)
 
         self.input_split_manager = None  # Placeholder for actual implementation
 
@@ -46,8 +46,8 @@ class InfrastructureManager:
 
         try:
             # Get data and children for the current node
-            data, stat = self.zk.zk.get(path)
-            children = self.zk.zk.get_children(path)
+            data, stat = self.zk.get(path)
+            children = self.zk.get_children(path)
         except Exception as e:
             self.logger.warning(f"Failed to get info for path '{path}': {e}")
             return
@@ -72,21 +72,22 @@ class InfrastructureManager:
     def init_zookeeper_directories(self) -> None:
         paths = ['/workloadmanager', '/taskmanagers', '/environment']
         for path in paths:
-            if not self.zk.zk.exists(path):
-                self.zk.zk.create(path)
+            if not self.zk.exists(path):
+                self.zk.create(path)
                 self.logger.debug(f"Created Zookeeper path: {path}")
 
 
     def register_self(self) -> None:
         node_path = f'/workloadmanager/{self.machine.ID}'
         mashine_utf8 = self.machine.to_utf8()
-        if self.zk.zk.exists(node_path):
-            self.zk.zk.set(node_path, mashine_utf8)
+        if self.zk.exists(node_path):
+            self.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.zk.create(node_path, mashine_utf8, makepath=True)
+            self.zk.create(node_path, mashine_utf8, makepath=True)
         self.logger.info(f"Registered TaskManager {self.machine} with ZooKeeper.")
 
     def serialize_environment_model(self):
+        print(self.machine_descriptors.items())
         # Convert descriptors to dictionaries
         model_data = json.dumps({
             machine_id: descriptor.to_dict() for machine_id, descriptor in self.machine_descriptors.items()
@@ -96,10 +97,10 @@ class InfrastructureManager:
     def store_environment_model_in_zookeeper(self) -> None:
         model_data = self.serialize_environment_model()
         model_path = '/environment/machines'
-        if self.zk.zk.exists(model_path):
-            self.zk.zk.set(model_path, model_data)
+        if self.zk.exists(model_path):
+            self.zk.set(model_path, model_data)
         else:
-            self.zk.zk.create(model_path, model_data)
+            self.zk.create(model_path, model_data)
         self.logger.debug("Environment model updated in ZooKeeper.")
 
     def zookeeper_task_manager_watcher(self, task_manager_nodes) -> None:
@@ -108,15 +109,15 @@ class InfrastructureManager:
             # Update machine descriptors based on task manager nodes
             for node in task_manager_nodes:
                 node_path = f'/taskmanagers/{node}'
-                data, stat = self.zk.zk.get(node_path)
+                data, stat = self.zk.get(node_path)
                 # if data:
                 #     machine_info = json.loads(data.decode('utf-8'))
                 #     self.update_machine_descriptors(machine_info)
             self.store_environment_model_in_zookeeper()
 
             # NOW: Call the subtree-printing function after each event:
-            self.logger.info("ZK tree (all) after update:")
-            self.print_zookeeper_subtree("/")
+            self.logger.info("ZK tree updated with task manager nodes")
+            #self.print_zookeeper_subtree("/")
 
     def get_machine(self, location_preference=None):
         with self.node_info_lock:
@@ -129,5 +130,6 @@ class InfrastructureManager:
             return selected_machine
 
     def shutdown_infrastructure_manager(self) -> None:
+        self.print_zookeeper_subtree("/")
         self.zk.stop()
         self.logger.info("Shutdown infrastructure manager.")

@@ -5,7 +5,7 @@ import docker
 from docker.models.networks import Network
 
 from graphmassivizer.infrastructure.simulation.node import (
-    TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode)
+    TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode, DashboardNode)
 
 
 class Cluster:
@@ -15,6 +15,7 @@ class Cluster:
         zookeeper: ZookeeperNode,
         workflow_manager: WorkflowManagerNode,
         task_managers: list[TaskManagerNode],
+        dashboard: DashboardNode,
         docker_network_name: str,
         hdfs_node: HDFSNode,
         hdfs_data_nodes: list[HDFSDataNode]
@@ -25,6 +26,7 @@ class Cluster:
         self.docker_network_name = docker_network_name
         self.hdfs_node = hdfs_node
         self.hdfs_data_nodes = hdfs_data_nodes
+        self.dashboard = dashboard
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__docker_client = docker.from_env()
 

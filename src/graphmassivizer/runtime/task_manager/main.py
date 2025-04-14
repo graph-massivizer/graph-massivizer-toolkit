@@ -34,14 +34,11 @@ class TaskManager:
     def register_self(self) -> None:
         node_path = f'/taskmanagers/{self.machine.ID}'
         mashine_utf8 = self.machine.to_utf8()
-        if self.zk.zk.exists(node_path):
-            self.zk.zk.set(node_path, mashine_utf8)
+        if self.zk.exists(node_path):
+            self.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.zk.create(node_path, mashine_utf8, makepath=True)
+            self.zk.create(node_path, mashine_utf8, makepath=True)
         self.logger.info(f"Registered TaskManager {self.machine.ID} with ZooKeeper.")
-
-    def run(self,algClass,args):
-        algClass.run(self.fs,args=args)
 
     def get_fs(node):
 
