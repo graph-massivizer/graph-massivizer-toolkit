@@ -15,7 +15,7 @@ class InputPipeline:
 				 metaphactoryAddress="http://localhost:10214/",
 				 workflowIRI="https://ontologies.metaphacts.com/bgo-ontology/instances/workflow-deae5723-dafb-4e79-8648-0510f0312958",
 				 availableBGOs={x[1].implementationId:{'name':x[0],'class':x[1]} for x in inspect.getmembers(sys.modules['graphmassivizer.runtime.task_manager.BGO.networkx_bgos'], inspect.isclass) if x[0] != "BGO"}):
-		self.userInputHandler = UserInputHandler(metaphactoryAddress)
+		self.userInputHandler = UserInputHandler(metaphactoryAddress=metaphactoryAddress)
 		self.workflowIRI = workflowIRI
 		self.availableBGOs = availableBGOs
 		self.state = state

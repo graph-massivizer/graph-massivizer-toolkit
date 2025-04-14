@@ -7,9 +7,9 @@ from graphmassivizer.core.connectors.metaphactory import MetaphactoryConnector
 class UserInputHandler:
 
 	def __init__(self,
-				 metaphactoryAddress,
+				 metaphactoryAddress="http://localhost:10214/",
 				 bgoArgs={'inputNode':'https://semopenalex.org/author/A5006947708','topic':'https://semopenalex.org/concept/C41008148','author':'https://semopenalex.org/author/A5006947708'}):
-		self.metaphactory = MetaphactoryConnector(metaphactoryAddress)
+		self.metaphactory = MetaphactoryConnector(metaphactoryAddress=metaphactoryAddress)
 		self.DAG = {"args":bgoArgs, "directed": False, "multigraph": False, "nodes":{}, "edges":{}}
 		if 'graph' not in self.DAG['args']:
 			self.DAG['args']['graph'] = self.defaultGraph()

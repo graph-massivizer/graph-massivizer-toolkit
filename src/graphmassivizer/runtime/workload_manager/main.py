@@ -132,10 +132,10 @@ class WorkloadManager:
     def register_self(self) -> None:
         node_path = f'/workloadmanagers/{self.machine.ID}'
         mashine_utf8 = self.machine.to_utf8()
-        if self.zk.zk.exists(node_path):
-            self.zk.zk.set(node_path, mashine_utf8)
+        if self.zk.exists(node_path):
+            self.zk.set(node_path, mashine_utf8)
         else:
-            self.zk.zk.create(node_path, mashine_utf8, makepath=True)
+            self.zk.create(node_path, mashine_utf8, makepath=True)
         self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
 
 
