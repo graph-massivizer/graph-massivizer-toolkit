@@ -228,6 +228,7 @@ class ZookeeperNode(SimulatedNode):
 			self.docker_client.images.pull(self.__image_name, tag=self.__tag)
 		except Exception as e:
 			raise e
+		self.status.ready()
 
 	def _get_docker_environment(self) -> dict[str, str]:
 		return self.__zookeeper_environment
@@ -297,6 +298,7 @@ class HDFSDataNode(SimulatedNode):
 			},
 			command=f"/run.sh"
 		)
+		self.status.ready()
 
 		# For single-node usage, bitnami/hadoop typically needs:
 		self.__hdfs_environment = {
@@ -330,6 +332,7 @@ class HDFSNode(SimulatedNode):
 			},
 			command=f"/run.sh"
 		)
+		self.status.ready()
 
 		# For single-node usage, bitnami/hadoop typically needs:
 		self.__hdfs_environment = {
@@ -449,6 +452,7 @@ class WorkflowManagerNode(SimulatedNode):
 			machine = machine,
 			zookeeper_host="zookeeper"
 		)
+		self.status.ready()
 
 	def _get_docker_environment(self) -> dict[str, str]:
 		return self.__workflow_manager_environment
@@ -476,6 +480,7 @@ class TaskManagerNode(SimulatedNode):
 			machine=machine,
 			zookeeper_host="zookeeper"
 		)
+		self.status.ready()
 
 	def run(self,alg,args): # TEMP RUN FOR VALIDATING WHILE FINISHING EXECUTION CONTROLLER AND DATA MANAGER
 		self.logger.info(f"Pretending to run {alg} in {self}")
@@ -510,6 +515,7 @@ class DashboardNode(SimulatedNode):
 			machine = machine,
 			zookeeper_host="zookeeper"
 		)
+		self.status.ready()
 
 	def _get_docker_environment(self) -> dict[str, str]:
 		return self.__dashboard_environment
