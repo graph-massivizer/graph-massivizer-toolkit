@@ -166,6 +166,8 @@ class Simulation:
 			print("Waiting for ready signal from dashboard node")
 			if not dashboard.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from dashboard node timed out after {TIMEOUT_SECONDS} seconds")
 
+			print("All nodes ready")
+
 			self.cluster = Cluster(
 				zookeeper,
 				workflow_manager,
