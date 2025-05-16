@@ -1,0 +1,80 @@
+<style>
+	.suggestion-prompt-cards {
+		margin: 40px 16px 16px 16px;
+	}
+	.suggestion-prompt-card-items {
+		display: flex;
+		padding: 4px;
+	}
+	.suggestion-prompt-card {
+		padding: 16px;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.suggestion-prompt-thumbnail {
+		height: 20px;
+		width: 20px;
+		line-height: 20px;
+		font-size: 20px;
+		color: var(--mp-color-primary-200);
+	}
+	.suggestion-prompt-text {
+		text-align: left;
+		padding-top: 4px;
+	}
+</style>
+
+<div class="page">
+	<div class="page_body">
+		<h1>Graph-Massivizer Conversational AI</h1>
+		<h2>SemOpenAlex Use Case</h2>
+		<h3>Currently available algorithms:</h3>
+		<ol>
+			 <li>Betweenness Centrality (max)</li>
+			 <li>Shortest Path Between two Nodes</li>
+		</ol>
+		<mp-conversational-ai
+			id="conversation-ai-test"
+			placeholder="Talk to Conversational AI..."
+			prompt-suggestion-template="{{> tmpl}}"
+			default-ontology-iri="https://semopenalex.org/ontology/"
+			options='{"explanationOptions": {"showExplanation": true},"ontologies": ["http://ontologies.metaphacts.com/graph-massivizer_ontology","https://semopenalex.org/ontology/"]}'>
+			<template id="tmpl">
+				<div class="suggestion-prompt-cards">
+					<div data-flex-layout="rows stretch-stretch">
+						{{#bind example-questions=(array-of
+							"What is the instance with the max betweenness centrality in the coauthor:graph?"
+							"What is the shortest path between Aaron Eberhart and Brian Elvesæter in the coauthor:graph?"
+							"What is the shortest path between Ryan McGranaghan and Brian Elvesæter in the coauthor:graph?"
+							"Find the shortest path between Matthew Horridge and the author with the max betweenness centrality in coauthor:graph.")}}
+
+								{{#each example-questions}}
+									<div data-flex-self="size-1of5 md-half sm-full" class="suggestion-prompt-card-items">
+										<mp-event-trigger targets='["conversation-ai-test"]' type="ConversationalAI.Start" data='{"prompt": "{{this}}"}'>
+										<button type="button" class="btn btn-secondary suggestion-prompt-card">
+											<span class="suggestion-prompt-thumbnail">
+											<span class="material-symbols-outlined">
+												lightbulb_circle
+											</span>
+											</span>
+											<span class="suggestion-prompt-text">{{this}}</span>
+										</button>
+										</mp-event-trigger>
+									</div>
+								{{/each}}
+							{{/bind}}
+						</div>
+					</div>
+				</template>
+			</mp-conversational-ai>
+		<p>Final example question executes the use case on the sample data.</p>
+	</div>
+</div>
+
+[[!-- testing the backend templates
+ [[betweennessCentrality "coauthor:graph"]]
+ [[shortestPath "coauthor:graph" "https://semopenalex.org/author/A5006947708" "https://semopenalex.org/author/A5016929278"]]
+ [[executeSequence sequence='["maxBetweennessCentrality" "shortestPath"]' args='{"graph":"coauthor:graph","start":"https://semopenalex.org/author/A5006947708"}']]
+--]]

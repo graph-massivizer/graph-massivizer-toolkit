@@ -1,0 +1,5 @@
+iri = https://graph-massivizer.metaphacts.net/queryTemplateContainer/bgoTestQuery
+disabled = false
+responseformat = text/csv
+aclPermission = qaas:execute:*
+publisher = http://www.metaphacts.com/ontologies/platform#anonymousUser

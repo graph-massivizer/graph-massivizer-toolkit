@@ -1,0 +1,24 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix service-config: <http://www.metaphacts.com/ontologies/platform/service/config/> .
+@prefix ai-service-config: <http://www.metaphacts.com/ontologies/platform/service/config/ai/> .
+@prefix llm: <http://www.metaphacts.com/ontologies/platform/service/config/ai/languagemodel/> .
+
+<urn:service:llm-azureopenai> a service-config:Service, ai-service-config:AzureOpenAILanguageModel ;
+  rdfs:label "LLM from OpenAI via Azure" ;
+  service-config:config [
+    # MODEL-SPECIFIC PARAMETERS
+    llm:modelName "gpt-4o" ;
+    llm:contextWindow 128000 ;
+    llm:temperature 0 ;
+    llm:topP 0.95 ;
+    llm:frequencyPenalty 0 ;
+    llm:presencePenalty 0.6 ;
+    llm:maxCompletionTokens 1000 ;
+    llm:timeoutInSeconds 60 ;
+    # PROVIDER-SPECIFIC PARAMETERS
+    llm:deploymentName "linn-test-2" ;
+    llm:endpoint "https://linn-test-3.openai.azure.com" ;
+    # AUTHENTICATION
+    # option 1: via API key
+    llm:apiKey "${ai.services.azureopenai.apiKey}" ;
+  ] .
