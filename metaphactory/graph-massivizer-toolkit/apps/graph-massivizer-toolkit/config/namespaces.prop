@@ -1,7 +1,17 @@
+schema = https://schema.org/
 foaf = http://xmlns.com/foaf/0.1/
+kira = http://ontologies.metaphacts.com/KIRA-Ontology/
+org = http://www.w3.org/ns/org#
+resourcehub = http://resourcehub.metaphacts.com/resource/
+pa = http://ontologies.metaphacts.com/project_activity_ontology/
+dataset = http://ontologies.metaphacts.com/dataset_ontology/
 gm = http://ontologies.metaphacts.com/graph-massivizer_ontology/
 gmi = https://graph-massivizer.metaphacts.net/instance/
+pacv = http://vocabularies.metaphacts.com/project_activity/
+pa = http://ontologies.metaphacts.com/project_activity_ontology/
 dct = http://purl.org/dc/terms/	
 dcat = http://www.w3.org/ns/dcat#
+prov = http://www.w3.org/ns/prov#
 soaa = https://semopenalex.org/author/
 soa = https://semopenalex.org/ontology/
+st = https://vocabularies.metaphacts.com/source-type/

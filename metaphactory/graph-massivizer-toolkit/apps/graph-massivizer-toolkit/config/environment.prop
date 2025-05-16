@@ -1,1 +1,5 @@
 shiroAuthenticationFilter=authcBasic,anon,authc
+enableLocalUsers=true
+
+[users]
+anonymous=,admin,root,end-user

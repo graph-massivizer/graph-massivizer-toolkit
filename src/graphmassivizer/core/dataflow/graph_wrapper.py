@@ -2,8 +2,6 @@ import networkx as nx
 import hashlib
 import json
 
-from graphmassivizer.core.dataflow.graph_metadata import GraphMetadata
-
 
 class GraphWrapper:
     def __init__(self, graph: nx.Graph):
@@ -12,7 +10,7 @@ class GraphWrapper:
         self.graph = graph
         self.graph_metadata = self.compute_metadata()
 
-    def compute_metadata(self) -> GraphMetadata:
+    def compute_metadata(self):
         """Computes a unique ID based on the graph's structure and content."""
         # TODO: this must be reworked - it does not scale
         graph_data = {
@@ -22,7 +20,7 @@ class GraphWrapper:
         graph_json = json.dumps(graph_data, sort_keys=True)
         return GraphMetadata(hashlib.md5(graph_json.encode()).hexdigest())
 
-    def get_metadata(self) -> GraphMetadata:
+    def get_metadata(self):
         """Returns the graph metadata."""
         return self.graph_metadata
 

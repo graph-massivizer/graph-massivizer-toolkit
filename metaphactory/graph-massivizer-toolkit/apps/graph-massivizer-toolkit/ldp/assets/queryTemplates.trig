@@ -1,0 +1,58 @@
+@prefix Platform: <http://www.metaphacts.com/ontologies/platform#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+@prefix schema: <https://schema.org/> .
+@prefix pa: <http://ontologies.metaphacts.com/project_activity_ontology/> .
+@prefix gmi: <https://graph-massivizer.metaphacts.net/instance/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix gm: <http://ontologies.metaphacts.com/graph-massivizer_ontology/> .
+@prefix rh: <http://ontologies.metaphacts.com/resourcehub/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dataset: <http://ontologies.metaphacts.com/dataset_ontology/> .
+@prefix sp: <http://spinrdf.org/sp#> .
+
+<http://www.metaphacts.com/ontologies/platform#queryContainer/context> {
+  Platform:queryContainer a ldp:Container, ldp:Resource, prov:Entity;
+    rdfs:label "Query Container";
+    rdfs:comment "Container to store sp:Query instances.";
+    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/System>;
+    prov:generatedAtTime "2025-02-25T11:12:13.481+01:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  _:c1f2db1925ff4f74b8c53d5647157bc2173 ldp:contains Platform:queryContainer .
+}
+
+<https://graph-massivizer.metaphacts.net/queryContainer/bgoTestQuery/context> {
+  Platform:queryContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryContainer/bgoTestQuery> .
+
+  <https://graph-massivizer.metaphacts.net/queryContainer/bgoTestQuery> a ldp:Resource,
+      prov:Entity, sp:Query, sp:Select;
+    rdfs:label "BGO Test Query";
+    prov:wasAttributedTo <http://www.metaphacts.com/resource/user/admin>;
+    prov:generatedAtTime "2025-02-25T11:16:44.007+01:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    sp:text "SELECT ?s ?p ?q WHERE { graph ?g { ?s ?p ?q } }" .
+}
+
+<https://graph-massivizer.metaphacts.net/queryTemplateContainer/bgoTestQuery/context> {
+  Platform:queryTemplateContainer ldp:contains <https://graph-massivizer.metaphacts.net/queryTemplateContainer/bgoTestQuery> .
+
+  <https://graph-massivizer.metaphacts.net/queryTemplateContainer/bgoTestQuery> a ldp:Resource,
+      prov:Entity, <http://spinrdf.org/spin#Template>, <http://spinrdf.org/spin#SelectTemplate>;
+    rdfs:label "BGO Test Query";
+    rdfs:comment "BGO Test Query";
+    prov:wasAttributedTo Platform:anonymousUser;
+    prov:generatedAtTime "2024-08-20T10:40:14.492Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://spinrdf.org/spin#body> <https://graph-massivizer.metaphacts.net/queryContainer/bgoTestQuery>;
+    <http://spinrdf.org/spin#constraint> <http://metaphacts.com/query/bgoTestQuery/arg/0> .
+
+  <http://metaphacts.com/query/bgoTestQuery/arg/0> a <http://spinrdf.org/spl#Argument>;
+    rdfs:label "Graph";
+    rdfs:comment "";
+    <http://spinrdf.org/spl#optional> false;
+    <http://spinrdf.org/spl#defaultValue> <file:/test-data.ttl>;
+    <http://spinrdf.org/spl#predicate> <http://metaphacts.com/query/bgoTestQuery/predicate/g>;
+    <http://spinrdf.org/spl#valueType> xsd:anyURI .
+
+}

@@ -1,0 +1,252 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix service-config: <http://www.metaphacts.com/ontologies/platform/service/config/> .
+@prefix ai-service-config: <http://www.metaphacts.com/ontologies/platform/service/config/ai/> .
+@prefix agent: <http://www.metaphacts.com/ontologies/platform/service/config/ai/agent/> .
+@prefix tool: <http://www.metaphacts.com/ontologies/platform/service/config/ai/tool/> .
+
+<urn:service:conversationagent-bgo> a service-config:Service, ai-service-config:ConversationAgent ;
+    rdfs:label "BGO Conversation Agent" ;
+    service-config:config [
+
+        # language model powering the conversational agent (to be defined as a separate service)
+        agent:languageModel <urn:service:llm-openai> ;
+
+        # the context ontology is provided to the agent during entity linking and SPARQL translation
+        agent:contextOntology <https://ontologies.metaphacts.com/bgo-ontology/0.1> ;
+
+        # The maximum number of retries for the agent to generate a response.
+        # If retryLimit is set, the response of the agent is validated w.r.t. its structure and syntax;
+        # for an invalid response, the agent will retry to regenerate it using the validation feedback.
+        # If retryLimit is not set, the response of the agent is passed through without validation.
+        agent:retryLimit 2;
+
+        # The context instructions should provide information about the environment the LLM is operating in.
+        # This includes the context around the conversation and the available resources to answer requests.
+        agent:contextInstructions """
+            - You are operating in an environment with access to knowledge graphs that are based on open standards like RDF, OWL, and SPARQL.
+            - You have access to tools that can be used to retrieve information from knowledge graphs and potentially other data sources.
+            - You can use the tools to retrieve information about entities, relationships, and other relevant information.
+            - Entities are identified by their fully-qualified IRI.
+            - The data on the system are accessible for tools under a particular data schema. When deciding which tool to use to answer the user request, pay attention to the data descriptions. 
+            - Data description for unstructured retrieval: information from literal properties of entities like titles or descriptions. 
+            - Data description for structured retrieval with SPARQL: The BGO ontology represents the structure and relationships between classes of graph algorithms, inputs and outputs for the algorithms, 
+              as well as workflows and tasks that may be created with the algorithms by a use case in the Graph-Masivizer project.
+            """ ;
+
+        # The task instructions clearly define the task of the LLM and the role it plays in the conversation.
+        # They may contain guidelines of how to answer user requests and what information to provide.
+        agent:taskInstructions """
+            You are a helpful assistant developed by metaphacts GmbH. STRICTLY adhere to the following instructions:
+            - Your response must be concise and to the point.
+            - Your response must include only information that is immediately relevant to answer the user request.
+            - Answer requests using only information that has been provided in the conversation and from tools.
+            - To answer a request, prefer tools for structured retrieval via SPARQL over unstructured retrieval.
+            - Your response should contain as much information as possible (especially entities) that you used to derive the answer.
+            - Use only entity IRIs that are provided by the user or from tools. Never use dummy IRIs or IRIs which you have learned during pre-training. Never use PREFIX <http://example.org/> in real tasks, and pay attention to the PREFIXes used in the context ontology.
+            - If you have multiple likely candidates for an entity let the user decide before answering the request. Use the `describe_entity` tool to provide details about each candidate.
+            - Do not use language tags.
+            """ ;
+
+        # The number of tokens stored in the conversation history. The most recent messages are kept; the earliest message
+        # is evicted as soon as a part of it does not fit into the window anymore. A value of 0 means that the window size
+        # is determined by the context window size of the language model minus the maximum number of response tokens minus
+        # a buffer of 1000.
+        agent:tokenWindowSize 0 ;
+
+        # configuration for the Entity Linking tool of the agent
+        agent:toolConfig [
+            a tool:EntityLinkingTool ;
+            tool:enabled true ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Returns detected entity mentions and their candidate entities ordered by score.
+                Entity mentions are detected using the types defined in the context ontology.
+                When retrieving structured information, this tool should typically be called first.
+                """ ;
+
+            # language model powering the tool (optional; by default, the language model of the agent is used)
+            #tool:languageModel <urn:service:languagemodel-default> ;
+
+            # Instructions for entity detection injected into the prompt of the LLM.
+            tool:taskInstructions """
+                - Extract named entities from the request provided below # REQUEST #.
+                - Only extract entities that may be instances of the types defined in the OWL ontology provided below # ONTOLOGY #.
+                - Do not extract mentions of types, numbers or dates.
+                - Assign all relevant candidate types to the named entities using only types from the OWL ontology.
+                - Omit the candidate types if you are unsure.
+                """ ;
+
+            # Examples for entity detection injected into the prompt of the LLM.
+            # These examples should be tailored to your context ontology and the expected user requests.
+            tool:examples """
+                Example 1.
+                Request: What are options for graph operations that implement the Breadth First Search algorithm?
+                Response: {\"mentions\": [
+                    {\"text\": \"Breadth First Search algorithm\", \"candidateTypes\": [\"https://ontologies.metaphacts.com/bgo-ontology/AlgorithmImplementation\"]}
+                ]}
+
+                Example 2.
+                Request: Are there any workflows available including tasks that correspond to BGOs that have implemented algorithms for input data that is an RDF graph?
+                Response: {\"mentions\": [
+                    {\"text\": \"RDF graph\", \"candidateTypes\": [\"https://ontologies.metaphacts.com/bgo-ontology/DataProperty\"]}
+                ]}
+
+                Example 3.
+                Request: What are algorithms that have RDF graph outputs?
+                Response: {\"mentions\": [
+                    {\"text\": \"RDF graph\", \"candidateTypes\": [\"https://ontologies.metaphacts.com/bgo-ontology/DataProperty\"]}
+                ]}
+                """ ;
+
+            # Upper limit of entity candidates returned by the Entity Lookup service.
+            tool:limit 3 ;
+
+            # Custom search service for entities (optional; uses the lookup of the default repository if not set)
+            #tool:searchServiceName "custom-search-service" ;
+        ] ;
+
+        # configuration for the SPARQL Translation tool of the agent
+        agent:toolConfig [
+            a tool:SPARQLTranslationTool ;
+            tool:enabled true ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Translates a natural language request into a SPARQL query that can be run against the database to retrieve structured data.
+                The tool is intended to answer information needs that require definitive or quantitative answers; such requests can contain keywords like \"all\", \"most recent\", \"highest\", \"sum\".
+                As entities, use only entity IRIs that were explicitly mentioned by the user or returned from tools.
+                """ ;
+
+            # language model powering the tool (optional; by default, the language model of the agent is used)
+            #tool:languageModel <urn:service:languagemodel-default> ;
+
+            # If enabled, the tool accepts only entity types that are used in at least one triple (in subject or object position).
+            # In case an unused type is provided, the tool will refuse to generate a query and return a corresponding error message to the Conversational AI.
+            tool:failForUnknownType true ;
+
+            # If enabled, the tool accepts only entities that are used in at least one triple (in subject or object position).
+            # In case an unused entity is provided, the tool will refuse to generate a query and return a corresponding error message to the Conversational AI.
+            tool:failForUnknownEntity true ;
+
+            # Task instructions for SPARQL translation injected into the prompt of the LLM.
+            tool:taskInstructions """
+                - Generate a SPARQL query that retrieves exactly the information requested in the request provided below # REQUEST #.
+                - Use the IRIs of the detected entities in the query which are provided below # ENTITIES #.
+                - Use only the OWL ontology as a model for the query which is provided below # ONTOLOGY #.
+                - Use the namespaces declared in the ontology and omit namespace declarations in the query.
+                - Use only classes and properties of the ontology that are relevant to the request.
+                - For Data Property instances, use rdfs:label to query for the string name. ONLY use bgo:dataType when explicitly instructed to query for the data type of the Data Property.
+                """ ;
+
+            # Examples for SPARQL translation injected into the prompt of the LLM (optional; typically not necessary).
+            #tool:examples "";
+
+            # The maximum number of retries for the tool to generate a response.
+            # If retryLimit is set, the generated query is validated w.r.t. its syntax and accordance to the context ontology;
+            # for an invalid query, we will retry to generate a query considering the validation feedback.
+            # If retryLimit is not set, the generated query is passed through without validation.
+            tool:retryLimit 2;
+        ] ;
+
+        # configuration for the SPARQL Execution tool of the agent
+        agent:toolConfig [
+            a tool:SPARQLQueryExecutionTool ;
+            tool:enabled true ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Returns a preview of the results of a SPARQL SELECT query (at most ten rows).
+                The query may have more results than that; to show all of them to the user, a dataFormat like table can be used.
+                The query to execute should be generated by a dedicated tool.
+                """ ;
+
+            # Upper limit of results returned by the executed SPARQL SELECT query.
+            tool:limit 10 ;
+        ] ;
+
+        agent:toolConfig [
+            a tool:DescribeEntityTool ;
+            tool:enabled true ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Describes an entity by retrieving a limited number of structured data from the knowledge graph.
+                Additionally, it provides the CONSTRUCT query that is used to retrieve the data.
+                Use this tool if you don't have a specific information need for the entity.
+                Do not use this tool to retrieve concrete information about one or more entities (like the author of a publication).
+                Do not use this tool to retrieve information for more than three entities to answer a user request.
+                """ ;
+
+            # If enabled, the tool accepts only entities that are used in at least one triple (in subject or object position).
+            # In case an unused entity is provided, the tool will refuse to generate a query and return a corresponding error message to the Conversational AI.
+            tool:failForUnknownEntity true ;
+
+            # Upper limit of triples returned to describe the entity.
+            tool:limit 10 ;
+        ] ;
+
+        # configuration for the Keyword Search tool of the agent
+        agent:toolConfig [
+            a tool:KeywordSearchTool ;
+            tool:enabled true ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Returns at most ten entities having textual descriptions that contain the given keywords (unstructured retrieval).
+                ONLY use this tool to retrieve context for answering explorative information needs over unstructured data, such as 'What do you know about X?' or 'What is the impact of X on Y?'.
+                """ ;
+
+            # Upper limit of entity candidates returned by the search.
+            tool:limit 10 ;
+
+            # Restrict retrieval to these candidate types (multiple may be provided). By default, all types are considered.
+            #tool:candidateType <http://www.w3.org/2004/02/skos/core#Concept> ;
+        ] ;
+
+        # configuration for the GraphDB Similarity Search tool of the agent
+        # (may save as a embedding-based replacement for the Keyword Search tool, if GraphDB is used)
+        agent:toolConfig [
+            a tool:GraphDBSimilaritySearchTool ;
+            tool:enabled false ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Returns at most ten entities that are semantically similar to the provided search phrase (unstructured retrieval).
+                ONLY use this tool to retrieve context for answering explorative information needs over unstructured data, such as 'What do you know about X?' or 'What is the impact of X on Y?'.
+                """ ;
+
+            # Upper limit of entity candidates returned by the search.
+            tool:limit 10 ;
+
+            # Lower limit for the similarity score of candidate entities.
+            tool:minScore 0.6 ;
+
+            # Name of the similarity index configured in GraphDB.
+            tool:indexName "similarity-index" ;
+        ] ;
+
+        # configuration for the Chart Configuration tool of the agent
+        agent:toolConfig [
+            a tool:ChartConfigurationTool ;
+            tool:enabled true ;
+
+            # Tool description that is provided to the agent to explain its purpose and the circumstances under which it should be used.
+            tool:description """
+                Generates the configuration for a chart given a user request and a SPARQL SELECT query.
+                The result can be used as dataConfig for the chart to be visualized.
+                """ ;
+
+            # language model powering the tool (optional; by default, the language model of the agent is used)
+            #tool:languageModel <urn:service:languagemodel-default> ;
+
+            # Task instructions for the generation of the chart configuration injected into the prompt of the LLM.
+            tool:taskInstructions """
+                - Generate a configuration for a component that visualizes data as a chart.
+                - Examples of chart configurations are provided below # EXAMPLES #.
+                - The original user request is provided below # REQUEST #.
+                - The SPARQL query returning the data for the chart is provided below # QUERY #.
+                """ ;
+        ] ;
+  ] .

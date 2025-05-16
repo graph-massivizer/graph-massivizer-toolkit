@@ -11,6 +11,7 @@ import pyarrow as pa
 import inspect
 import json
 import pickle
+from concurrent.futures import ThreadPoolExecutor
 
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
@@ -99,8 +100,7 @@ class Simulation:
 	def __exit__(self,
 				 exctype: Optional[Type[BaseException]],
 				 excinst: Optional[BaseException],
-				 exctb: Optional[TracebackType]
-				 ) -> bool:
+				 exctb: Optional[TracebackType] ) -> bool:
 
 		if self.state.current_state not in {LifecycleState.COMPLETED, LifecycleState.FAILED}:
 			try:
@@ -137,7 +137,7 @@ class Simulation:
 			task_managers: list[TaskManagerNode] = []
 			offset = 3
 			for i in range(self.initNumberOfTms):
-				self.logger.info(f"Creating task manager{offset+i}")
+				self.logger.info(f"Creating task manager {offset+i}")
 				tm = TaskManagerNode(Machine(offset + i, self.__machine_descriptor), self.__network_name)
 				task_managers.append(tm)
 
@@ -186,7 +186,7 @@ class Simulation:
 			self.logger.info("Dashboard started")
 
 			hdfs_node.wait_for_hdfs(timeout=10000)
-			hdfs_node.create_hdfs_directory("/tmp")
+			#hdfs_node.create_hdfs_directory("/tmp")
 			self.logger.info("HDFS is ready")
 
 		except Exception:
@@ -247,9 +247,10 @@ class Simulation:
 	def wait_for_completion(self) -> None:
 		raise NotImplementedError()
 
-	def _try_complete_nodes(self):
+	def _complete_tms(self):
 		for tm in self.cluster.task_managers:
 			try:
+				tm.logger.setLevel(logging.ERROR) # Currently zookeeper throws a thousand warnings as soon as you shut things off
 				tm.shutdown()
 				self.logger.info(
 					f"Task manager {tm.node_id} has been shut down.")
@@ -257,33 +258,52 @@ class Simulation:
 				self.logger.info(
 					f"Closing the task manager {tm.node_id} failed. " + str(e))
 				self.state.fail()
+
+	def _complete_wm(self):
 		try:
+			self.cluster.workload_manager.logger.setLevel(logging.ERROR) # Currently zookeeper throws a thousand warnings as soon as you shut things off
 			self.cluster.workload_manager.shutdown()
 			self.logger.info("Workload manager stopped")
 		except Exception as e:
 			self.logger.info("Closing the workload manager failed. " + str(e))
 			self.state.fail()
+
+	def _complete_zk(self):
 		try:
+			self.cluster.zookeeper.logger.setLevel(logging.ERROR) # Currently zookeeper throws a thousand warnings as soon as you shut things off
 			self.cluster.zookeeper.shutdown()
 			self.logger.info("Zookeeper stopped")
 		except Exception as e:
 			self.logger.info("Closing the zookeeper failed. " + str(e))
 			self.state.fail()
+
+	def _complete_hdfs(self):
 		try:
 			for dataNode in self.cluster.hdfs_data_nodes:
+				dataNode.logger.setLevel(logging.ERROR) # Currently zookeeper throws a thousand warnings as soon as you shut things off
 				dataNode.shutdown()
 				self.logger.info("HDFS Data Node stopped")
+			self.cluster.hdfs_node.logger.setLevel(logging.ERROR) # Currently zookeeper throws a thousand warnings as soon as you shut things off
 			self.cluster.hdfs_node.shutdown()
 			self.logger.info("HDFS Name Node stopped")
 		except Exception as e:
 			self.logger.info("Closing the hdfs failed. " + str(e))
 			self.state.fail()
+
+	def _complete_dash(self):
 		try:
+			self.cluster.dashboard.logger.setLevel(logging.ERROR) # Currently zookeeper throws a thousand warnings as soon as you shut things off
 			self.cluster.dashboard.shutdown()
 			self.logger.info("Dashboard stopped")
 		except Exception as e:
 			self.logger.info("Closing the dashboard failed. " + str(e))
 			self.state.fail()
+
+	def _try_complete_nodes(self):
+		with ThreadPoolExecutor(max_workers=6) as executor:
+			for func in [self._complete_tms,self._complete_wm,self._complete_zk,self._complete_hdfs,self._complete_dash]:
+				executor.submit(func)
+			executor.shutdown(wait=True)
 
 	def get_status(self) -> tuple[str, list[dict[str, Any]]]:
 		# Collect status from the cluster and nodes

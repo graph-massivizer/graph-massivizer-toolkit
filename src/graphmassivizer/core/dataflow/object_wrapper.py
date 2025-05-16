@@ -1,4 +1,4 @@
-from src.graphmassivizer.core.dataflow.object_handle import ObjectHandle
+from graphmassivizer.core.dataflow.object_handle import ObjectHandle
 import networkx as nx
 
 

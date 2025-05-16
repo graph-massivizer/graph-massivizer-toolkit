@@ -1,6 +1,5 @@
-from src.graphmassivizer.core.dataflow.data_manager import DataManager
-from src.graphmassivizer.core.dataflow.graph_handle import ObjectHandle
-from src.graphmassivizer.core.dataflow.BGO import BGO
+from graphmassivizer.core.dataflow.data_manager import DataManager
+from graphmassivizer.core.dataflow.BGO import BGO
 
 class WorkflowStep:
     def __init__(self, data_manager: DataManager, operation: BGO):
