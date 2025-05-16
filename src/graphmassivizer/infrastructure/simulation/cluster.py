@@ -51,9 +51,8 @@ class Cluster:
     def remove_network(self):
         network = self._get_network_if_exists()
         if network is not None:
-            network.remove()
-            self.__logger.info(
-                f"Network '{self.docker_network_name}' removed.")
+            pass#network.remove()
+            #self.__logger.info(f"Network '{self.docker_network_name}' removed.")
 
     # def monitor_cluster(self) -> None:
     #     for node in self.nodes.values():

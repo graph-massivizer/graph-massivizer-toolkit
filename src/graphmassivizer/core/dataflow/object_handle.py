@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from src.graphmassivizer.core.dataflow import BGO
+from graphmassivizer.core.dataflow import BGO
 
 
 class ObjectHandle:

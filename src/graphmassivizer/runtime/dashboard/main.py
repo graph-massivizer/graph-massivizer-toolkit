@@ -79,7 +79,7 @@ class Dashboard:
 			# List connected containers
 			containers = network.containers
 
-			print(f"Containers info in network '{self.docker_network_name}':")
+			#print(f"Containers info in network '{self.docker_network_name}':")
 			containers_info = {"Container Name": [], "Status": [], "Host Name":[]}#, "CPU Percent":[], "Memory Usage":[]}
 			for container in containers:
 				'''
@@ -371,7 +371,7 @@ class Dashboard:
 				memory_stats = stats.get("memory_stats", {})
 				mem_usage = memory_stats.get("usage")
 				mem_limit = memory_stats.get("limit")
-				print(f'Memory limit for the container is: {mem_limit}')
+				#print(f'Memory limit for the container is: {mem_limit}')
 
 				if None in (mem_usage, mem_limit) or mem_limit == 0:
 					mem_percent = 0.0
@@ -456,7 +456,7 @@ class Dashboard:
 			except Exception as e:
 				result["cpu_percent"] = None
 				result["mem_percent"] = None
-				print(f"Error retrieving stats for container {container.name}: {e}")
+				#print(f"Error retrieving stats for container {container.name}: {e}")
 
 		# Start the thread
 		stats_thread = threading.Thread(target=get_stats)
@@ -482,10 +482,10 @@ class Dashboard:
 		network = self.get_network()
 		# Get all containers in this network
 		containers_info = ""
-		print("\nContainers in this network:")
+		#print("\nContainers in this network:")
 		for container_id, details in network.attrs["Containers"].items():
 			container_info = f"  - Container ID: {container_id}, Name: {details['Name']}, IPv4: {details['IPv4Address']}"
-			print(container_info)
+			#print(container_info)
 			containers_info += container_info + '\n'
 
 		return containers_info
@@ -593,9 +593,9 @@ def main() -> None:
 		# get connected containers info
 		#logger.info(dashboard.get_connected_containers_info())
 		containers_info_df = dashboard.list_all_containers_info_in_network_multithread()
-		print(f'df inside main: columns are: {containers_info_df.columns} and its len is {containers_info_df.shape[0]}')
+		#print(f'df inside main: columns are: {containers_info_df.columns} and its len is {containers_info_df.shape[0]}')
 
-		dashboard.logger.info(f'{containers_info_df.columns}')
+		#dashboard.logger.info(f'{containers_info_df.columns}')
 
 		# Get ZooKeeper host from environment variables
 		root_znode_path = '/'
@@ -619,8 +619,8 @@ def main() -> None:
 		# run dashboard
 		znodes_hierarchy_graph_elements =  znodes_hierarchy_graph_nodes + znodes_hierarchy_graph_edges
 		workflow_DAG_path = './tests/resources/DAG.py-dict'
-		#DAG_elements = workflow_DAG_to_graph_elements(workflow_DAG_path)
-		dashboard.run_dashboard(containers_info_df, df_znodes_data, znodes_hierarchy_graph_elements, None)
+		DAG_elements = workflow_DAG_to_graph_elements()
+		dashboard.run_dashboard(containers_info_df, df_znodes_data, znodes_hierarchy_graph_elements, DAG_elements)
 
 		# Create the dashboard's machine descriptor
 
@@ -645,7 +645,7 @@ def main() -> None:
 			pass  # Replace with actual workload manager logic
 
 	except Exception as e:
-		logging.error(f"An error occurred: {e}")
+		dashboard.logger.error(f"An error occurred: {e}")
 	finally:
 		# Ensure that the infrastructure manager shuts down properly
 		if 'infrastructure_manager' in locals():

@@ -58,6 +58,7 @@ class SimulatedNode(Node, Thread):
 		self.__image_name = image_name
 		self.__tag = tag
 		self._command = command
+		self.logger = logging.getLogger(__name__)
 
 	def run(self) -> None:
 		while self.status.current_state == NodeStatus.RUNNING:
@@ -81,24 +82,39 @@ class SimulatedNode(Node, Thread):
 
 		for raw_line in log_stream:
 			# Decode bytes
-			line = raw_line.decode('utf-8', errors='replace').rstrip()
+			message = raw_line.decode('utf-8', errors='replace').rstrip()
+			level = message.split(":",2)
+			match level[0]:
+				case "WARNING": logAtLevel = logger.warning
+				case "ERROR": logAtLevel = logger.error
+				case "CRITICAL": logAtLevel = logger.critical
+				case "DEBUG": logAtLevel = logger.debug
+				case _: logAtLevel = logger.info
+
 			# For instance, you might want to add the container name or ID:
-			logger.info(f"[container:{self.__container_name}] {line}")
+			logAtLevel(f"[container:{self.__container_name}] {message}")
 
 	def deploy(self) -> None:
+		try:
+			self.docker_container = self.docker_client.containers.get(self.__container_name) # first check for existing containers/images
+
+			self.docker_container.stop()
+			self.docker_container.remove()
+
+		except docker.errors.NotFound:
+			pass
 		try:
 			self.docker_container = self.docker_client.containers.run(
 				self.__image_name + f":{self.__tag}" if self.__tag else self.__image_name,
 				detach=True,
 				name=self.__container_name,
 				network=self.docker_network_name,
+				auto_remove=True,
 				environment=self._get_docker_environment(),
 				labels={'node': str(self.node_id)},
 				command = self._command,
 				volumes={"/var/run/docker.sock": {"bind": "/var/run/docker.sock", "mode": "rw"}}
 			)
-			# TODO In the past we added some aliases as well. Are they still needed?
-
 			# Start the container
 			self.docker_container.start()
 
@@ -107,7 +123,6 @@ class SimulatedNode(Node, Thread):
 				name=f"{self.__container_name}-log-forwarder",
 				daemon=True
 			).start()
-
 		except Exception as e:
 			print(f"Error deploying container on node {self.node_id}: {e}")
 			raise e
@@ -126,14 +141,14 @@ class SimulatedNode(Node, Thread):
 			self.status.offline()
 			if self.docker_container:
 				self.docker_container.stop()
-				self.docker_container.remove()
+				#self.docker_container.remove()
 				del self.docker_container
 		# TODO the following ensures that the container is removed, even if we somehow lost connection to it. Is this needed?
 		try:
 			existing_container = self.docker_client.containers.get(
 				self.__container_name)
 			existing_container.stop()
-			existing_container.remove()
+			#existing_container.remove()
 		except docker.errors.NotFound:
 			pass  # No existing container, proceed
 
@@ -169,7 +184,8 @@ class SimulatedNode(Node, Thread):
 			"ROLE": role,
 			"ZOOKEEPER_HOST": zookeeper_host,
 			"NODE_ID": str(machine.ID),
-			"HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020"
+			"HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020",
+			"METAPHACTORY":"http://172.22.0.1:10214"
 		}
 
 		# If you need separate fields for Task vs. Workflow,
@@ -236,7 +252,7 @@ class ZookeeperNode(SimulatedNode):
 		command = f'sh -c "echo ruok | nc {self.__container_name} 2181"'
 		try:
 			output = self.docker_client.containers.run(
-				"alpine:latest",
+				self.__container_name,
 				command=command,
 				network=self.docker_network_name,
 				remove=True
@@ -470,7 +486,7 @@ class TaskManagerNode(SimulatedNode):
 						 self.__tag,
 						 {}
 						 )
-		self.logger = logging.getLogger(__name__)
+
 		self.__task_manager_environment = SimulatedNode.create_runtime_environment(
 			role="task_manager",
 			machine=machine,

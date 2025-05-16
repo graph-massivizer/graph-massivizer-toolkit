@@ -1,11 +1,9 @@
-from src.graphmassivizer.core.dataflow.graph_wrapper import GraphWrapper
-from src.graphmassivizer.core.dataflow.data_manager import DataManager
-from src.graphmassivizer.core.dataflow.graph_handle import ObjectHandle
+from graphmassivizer.core.dataflow.graph_wrapper import GraphWrapper
 from abc import ABC, abstractmethod
 import networkx as nx
 
 class BGO:
-    def execute(self, data_manager: DataManager, object_handle: ObjectHandle, dry_run=False) -> ObjectHandle:
+    def execute(self, data_manager, object_handle, dry_run=False):
         """Execute some transformation on the graph and return a new GraphWrapper."""
         output_handle = object_handle.get_outcome_paths(self)
 
