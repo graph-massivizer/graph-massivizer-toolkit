@@ -217,32 +217,32 @@ class Simulation:
 		self.complete()
 
 	def get_input(self) -> None:
-		self.DAG = InputPipeline().getWorkflow()
-		self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
-		self.state.get_input()
+		# self.DAG = InputPipeline().getWorkflow()
+		# self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
+		# self.state.get_input()
 
-	def parallelize(self) -> None:
-		Parallelizer.parallelize(self.DAG)
-		self.state.parallelize()
+	# def parallelize(self) -> None:
+	# 	Parallelizer.parallelize(self.DAG)
+	# 	self.state.parallelize()
 
-	def optimize(self) -> None:
-		Optimizer_1.optimize(self.DAG)
-		self.state.optimize()
+	# def optimize(self) -> None:
+	# 	Optimizer_1.optimize(self.DAG)
+	# 	self.state.optimize()
 
-	def greenify(self) -> None:
-		Optimizer_2.optimize(self.DAG)
-		self.state.greenify()
+	# def greenify(self) -> None:
+	# 	Optimizer_2.optimize(self.DAG)
+	# 	self.state.greenify()
 
-	def run(self) -> None:
-		self.state.run()
-		task = self.firstTask
-		args = self.DAG['args']
-		i = 0
-		while task:
-			algorithm = list(task['implementations'].values())[0]['class'].run
-			self.cluster.task_managers[i].run(algorithm,args)
-			task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
-			i += 1
+	# def run(self) -> None:
+	# 	self.state.run()
+	# 	task = self.firstTask
+	# 	args = self.DAG['args']
+	# 	i = 0
+	# 	while task:
+	# 		algorithm = list(task['implementations'].values())[0]['class'].run
+	# 		self.cluster.task_managers[i].run(algorithm,args)
+	# 		task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
+	# 		i += 1
 
 	def wait_for_completion(self) -> None:
 		raise NotImplementedError()

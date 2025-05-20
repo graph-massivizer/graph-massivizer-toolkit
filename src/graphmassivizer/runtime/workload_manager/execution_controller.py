@@ -7,9 +7,14 @@ class ExecutionController:
 
     def __init__(self) -> None:
         pass
-
-    def execute(self,execlutable_DAG):
-        # in the first version (sequential) we jump from BGOto BGO (for loop)
-        
-        # we transform the zookeper
-        pass
+    
+    def execute(self) -> None:
+        self.state.run()
+        task = self.firstTask   
+        args = self.DAG['args']
+        i = 0
+        while task:
+            algorithm = list(task['implementations'].values())[0]['class'].run
+            self.cluster.task_managers[i].run(algorithm,args)
+            task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
+            i += 1

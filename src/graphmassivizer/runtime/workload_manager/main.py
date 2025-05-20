@@ -11,6 +11,7 @@ import logging.handlers
 import re
 import pyarrow as pa
 import pyarrow.fs as pafs
+from functools import reduce
 from kazoo.client import KazooClient
 from statemachine import Event, State, StateMachine
 from typing import Any, Optional, Type
@@ -18,65 +19,74 @@ from graphmassivizer.runtime.workload_manager.infrastructure_manager import Infr
 from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
 from graphmassivizer.core.descriptors.descriptors import Machine
 from graphmassivizer.core.dataflow.data_manager import DataManager
+from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
+from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
+from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
+from graphmassivizer.runtime.workload_manager.scheduler import Scheduler
+from graphmassivizer.runtime.workload_manager.deployer import Deployer
+from graphmassivizer.runtime.workload_manager.execution_controller import ExecutionController
+from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
+from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
 
 logging.basicConfig(level=logging.INFO)
 
-#	 # ----------------------------------------
-#	 # WORKLOAD MANAGER STATE MACHINE
-#	 # ----------------------------------------
-#	 # This is the most basic state machine for the
-#	 # Workload Manager I could think of. Has most likely
-#	 # to be refined and extended.
-# class WorkloadManagerState(StateMachine):
+	 # ----------------------------------------
+	 # WORKLOAD MANAGER STATE MACHINE
+	 # ----------------------------------------
+	 # This is the most basic state machine for the
+	 # Workload Manager I could think of. Has most likely
+	 # to be refined and extended.
+class WorkloadManagerState(StateMachine):
 
-#	 # STATES
-#	 # ----------------------------------------
-#	 # initial
-#	 CREATED = State(initial=True)
-#	 # transition
-#	 INITIALIZED = State()
-#	 PARALLELIZED = State()
-#	 OPTIMIZED = State()
-#	 GREENIFIED = State()
-#	 SCHEDULED = State()
-#	 DEPLOYED = State()
-#	 RUNNING_PROGRAM = State()
-#	 RUNNING_ONBOARDING = State()
-#	 FAILED = State()
-#	 RECOVER = State()
-#	 # final
-#	 CANCELLED = State(final=True)
-#	 FINISHED = State(final=True)
-#	 # TRANSITIONS: workflow lifecycle
-#	 # ----------------------------------------
-#	 initialize = Event(CREATED.to(INITIALIZED))
-#	 receive_workflow = Event(INITIALIZED.to(PARALLELIZED))
-#	 optimize = Event(PARALLELIZED.to(OPTIMIZED))
-#	 optimization_failed = Event(OPTIMIZED.to(FAILED))
-#	 greenify = Event(OPTIMIZED.to(GREENIFIED))
-#	 greenification_failed = Event(GREENIFIED.to(FAILED))
-#	 schedule = Event(GREENIFIED.to(SCHEDULED))
-#	 schedule_failed = Event(SCHEDULED.to(FAILED))
-#	 deploy = Event(SCHEDULED.to(DEPLOYED))
-#	 deploy_failed = Event(DEPLOYED.to(FAILED))
-#	 start_execution = Event(INITIALIZED.to(RUNNING_PROGRAM))
-#	 execution_failed = Event(RUNNING_PROGRAM.to(FAILED))
-#	 finish = Event(RUNNING_PROGRAM.to(FINISHED))
-#	 # TRANSITIONS: data onboarding
-#	 # ----------------------------------------
-#	 onboard_data = Event(INITIALIZED.to(RUNNING_ONBOARDING))
-#	 onboarding_failed = Event(RUNNING_ONBOARDING.to(FAILED))
-#	 # TRANSITIONS: failure
-#	 # ----------------------------------------
-#	 recover = Event(FAILED.to(RECOVER))
-#	 cancel = Event(FAILED.to(CANCELLED))
+	# STATES
+	# ----------------------------------------
+	# initial
+	CREATED = State(initial=True)
+	# transition
+	INITIALIZED = State()
+	PARALLELIZED = State()
+	OPTIMIZED = State()
+	GREENIFIED = State()
+	SCHEDULED = State()
+	DEPLOYED = State()
+	RUNNING_PROGRAM = State()
+	RUNNING_ONBOARDING = State()
+	FAILED = State()
+	RECOVER = State()
+	# final
+	CANCELLED = State(final=True)
+	FINISHED = State(final=True)
+	# TRANSITIONS: workflow lifecycle
+	# ----------------------------------------
+	initialize = Event(CREATED.to(INITIALIZED))
+	parallize_workflow = Event(INITIALIZED.to(PARALLELIZED))
+	optimize = Event(PARALLELIZED.to(OPTIMIZED))
+	optimization_failed = Event(OPTIMIZED.to(FAILED))
+	greenify = Event(OPTIMIZED.to(GREENIFIED))
+	greenification_failed = Event(GREENIFIED.to(FAILED))
+	schedule = Event(GREENIFIED.to(SCHEDULED))
+	schedule_failed = Event(SCHEDULED.to(FAILED))
+	deploy = Event(SCHEDULED.to(DEPLOYED))
+	deploy_failed = Event(DEPLOYED.to(FAILED))
+	start_execution = Event(INITIALIZED.to(RUNNING_PROGRAM))
+	execution_failed = Event(RUNNING_PROGRAM.to(FAILED))
+	finish = Event(RUNNING_PROGRAM.to(FINISHED))
+	# TRANSITIONS: data onboarding
+	# ----------------------------------------
+	onboard_data = Event(INITIALIZED.to(RUNNING_ONBOARDING))
+	onboarding_failed = Event(RUNNING_ONBOARDING.to(FAILED))
+	# TRANSITIONS: failure
+	# ----------------------------------------
+	recover = Event(FAILED.to(RECOVER))
+	cancel = Event(FAILED.to(CANCELLED))
 
-# class LoggingListener:
-#	 def __init__(self, logger: logging.Logger) -> None:
-#		 self.logger = logger
+class LoggingListener:
+	def __init__(self, logger: logging.Logger) -> None:
+		self.logger = logger
 
-#	 def after_transition(self, event: Event, state: State) -> None:
-#		 self.logger.info(f"With event {event} to state {state}")
+	def after_transition(self, event: Event, state: State) -> None:
+		self.logger.info(f"With event {event} to state {state}")
 
 
 class WorkloadManager:
@@ -92,6 +102,72 @@ class WorkloadManager:
 		self.register_self()
 		self.infrastructure_manager = InfrastructureManager(workload_manager=self)
 		self.dataManager = DataManager('/dm', self.zk)
+		self.parallelizer = Parallelizer()
+		self.optimizer = Optimizer_1()
+		self.greenifier = Optimizer_2()
+		self.scheduler = Scheduler()
+		self.deployer = Deployer()
+		self.execution_manager = ExecutionController()
+		self.DAG = None  # Placeholder for the actual DAG
+  
+	def register_self(self) -> None:
+		node_path = f'/workloadmanagers/{self.machine.ID}'
+		mashine_utf8 = self.machine.to_utf8()
+		if self.zk.exists(node_path):
+			self.zk.set(node_path, mashine_utf8)
+		else:
+			self.zk.create(node_path, mashine_utf8, makepath=True)
+		self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
+  
+	def receive_workflow(self):
+		self.logger.info(f"Received workflow: {workflow}")
+		self.DAG = InputPipeline().getWorkflow()
+		self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
+		self.state.initialize()
+  
+	def parallelize(self) -> None:
+		self.logger.info("Parallelizing workload...")
+		dag = Parallelizer.parallelize(self.DAG)
+		self.state.parallize_workflow()
+  
+	def optimize(self) -> None:
+		self.logger.info("Optimizing workload...")
+		optimizer = Optimizer_1()
+		optimizer.optimize(self.DAG)
+		self.state.optimize()
+  
+	def greenify(self) -> None:
+		self.logger.info("Greenifying workload...")
+		optimizer = Optimizer_2()
+		optimizer.greenify(self.DAG)
+		self.state.greenify()
+
+	def schedule(self) -> None:
+		# TODO REZA: WE SHOULD SCHEDULE THE WORKLOAD HERE
+		self.logger.info("Scheduling workload...")
+		self.state.schedule()
+
+	def deploy(self) -> None:
+		# HERE WE SHOULD MAKE SURE THAT THE WORKLOAD IS DEPLOYED
+		self.logger.info("Deploying workload...")
+		self.state.deploy()
+  
+	def execute(self) -> None:
+		self.logger.info("Executing workload...")
+		self.execution_manager.execute(self.DAG)
+		self.state.start_execution()
+  
+	def demo_hdfs_io(self) -> None:
+		file_path = '/tmp/workload_manager_hello.txt'
+		data_to_write = b'Hello from WorkloadManager!\n'
+		self.logger.info(f"Writing to HDFS path: {file_path}")
+		with self.fs.open_output_stream(file_path) as f:
+			f.write(data_to_write)
+		self.logger.info(f"Reading the same file back from HDFS.")
+		with self.fs.open_input_stream(file_path) as f:
+			contents = f.read()
+			self.logger.info(f"Read from HDFS: {contents}")
+  
 
 	# def __enter__(self) -> "WorkloadManager":
 	#	 self.start()
@@ -117,28 +193,10 @@ class WorkloadManager:
 	#	 return True
 
 
-	def demo_hdfs_io(self) -> None:
-		"""Example: write & read a file in HDFS."""
-		file_path = '/tmp/workload_manager_hello.txt'
-		data_to_write = b'Hello from WorkloadManager!\n'
-		self.logger.info(f"Writing to HDFS path: {file_path}")
-		with self.fs.open_output_stream(file_path) as f:
-			f.write(data_to_write)
-
-		# self.logger.info(f"Reading the same file back from HDFS.")
-		# with self.fs.open_input_stream(file_path) as f:
-		#	 contents = f.read()
-		# self.logger.info(f"Read from HDFS: {contents}")
 
 
-	def register_self(self) -> None:
-		node_path = f'/workloadmanagers/{self.machine.ID}'
-		mashine_utf8 = self.machine.to_utf8()
-		if self.zk.exists(node_path):
-			self.zk.set(node_path, mashine_utf8)
-		else:
-			self.zk.create(node_path, mashine_utf8, makepath=True)
-		self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
+
+
 
 
 
@@ -165,6 +223,10 @@ def main() -> None:
 
 		workload_manager = WorkloadManager(zookeeper_host, fs)
 		logger.info("I am Workload Manager " + str(workload_manager.machine.ID))
+  
+  
+  
+  
 
 		# Optional: demonstrate HDFS I/O
 		#workload_manager.demo_hdfs_io()
