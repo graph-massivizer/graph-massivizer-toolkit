@@ -110,6 +110,23 @@ class WorkloadManager:
 		self.execution_manager = ExecutionController()
 		self.DAG = None  # Placeholder for the actual DAG
   
+	# --- Root
+	# ------- Infrastructure
+	# ------------ MASHINE I
+    # ------------ MASHINE II
+    # ------- Environment
+    # ------------ WM
+    # --------------- recived workflow : false
+    # --------------- state : CREATED 
+    # ------------ TM I
+    # ------------ TM II
+    # ------------ TM III  
+    
+    def zookeeper_task_manager_watcher(self, event: Event) -> None:
+    		self.logger.info(f"Task Manager event: {event}")
+			# TODO
+			# When recived_workflow = true
+
 	def register_self(self) -> None:
 		node_path = f'/workloadmanagers/{self.machine.ID}'
 		mashine_utf8 = self.machine.to_utf8()
@@ -120,7 +137,7 @@ class WorkloadManager:
 		self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
   
 	def receive_workflow(self):
-		self.logger.info(f"Received workflow: {workflow}")
+		self.logger.info(f"Received workflow")
 		self.DAG = InputPipeline().getWorkflow()
 		self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
 		self.state.initialize()
@@ -128,6 +145,18 @@ class WorkloadManager:
 	def parallelize(self) -> None:
 		self.logger.info("Parallelizing workload...")
 		dag = Parallelizer.parallelize(self.DAG)
+		# TODO change state in Zookeeper
+		# --- Root
+		# ------- Infrastructure
+		# ------------ MASHINE I
+    	# ------------ MASHINE II
+    	# ------- Environment
+    	# ------------ WM
+    	# --------------- recived workflow : false
+    	# --------------- state : PARALLELIZED 
+    	# ------------ TM I
+    	# ------------ TM II
+    	# ------------ TM III  
 		self.state.parallize_workflow()
   
 	def optimize(self) -> None:
@@ -140,6 +169,7 @@ class WorkloadManager:
 		self.logger.info("Greenifying workload...")
 		optimizer = Optimizer_2()
 		optimizer.greenify(self.DAG)
+  		# TODO change state in Zookeeper
 		self.state.greenify()
 
 	def schedule(self) -> None:

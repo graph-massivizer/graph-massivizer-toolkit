@@ -220,6 +220,34 @@ class Simulation:
 		# self.DAG = InputPipeline().getWorkflow()
 		# self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
 		# self.state.get_input()
+  
+   # HERE OUR ZOOKEPER LOOKS LIKE THIS:
+   	# --- Root
+	# ------- Infrastructure
+	# ------------ MASHINE I
+    # ------------ MASHINE II
+    # ------- Environment
+    # ------------ WM
+    # --------------- recived workflow : false
+    # --------------- state : CREATED 
+    # ------------ TM I
+    # ------------ TM II
+    # ------------ TM III 
+  
+	# TODO Call Zookeper to Trigger receive_workflow in WM
+ 
+  # HERE OUR ZOOKEPER LOOKS LIKE THIS:
+   	# --- Root
+	# ------- Infrastructure
+	# ------------ MASHINE I
+    # ------------ MASHINE II
+    # ------- Environment
+    # ------------ WM
+    # --------------- recived workflow : true
+    # --------------- state : CREATED 
+    # ------------ TM I
+    # ------------ TM II
+    # ------------ TM III 
 
 	# def parallelize(self) -> None:
 	# 	Parallelizer.parallelize(self.DAG)
@@ -243,9 +271,9 @@ class Simulation:
 	# 		self.cluster.task_managers[i].run(algorithm,args)
 	# 		task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
 	# 		i += 1
-
-	def wait_for_completion(self) -> None:
-		raise NotImplementedError()
+	
+ 	# def wait_for_completion(self) -> None:
+	# 	raise NotImplementedError()
 
 	def _complete_tms(self):
 		for tm in self.cluster.task_managers:
