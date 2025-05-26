@@ -1,0 +1,138 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix service-config: <http://www.metaphacts.com/ontologies/platform/service/config/> .
+@prefix agent: <http://www.metaphacts.com/ontologies/platform/service/config/ai/agent/> .
+@prefix tool: <http://www.metaphacts.com/ontologies/platform/service/config/ai/tool/> .
+@prefix ai-service-config: <http://www.metaphacts.com/ontologies/platform/service/config/ai/> .
+
+<urn:service:workflowAgent> a service-config:Service, ai-service-config:ConversationAgent;
+  service-config:config [
+      agent:contextInstructions """
+                - You are operating in an environment with access to knowledge graphs that are based on open standards like RDF, OWL, and SPARQL.
+                - You have access to tools that can be used to retrieve information from knowledge graphs and potentially other data sources.
+                - You can use the tools to retrieve information about entities, relationships, and other relevant information.
+                - Entities are identified by their fully-qualified IRI.
+                - The data on the system are accessible for tools under a particular data schema. When deciding which tool to use to answer the user request, pay attention to the data descriptions.
+                - Data description for unstructured retrieval: information from literal properties of entities like titles or descriptions.
+                - Data description for structured retrieval with SPARQL: The BGO ontology represents the structure and relationships between classes of graph algorithms, inputs and outputs for the algorithms,
+                  as well as workflows and tasks that may be created with the algorithms by a use case in the Graph-Masivizer project.
+                """;
+      agent:contextOntology <https://ontologies.metaphacts.com/bgo-ontology/0.1>;
+      agent:languageModel <urn:service:llm-openai>;
+      agent:retryLimit "2"^^<http://www.w3.org/2001/XMLSchema#int>;
+      agent:taskInstructions """
+                You are a helpful assistant developed by metaphacts GmbH. STRICTLY adhere to the following instructions:
+                - Your response must be concise and to the point.
+                - Your response must include only information that is immediately relevant to answer the user request.
+                - Answer requests using only information that has been provided in the conversation and from tools.
+                - To answer a request, prefer tools for structured retrieval via SPARQL over unstructured retrieval.
+                - Your response should contain as much information as possible (especially entities) that you used to derive the answer.
+                - Use only entity IRIs that are provided by the user or from tools. Never use dummy IRIs or IRIs which you have learned during pre-training. Never use PREFIX <http://example.org/> in real tasks, and pay attention to the PREFIXes used in the context ontology.
+                - If you have multiple likely candidates for an entity let the user decide before answering the request. Use the `describe_entity` tool to provide details about each candidate.
+                - Do not use language tags.
+                """;
+      agent:tokenWindowSize "0"^^<http://www.w3.org/2001/XMLSchema#int>;
+      agent:toolConfig [ a tool:ChartConfigurationTool;
+          tool:description """
+                Generates the configuration for a chart given a user request and a SPARQL SELECT query.
+                The result can be used as dataConfig for the chart to be visualized.
+                """;
+          tool:enabled true;
+          tool:taskInstructions """
+                - Generate a configuration for a component that visualizes data as a chart.
+                - Examples of chart configurations are provided below # EXAMPLES #.
+                - The original user request is provided below # REQUEST #.
+                - The SPARQL query returning the data for the chart is provided below # QUERY #.
+                """
+        ], [ a tool:SPARQLTranslationTool;
+          tool:description """
+                Translates a natural language request into a SPARQL query that can be run against the database to retrieve structured data.
+                The tool is intended to answer information needs that require definitive or quantitative answers; such requests can contain keywords like \"all\", \"most recent\", \"highest\", \"sum\".
+                As entities, use only entity IRIs that were explicitly mentioned by the user or returned from tools.
+                """;
+          tool:enabled true;
+          tool:failForUnknownEntity true;
+          tool:failForUnknownType true;
+          tool:retryLimit "2"^^<http://www.w3.org/2001/XMLSchema#int>;
+          tool:taskInstructions """
+                - Generate a SPARQL query that retrieves exactly the information requested in the request provided below # REQUEST #.
+                - Use the IRIs of the detected entities in the query which are provided below # ENTITIES #.
+                - Use only the OWL ontology as a model for the query which is provided below # ONTOLOGY #.
+                - Use the namespaces declared in the ontology and omit namespace declarations in the query.
+                - Use only classes and properties of the ontology that are relevant to the request.
+                - For Data Property instances, use rdfs:label to query for the string name. ONLY use bgo:dataType when explicitly instructed to query for the data type of the Data Property.
+                """
+        ], [ a tool:EntityLinkingTool;
+          tool:description """
+                Returns detected entity mentions and their candidate entities ordered by score.
+                Entity mentions are detected using the types defined in the context ontology.
+                When retrieving structured information, this tool should typically be called first.
+                """;
+          tool:enabled true;
+          tool:examples """
+                Example 1.
+                Request: What are options for graph operations that implement the Breadth First Search algorithm?
+                Response: {\"mentions\": [
+                    {\"text\": \"Breadth First Search algorithm\", \"candidateTypes\": [\"https://ontologies.metaphacts.com/bgo-ontology/AlgorithmImplementation\"]}
+                ]}
+
+                Example 2.
+                Request: Which author wrote a paper with Aaron Eberhart?
+                Response: {\"mentions\": [
+                    {\"text\": \"Aaron Eberhart\", \"candidateTypes\": [\"https://semopenalex.org/ontology/Author\"]}
+                ]}
+
+                Example 3.
+                Request: What are algorithms that have RDF graph outputs?
+                Response: {\"mentions\": [
+                    {\"text\": \"RDF graph\", \"candidateTypes\": [\"https://ontologies.metaphacts.com/bgo-ontology/DataProperty\"]}
+                ]}
+                """;
+          tool:limit "3"^^<http://www.w3.org/2001/XMLSchema#int>;
+          tool:taskInstructions """
+                - Extract named entities from the request provided below # REQUEST #.
+                - Only extract entities that may be instances of the types defined in the OWL ontology provided below # ONTOLOGY #.
+                - Do not extract mentions of types, numbers or dates.
+                - Assign all relevant candidate types to the named entities using only types from the OWL ontology.
+                - Omit the candidate types if you are unsure.
+                """
+        ], [ a tool:SPARQLQueryExecutionTool;
+          tool:description """
+                Returns a preview of the results of a SPARQL SELECT query (at most ten rows).
+                The query may have more results than that; to show all of them to the user, a dataFormat like table can be used.
+                The query to execute should be generated by a dedicated tool.
+                """;
+          tool:enabled true;
+          tool:limit "10"^^<http://www.w3.org/2001/XMLSchema#int>
+        ], [ a tool:GraphMassivizerTool;
+          tool:description "The Graph Massivizer toolkit is a set of algorithms for graph analytics and reasoning.";
+          tool:enabled true;
+          tool:taskInstructions """
+                Generate a configuration for a component that can perform computations and analytics for graphs.
+                The original user request is enclosed in <request> tags.
+                The graph providing the input data is enclosed in <graph> tags.
+                The algorithms to be used are enclosed in <algorithm> tags.
+                The input <parameters> of any type to be used.
+                Examples of algorithms are enclosed in <examples> tags.
+                """
+        ], [ a tool:KeywordSearchTool;
+          tool:description """
+                Returns at most ten entities having textual descriptions that contain the given keywords (unstructured retrieval).
+                ONLY use this tool to retrieve context for answering explorative information needs over unstructured data, such as 'What do you know about X?' or 'What is the impact of X on Y?'.
+                """;
+          tool:enabled true;
+          tool:limit "10"^^<http://www.w3.org/2001/XMLSchema#int>
+        ], [ a tool:DescribeEntityTool;
+          tool:description """
+                Describes an entity by retrieving a limited number of structured data from the knowledge graph.
+                Additionally, it provides the CONSTRUCT query that is used to retrieve the data.
+                Use this tool if you don't have a specific information need for the entity.
+                Do not use this tool to retrieve concrete information about one or more entities (like the author of a publication).
+                Do not use this tool to retrieve information for more than three entities to answer a user request.
+                """;
+          tool:enabled true;
+          tool:failForUnknownEntity true;
+          tool:limit "10"^^<http://www.w3.org/2001/XMLSchema#int>
+        ]
+    ];
+  rdfs:label "BGO Worlflow Conversation Agent" .
