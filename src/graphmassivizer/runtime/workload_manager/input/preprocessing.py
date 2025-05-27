@@ -1,8 +1,8 @@
-from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
 import graphmassivizer.runtime.task_manager.BGO.networkx_bgos
+from graphmassivizer.runtime.workload_manager.input.userInputHandler import UserInputHandler
 import tarfile
 
 from functools import reduce
@@ -23,6 +23,13 @@ class InputPipeline:
 	def getWorkflow(self):
 		return self.userInputHandler.getWorkflow(self.workflowIRI,self.availableBGOs)
 
+	def getWorkflowFromFile(self, filePath):
+     	#	# Load the workflow from a file
+		file = tarfile.open(filePath, "r:gz")
+		
+     
+     
+		
 	def composeDAG(self):
 
 		if self.state: self.state.get_input()

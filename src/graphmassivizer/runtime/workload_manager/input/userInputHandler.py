@@ -13,6 +13,9 @@ class UserInputHandler:
 		self.DAG = {"args":bgoArgs, "directed": False, "multigraph": False, "nodes":{}, "edges":{}}
 		if 'graph' not in self.DAG['args']:
 			self.DAG['args']['graph'] = self.defaultGraph()
+   
+	def getWorkflowFromFile(self,workflowIRI,availableBGOs,jsonFile):
+		return
 
 	def getWorkflow(self,workflowIRI,availableBGOs):
 		return self.formatWorkflow(json.loads(self.metaphactory.workflowQuery(workflowIRI)),workflowIRI,availableBGOs)

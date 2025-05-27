@@ -20,14 +20,14 @@ from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStat
 from graphmassivizer.core.descriptors.descriptors import Machine
 from graphmassivizer.core.dataflow.data_manager import DataManager
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
-from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.workload_manager.input.preprocessing import InputPipeline
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
 from graphmassivizer.runtime.workload_manager.scheduler import Scheduler
 from graphmassivizer.runtime.workload_manager.deployer import Deployer
 from graphmassivizer.runtime.workload_manager.execution_controller import ExecutionController
 from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
-from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
+
 
 logging.basicConfig(level=logging.INFO)
 
