@@ -1,7 +1,7 @@
 import pandas as pd
 import ast
 import os
-from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.workload_manager.input.preprocessing import InputPipeline
 
 def load_data():
 	return pd.read_csv('data.csv')
