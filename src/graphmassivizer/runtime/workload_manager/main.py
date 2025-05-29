@@ -23,9 +23,9 @@ from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.input.preprocessing import InputPipeline
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
+from graphmassivizer.runtime.workload_manager.execution_controller import ExecutionController
 from graphmassivizer.runtime.workload_manager.scheduler import Scheduler
 from graphmassivizer.runtime.workload_manager.deployer import Deployer
-from graphmassivizer.runtime.workload_manager.execution_controller import ExecutionController
 from graphmassivizer.core.zookeeper.zookeeper_state_manager import ZookeeperStateManager
 
 
@@ -99,6 +99,8 @@ class WorkloadManager:
 		self.fs = hdfs_fs
 		self.zk = ZookeeperStateManager(self.zookeeper_host)
 		self.machine = Machine.parse_from_env(self.zk,prefix="WM_")
+		self.state = WorkloadManagerState() # Initialize the state machine instance
+		self.state.add_listener(LoggingListener(self.logger))
 		self.register_self()
 		self.infrastructure_manager = InfrastructureManager(workload_manager=self)
 		self.dataManager = DataManager('/dm', self.zk)
@@ -122,10 +124,10 @@ class WorkloadManager:
     # ------------ TM II
     # ------------ TM III  
     
-    def zookeeper_task_manager_watcher(self, event: Event) -> None:
-    		self.logger.info(f"Task Manager event: {event}")
-			# TODO
-			# When recived_workflow = true
+    # def zookeeper_task_manager_watcher(self, event: Event) -> None:
+    # 		self.logger.info(f"Task Manager event: {event}")
+	# 		# TODO
+	# 		# When recived_workflow = true
 
 	def register_self(self) -> None:
 		node_path = f'/workloadmanagers/{self.machine.ID}'
@@ -137,12 +139,48 @@ class WorkloadManager:
 		self.logger.info(f"Registered WorkloadManager {self.machine} with ZooKeeper.")
   
 	def receive_workflow(self):
-		self.logger.info(f"Received workflow")
-		self.DAG = InputPipeline().getWorkflow()
-		self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
-		self.state.initialize()
+		# Check current state to prevent re-initialization if already processed
+		if self.state.current_state != WorkloadManagerState.CREATED:
+			self.logger.info(f"Workflow reception triggered, but manager is in state '{self.state.current_state_value}'. Skipping.")
+			return
+
+		self.logger.info(f"Receiving and processing workflow...")
+		try:
+			self.DAG = InputPipeline().getWorkflow() # Consider passing METAPHACTORY_HOST if needed by InputPipeline
+			self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),(None, None))[1] # Added default for reduce
+			if self.firstTask is None:
+				self.logger.error("No first task found in the workflow DAG.")
+				# self.state.fail() # Or some other failure transition
+				return
+
+			self.logger.info("Workflow DAG processed successfully.")
+			self.state.initialize_workflow() # Transition to INITIALIZED state
+			
+			# Automatically proceed to the next steps if desired
+			self.parallelize()
+			self.optimize()
+			self.greenify()
+			# self.schedule() # etc. 
+			
+		except Exception as e:
+			self.logger.error(f"Error during receive_workflow: {e}", exc_info=True)
+			# self.state.fail() # Or appropriate error state
+     
+		# self.logger.info(f"Received workflow")
+		# self.DAG = InputPipeline().getWorkflow()
+		# self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
+		# self.state.initialize()
   
 	def parallelize(self) -> None:
+		if self.state.current_state != WorkloadManagerState.INITIALIZED:
+			self.logger.warning(f"Cannot parallelize, not in INITIALIZED state. Current state: {self.state.current_state_value}")
+			return
+		self.logger.info("Parallelizing workload...")
+		if self.DAG is None:
+			self.logger.error("DAG is not loaded, cannot parallelize.")
+			return
+		Parallelizer.parallelize(self.DAG) # Assuming this modifies self.DAG in place
+		self.state.parallize_workflow()
 		self.logger.info("Parallelizing workload...")
 		dag = Parallelizer.parallelize(self.DAG)
 		# TODO change state in Zookeeper
@@ -156,31 +194,60 @@ class WorkloadManager:
     	# --------------- state : PARALLELIZED 
     	# ------------ TM I
     	# ------------ TM II
-    	# ------------ TM III  
-		self.state.parallize_workflow()
+    	# ------------ TM III 
   
 	def optimize(self) -> None:
+		if self.state.current_state != WorkloadManagerState.PARALLELIZED:
+			self.logger.warning(f"Cannot optimize, not in PARALLELIZED state. Current state: {self.state.current_state_value}")
+			return
 		self.logger.info("Optimizing workload...")
-		optimizer = Optimizer_1()
-		optimizer.optimize(self.DAG)
-		self.state.optimize()
+		if self.DAG is None:
+			self.logger.error("DAG is not loaded, cannot optimize.")
+			return
+		self.optimizer.optimize(self.DAG) # Assuming this modifies self.DAG
+		self.state.optimize()     
+		# self.logger.info("Optimizing workload...")
+		# optimizer = Optimizer_1()
+		# optimizer.optimize(self.DAG)
+		# self.state.optimize()
   
 	def greenify(self) -> None:
+		if self.state.current_state != WorkloadManagerState.OPTIMIZED:
+			self.logger.warning(f"Cannot greenify, not in OPTIMIZED state. Current state: {self.state.current_state_value}")
+			return
 		self.logger.info("Greenifying workload...")
-		optimizer = Optimizer_2()
-		optimizer.greenify(self.DAG)
-  		# TODO change state in Zookeeper
-		self.state.greenify()
+		if self.DAG is None:
+			self.logger.error("DAG is not loaded, cannot greenify.")
+			return
+		self.greenifier.optimize(self.DAG) # Assuming this modifies self.DAG; method name is 'optimize' in class
+		self.state.greenify()     
+		# self.logger.info("Greenifying workload...")
+		# optimizer = Optimizer_2()
+		# optimizer.greenify(self.DAG)
+  		# # TODO change state in Zookeeper
+		# self.state.greenify()
 
 	def schedule(self) -> None:
-		# TODO REZA: WE SHOULD SCHEDULE THE WORKLOAD HERE
+		if self.state.current_state != WorkloadManagerState.GREENIFIED:
+			self.logger.warning(f"Cannot schedule, not in GREENIFIED state. Current state: {self.state.current_state_value}")
+			return
 		self.logger.info("Scheduling workload...")
+		# Add scheduling logic here using self.scheduler
 		self.state.schedule()
+		# # TODO REZA: WE SHOULD SCHEDULE THE WORKLOAD HERE
+		# self.logger.info("Scheduling workload...")
+		# self.state.schedule()
 
 	def deploy(self) -> None:
-		# HERE WE SHOULD MAKE SURE THAT THE WORKLOAD IS DEPLOYED
+		if self.state.current_state != WorkloadManagerState.SCHEDULED:
+			self.logger.warning(f"Cannot deploy, not in SCHEDULED state. Current state: {self.state.current_state_value}")
+			return
 		self.logger.info("Deploying workload...")
+		# Add deployment logic here using self.deployer
 		self.state.deploy()
+		# HERE WE SHOULD MAKE SURE THAT THE WORKLOAD IS DEPLOYED
+		# self.logger.info("Deploying workload...")
+		# self.state.deploy()
   
 	def execute(self) -> None:
 		self.logger.info("Executing workload...")

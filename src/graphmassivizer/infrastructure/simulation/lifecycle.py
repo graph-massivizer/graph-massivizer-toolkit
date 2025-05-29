@@ -16,8 +16,8 @@ from concurrent.futures import ThreadPoolExecutor
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
 from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode, DashboardNode)
-from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
-from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
+from graphmassivizer.runtime.workload_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.workload_manager.input.userInputHandler import UserInputHandler
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
@@ -217,63 +217,35 @@ class Simulation:
 		self.complete()
 
 	def get_input(self) -> None:
-		# self.DAG = InputPipeline().getWorkflow()
-		# self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
-		# self.state.get_input()
-  
-   # HERE OUR ZOOKEPER LOOKS LIKE THIS:
-   	# --- Root
-	# ------- Infrastructure
-	# ------------ MASHINE I
-    # ------------ MASHINE II
-    # ------- Environment
-    # ------------ WM
-    # --------------- recived workflow : false
-    # --------------- state : CREATED 
-    # ------------ TM I
-    # ------------ TM II
-    # ------------ TM III 
-  
-	# TODO Call Zookeper to Trigger receive_workflow in WM
- 
-  # HERE OUR ZOOKEPER LOOKS LIKE THIS:
-   	# --- Root
-	# ------- Infrastructure
-	# ------------ MASHINE I
-    # ------------ MASHINE II
-    # ------- Environment
-    # ------------ WM
-    # --------------- recived workflow : true
-    # --------------- state : CREATED 
-    # ------------ TM I
-    # ------------ TM II
-    # ------------ TM III 
+		self.DAG = InputPipeline().getWorkflow()
+		self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
+		self.state.get_input()
 
-	# def parallelize(self) -> None:
-	# 	Parallelizer.parallelize(self.DAG)
-	# 	self.state.parallelize()
+	def parallelize(self) -> None:
+		Parallelizer.parallelize(self.DAG)
+		self.state.parallelize()
 
-	# def optimize(self) -> None:
-	# 	Optimizer_1.optimize(self.DAG)
-	# 	self.state.optimize()
+	def optimize(self) -> None:
+		Optimizer_1.optimize(self.DAG)
+		self.state.optimize()
 
-	# def greenify(self) -> None:
-	# 	Optimizer_2.optimize(self.DAG)
-	# 	self.state.greenify()
+	def greenify(self) -> None:
+		Optimizer_2.optimize(self.DAG)
+		self.state.greenify()
 
-	# def run(self) -> None:
-	# 	self.state.run()
-	# 	task = self.firstTask
-	# 	args = self.DAG['args']
-	# 	i = 0
-	# 	while task:
-	# 		algorithm = list(task['implementations'].values())[0]['class'].run
-	# 		self.cluster.task_managers[i].run(algorithm,args)
-	# 		task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
-	# 		i += 1
+	def run(self) -> None:
+		self.state.run()
+		task = self.firstTask
+		args = self.DAG['args']
+		i = 0
+		while task:
+			algorithm = list(task['implementations'].values())[0]['class'].run
+			self.cluster.task_managers[i].run(algorithm,args)
+			task = self.DAG['nodes'][list(task['next'])[0]] if task and 'next' in task else None
+			i += 1
 	
- 	# def wait_for_completion(self) -> None:
-	# 	raise NotImplementedError()
+#  	def wait_for_completion(self) -> None:
+# 		raise NotImplementedError()
 
 	def _complete_tms(self):
 		for tm in self.cluster.task_managers:
