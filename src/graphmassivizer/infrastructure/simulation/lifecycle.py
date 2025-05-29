@@ -144,6 +144,30 @@ class Simulation:
 			# adding dashboard node
 			dashboard = DashboardNode(Machine(len(task_managers) + offset, self.__machine_descriptor), self.__network_name)
 
+			# Wait for all the nodes to be ready
+			TIMEOUT_SECONDS = None  # None means there is no limit, otherwise timeout after TIMEOUT_SECONDS seconds
+
+			print("Waiting for ready signal from Zookeeper node")
+			if not zookeeper.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from Zookeeper node timed out after {TIMEOUT_SECONDS} seconds")
+
+			print("Waiting for ready signal from workflow manager node")
+			if not workflow_manager.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from workflow manager node timed out after {TIMEOUT_SECONDS} seconds")
+
+			print("Waiting for ready signal from hdfs node")
+			if not hdfs_node.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from hdfs node timed out after {TIMEOUT_SECONDS} seconds")
+
+			print("Waiting for ready signal from hdfs data node")
+			if not hdfs_data_node.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from hdfs data node timed out after {TIMEOUT_SECONDS} seconds")
+
+			for i, task_manager_node in enumerate(task_managers):
+				print(f"Waiting for ready signal from task manager node ({i+1}/{self.initNumberOfTms})")
+				if not task_manager_node.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from task manager node ({i+1}/{self.initNumberOfTms}) timed out after {TIMEOUT_SECONDS} seconds")
+			
+			print("Waiting for ready signal from dashboard node")
+			if not dashboard.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from dashboard node timed out after {TIMEOUT_SECONDS} seconds")
+
+			print("All nodes ready")
+
 			self.cluster = Cluster(
 				zookeeper,
 				workflow_manager,

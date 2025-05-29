@@ -5,19 +5,29 @@ from statemachine import Event, State, StateMachine
 
 from graphmassivizer.core.descriptors.descriptors import MachineDescriptor
 
+from threading import Event as ThreadingEvent
+
 # Abstraction of a compute node.
 
 
 class NodeStatus(StateMachine):
     CREATED = State(initial=True)
+    READY = State()
     RUNNING = State()
     IDLE = State()
     OFFLINE = State(final=True)
 
-    run = Event(CREATED.to(RUNNING) | IDLE.to(RUNNING))
+    ready = Event(CREATED.to(READY))
+    run = Event(READY.to(RUNNING) | IDLE.to(RUNNING))
     idle = Event(RUNNING.to(IDLE))
     offline = Event(IDLE.to(OFFLINE) | RUNNING.to(
-        OFFLINE) | CREATED.to(OFFLINE))
+        OFFLINE) | READY.to(OFFLINE) | CREATED.to(OFFLINE))
+
+    ready_event = ThreadingEvent()
+
+    def on_enter_state(self, event, state) -> None:
+        if state == self.READY:
+            self.ready_event.set()
 
 
 class Node(ABC):
