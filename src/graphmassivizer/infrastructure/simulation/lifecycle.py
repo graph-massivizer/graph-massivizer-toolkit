@@ -12,6 +12,7 @@ import inspect
 import json
 import pickle
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
@@ -74,6 +75,12 @@ def is_container_running(container_name: str) -> Optional[bool]:
 	else:
 		container_state = container.attrs["State"]
 		return container_state["Status"] == RUNNING
+
+def executeFunctionsInParallel(functions):
+	with ThreadPoolExecutor(max_workers=len(functions)) as executor:
+		for func in functions:
+			executor.submit(func)
+		executor.shutdown(wait=True)
 
 class Simulation:
 
@@ -144,29 +151,8 @@ class Simulation:
 			# adding dashboard node
 			dashboard = DashboardNode(Machine(len(task_managers) + offset, self.__machine_descriptor), self.__network_name)
 
-			# Wait for all the nodes to be ready
-			TIMEOUT_SECONDS = None  # None means there is no limit, otherwise timeout after TIMEOUT_SECONDS seconds
-
-			print("Waiting for ready signal from Zookeeper node")
-			if not zookeeper.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from Zookeeper node timed out after {TIMEOUT_SECONDS} seconds")
-
-			print("Waiting for ready signal from workflow manager node")
-			if not workflow_manager.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from workflow manager node timed out after {TIMEOUT_SECONDS} seconds")
-
-			print("Waiting for ready signal from hdfs node")
-			if not hdfs_node.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from hdfs node timed out after {TIMEOUT_SECONDS} seconds")
-
-			print("Waiting for ready signal from hdfs data node")
-			if not hdfs_data_node.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from hdfs data node timed out after {TIMEOUT_SECONDS} seconds")
-
-			for i, task_manager_node in enumerate(task_managers):
-				print(f"Waiting for ready signal from task manager node ({i+1}/{self.initNumberOfTms})")
-				if not task_manager_node.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from task manager node ({i+1}/{self.initNumberOfTms}) timed out after {TIMEOUT_SECONDS} seconds")
-			
-			print("Waiting for ready signal from dashboard node")
-			if not dashboard.status.ready_event.wait(TIMEOUT_SECONDS): raise TimeoutError(f"Ready signal from dashboard node timed out after {TIMEOUT_SECONDS} seconds")
-
-			print("All nodes ready")
+			# COMMENTED OUT UNTIL READY STATES ARE DEFINED FOR ALL NODES
+			# self.waitForNodesToBeReady(zookeeper,hdfs_node,hdfs_data_node,workflow_manager,task_managers,dashboard,TIMEOUT_SECONDS=10000)
 
 			self.cluster = Cluster(
 				zookeeper,
@@ -218,6 +204,42 @@ class Simulation:
 			raise
 
 		self.logger.info("Full simulation is running...")
+
+	def waitForNodesToBeReady(self,zookeeper,hdfs_node,hdfs_data_node,workflow_manager,task_managers,dashboard,TIMEOUT_SECONDS=None):  # None timeout means there is no limit, otherwise timeout after TIMEOUT_SECONDS seconds
+		executeFunctionsInParallel([self.waitForZookeeper(TIMEOUT_SECONDS,zookeeper),
+									self.waitForHDFSName(TIMEOUT_SECONDS,hdfs_node),
+									self.waitForHDFSData(TIMEOUT_SECONDS,hdfs_data_node),
+									self.waitForWM(TIMEOUT_SECONDS,workflow_manager),
+									self.waitForTMs(TIMEOUT_SECONDS,task_managers),
+									self.waitForDash(TIMEOUT_SECONDS,dashboard)])
+		self.logger.info("All nodes ready")
+
+	def waitForZookeeper(self,TIMEOUT_SECONDS,zookeeper):
+		if not zookeeper.status.ready_event.wait(TIMEOUT_SECONDS):
+			raise TimeoutError(f"Ready signal from Zookeeper node timed out after {TIMEOUT_SECONDS} seconds")
+
+	def waitForWM(self,TIMEOUT_SECONDS,workflow_manager):
+		if not workflow_manager.status.ready_event.wait(TIMEOUT_SECONDS):
+			raise TimeoutError(f"Ready signal from workflow manager node timed out after {TIMEOUT_SECONDS} seconds")
+
+	def waitForTMs(self,TIMEOUT_SECONDS,task_managers):
+		executeFunctionsInParallel(list(map(partial(self.waitForTM,TIMEOUT_SECONDS),task_managers)))
+
+	def waitForTM(self,TIMEOUT_SECONDS,task_manager):
+		if not task_manager.status.ready_event.wait(TIMEOUT_SECONDS):
+			raise TimeoutError(f"Ready signal from task manager node {task_manager.machine.ID} timed out after {TIMEOUT_SECONDS} seconds")
+
+	def waitForHDFSName(self,TIMEOUT_SECONDS,hdfs_node):
+		if not hdfs_node.status.ready_event.wait(TIMEOUT_SECONDS):
+			raise TimeoutError(f"Ready signal from hdfs node timed out after {TIMEOUT_SECONDS} seconds")
+
+	def waitForHDFSData(self,TIMEOUT_SECONDS,hdfs_data_node):
+		if not hdfs_data_node.status.ready_event.wait(TIMEOUT_SECONDS):
+			raise TimeoutError(f"Ready signal from hdfs data node timed out after {TIMEOUT_SECONDS} seconds")
+
+	def waitForDash(self,TIMEOUT_SECONDS,dashboard):
+		if not dashboard.status.ready_event.wait(TIMEOUT_SECONDS):
+			raise TimeoutError(f"Ready signal from dashboard node timed out after {TIMEOUT_SECONDS} seconds")
 
 	def fail(self) -> None:
 		self._try_complete_nodes()
@@ -324,10 +346,7 @@ class Simulation:
 			self.state.fail()
 
 	def _try_complete_nodes(self):
-		with ThreadPoolExecutor(max_workers=6) as executor:
-			for func in [self._complete_tms,self._complete_wm,self._complete_zk,self._complete_hdfs,self._complete_dash]:
-				executor.submit(func)
-			executor.shutdown(wait=True)
+		executeFunctionsInParallel([self._complete_tms,self._complete_wm,self._complete_zk,self._complete_hdfs,self._complete_dash])
 
 	def get_status(self) -> tuple[str, list[dict[str, Any]]]:
 		# Collect status from the cluster and nodes

@@ -40,7 +40,6 @@ class BetweennessCentrality(BGO):
 
   return [x for x in args['betweenness'].items()][:15]
 
-
 class FindMax(BGO):
  """Find Max betweenness"""
 
