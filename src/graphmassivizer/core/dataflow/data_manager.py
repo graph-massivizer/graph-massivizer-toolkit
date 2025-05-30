@@ -28,3 +28,4 @@ class DataManager:
 			graph = pickle.load(f)
 
 		return ObjectWrapper(graph, object_handle)
+
