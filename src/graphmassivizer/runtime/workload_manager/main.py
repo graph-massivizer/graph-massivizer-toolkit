@@ -59,7 +59,7 @@ class WorkloadManagerState(StateMachine):
 	FINISHED = State(final=True)
 	# TRANSITIONS: workflow lifecycle
 	# ----------------------------------------
-	initialize = Event(CREATED.to(INITIALIZED))
+	initialize_workflow = Event(CREATED.to(INITIALIZED))
 	parallize_workflow = Event(INITIALIZED.to(PARALLELIZED))
 	optimize = Event(PARALLELIZED.to(OPTIMIZED))
 	optimization_failed = Event(OPTIMIZED.to(FAILED))
@@ -107,7 +107,7 @@ class WorkloadManager:
 		self.parallelizer = Parallelizer()
 		self.optimizer = Optimizer_1()
 		self.greenifier = Optimizer_2()
-		self.scheduler = Scheduler()
+		self.scheduler = Scheduler(workload_manager=self)
 		self.deployer = Deployer()
 		self.execution_manager = ExecutionController()
 		self.DAG = None  # Placeholder for the actual DAG
@@ -146,7 +146,8 @@ class WorkloadManager:
 
 		self.logger.info(f"Receiving and processing workflow...")
 		try:
-			self.DAG = InputPipeline().getWorkflow() # Consider passing METAPHACTORY_HOST if needed by InputPipeline
+			
+			self.DAG = InputPipeline(metaphactoryAddress=os.environ["METAPHACTORY"]).getWorkflow() # Consider passing METAPHACTORY_HOST if needed by InputPipeline
 			self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),(None, None))[1] # Added default for reduce
 			if self.firstTask is None:
 				self.logger.error("No first task found in the workflow DAG.")
@@ -160,7 +161,7 @@ class WorkloadManager:
 			self.parallelize()
 			self.optimize()
 			self.greenify()
-			# self.schedule() # etc. 
+			self.schedule() # etc. 
 			
 		except Exception as e:
 			self.logger.error(f"Error during receive_workflow: {e}", exc_info=True)
@@ -204,7 +205,7 @@ class WorkloadManager:
 		if self.DAG is None:
 			self.logger.error("DAG is not loaded, cannot optimize.")
 			return
-		self.optimizer.optimize(self.DAG) # Assuming this modifies self.DAG
+		Optimizer_1.optimize(self.DAG) # Assuming this modifies self.DAG
 		self.state.optimize()     
 		# self.logger.info("Optimizing workload...")
 		# optimizer = Optimizer_1()
@@ -219,7 +220,7 @@ class WorkloadManager:
 		if self.DAG is None:
 			self.logger.error("DAG is not loaded, cannot greenify.")
 			return
-		self.greenifier.optimize(self.DAG) # Assuming this modifies self.DAG; method name is 'optimize' in class
+		Optimizer_2.optimize(self.DAG) # Assuming this modifies self.DAG; method name is 'optimize' in class
 		self.state.greenify()     
 		# self.logger.info("Greenifying workload...")
 		# optimizer = Optimizer_2()
@@ -232,7 +233,9 @@ class WorkloadManager:
 			self.logger.warning(f"Cannot schedule, not in GREENIFIED state. Current state: {self.state.current_state_value}")
 			return
 		self.logger.info("Scheduling workload...")
+
 		# Add scheduling logic here using self.scheduler
+		self.scheduler.schedule(self.DAG)  # Assuming this modifies self.DAG in place
 		self.state.schedule()
 		# # TODO REZA: WE SHOULD SCHEDULE THE WORKLOAD HERE
 		# self.logger.info("Scheduling workload...")
