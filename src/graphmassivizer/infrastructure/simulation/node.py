@@ -185,7 +185,8 @@ class SimulatedNode(Node, Thread):
 			"ZOOKEEPER_HOST": zookeeper_host,
 			"NODE_ID": str(machine.ID),
 			"HDFS_NAMENODE": f"hdfs://{hdfs_host}:8020",
-			"METAPHACTORY":"http://172.22.0.1:10214"
+			"METAPHACTORY_INTERNAL":"http://172.22.0.1:10214", # TODO set this address dynamically when containert starts
+			"METAPHACTORY_EXTERNAL":"http://localhost:10214"
 		}
 
 		# If you need separate fields for Task vs. Workflow,

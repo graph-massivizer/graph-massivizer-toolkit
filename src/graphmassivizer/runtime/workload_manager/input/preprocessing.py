@@ -1,4 +1,4 @@
-from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
+from graphmassivizer.runtime.workload_manager.input.userInputHandler import UserInputHandler
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2

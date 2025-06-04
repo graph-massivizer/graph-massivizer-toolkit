@@ -1,8 +1,10 @@
 import json
 import re
 import io
+from functools import reduce
 
 from graphmassivizer.core.connectors.metaphactory import MetaphactoryConnector
+from graphmassivizer.core.descriptors.descriptors import BGODescriptor
 
 class UserInputHandler:
 
@@ -22,6 +24,16 @@ class UserInputHandler:
 
 	def formatIRI(self,iriString):
 		return re.split(r"/",iriString)[-1]
+
+	def convertUserWorkflowToExecutable(self):
+		id,firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)
+		self.DAG['descriptors'] = self.convertUserTasksToExecutable(id,firstTask)
+		print(self.DAG['descriptors'])
+		raise
+
+	def convertUserTasksToExecutable(self,id,data):
+		next = None if 'next' not in data else list(map(lambda x: self.convertUserTasksToExecutable(x,self.DAG['nodes'][x]),data['next']))
+		return BGODescriptor(id,data,None,None,next)
 
 	def formatWorkflow(self,queryResult,workflowIRI,availableBGOs):
 		#self.DAG["graph"] = self.formatIRI(queryResult['results']['bindings'][0]['graph']['value'])
@@ -52,5 +64,7 @@ class UserInputHandler:
 			if "next" in queryItem:
 			 node["next"] = {self.formatIRI(queryItem["next"]['value'])}
 			 self.DAG['edges'][id] = node["next"]
+
+		self.convertUserWorkflowToExecutable()
 
 		return self.DAG
