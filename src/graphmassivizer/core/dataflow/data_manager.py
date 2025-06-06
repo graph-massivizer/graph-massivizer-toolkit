@@ -1,5 +1,3 @@
-from graphmassivizer.core.dataflow.object_wrapper import ObjectWrapper
-from graphmassivizer.core.dataflow.object_handle import ObjectHandle
 import pickle
 import os
 
@@ -8,23 +6,45 @@ class DataManager:
 		self.base_dir = base_dir
 		self.fs = fs
 		self.fs.create(base_dir)
+		# includes metadata about persisted graphs such as:
+		#{'graph_id':{'path':'', 'nodes':0, 'edges':0, 'generated_bgo': '', 'gen_bgo_input_graph_ids':['','']}}
+		self.graphs_metadata = {} 
+		self.logger = self.fs.get_logger("DataManager")
 
-	def __get_object_path__(self, object_handle: ObjectHandle):
-		directory = os.path.join(self.base_dir, object_handle.get_object_path())
-		os.makedirs(directory, exist_ok=True)
-		return os.path.join(directory, "object.pkl")
+	def retrieve_object_path(self, workflow_id: str, job_id:str):
+		''' 
+		This function retrieves the stored path for the graph previously saved and was generated in
+		workflow with id: workflow_id, and job with id: job_id.
+		'''
+		graph_id = workflow_id + '/' + job_id
 
-	def persist_object(self, object_wrapper: ObjectWrapper):
-		"""Persist a object to the directory specified by the ObjectHandle."""
-		graph_path = self.__get_object_path__(object_wrapper.get_object_handle())
-		with self.fs.open_output_stream(graph_path) as f:
-			pickle.dump(object_wrapper.get_object(), f)
+		return self.graphs_metadata[graph_id]['path']
 
-	def load_object(self, object_handle: ObjectHandle) -> ObjectWrapper:
-		"""Load a object from the directory specified by the ObjectHandle."""
-		object_path = self.__get_object_path__(object_handle)
+	def generate_graph_path(self, workflow_id: str, job_id:str):
+		'''
+		This function generates a graph path for the output graph of a job with id job_id in a
+	    workflow with id workflow_id.
+		'''
+		graph_id = workflow_id + '/' + job_id
+		graph_folder_path = os.path.join(self.base_dir, graph_id)
+		graph_path = os.path.join(graph_folder_path, "object.pkl")
+		self.graphs_metadata[graph_id] = {}
+		self.graphs_metadata[graph_id]['path'] = graph_path
 
-		with self.fs.open_input_stream(object_path) as f:
-			graph = pickle.load(f)
+		return graph_path
+	
 
-		return ObjectWrapper(graph, object_handle)
+	def lookup(self, workflow_id: str, job_id:str):
+		"""
+        Return the HDFS path of the graph, if it exists.
+        """
+		graph_id = workflow_id + '/' + job_id
+		path = self.graphs_metadata.get(graph_id).get('path')
+		if path:
+			self.logger.info(f"Lookup for graph '{graph_id}': {path}")
+		else:
+			self.logger.warning(f"Graph ID '{graph_id}' not found.")
+		return path
+
+if __name__=='__main__':
+	pass
