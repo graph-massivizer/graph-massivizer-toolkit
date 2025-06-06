@@ -5,6 +5,28 @@ The architecture of the Graph-Massivizer distributed graph processing engine is 
 
 ![Architecture](https://github.com/graph-massivizer/.github/blob/public-update/figs/overview.png)
 
+## Workload Manager
+The Workload Manager is a centralized component running on the master node, acting as the global orchestrator of graph workflows submitted by users. Upon receiving a workflow (as a DAG), it validates its structure and decomposes it into BGOs, such as filtering, traversal, or PageRank. Its internal modules are:
+
+- Parser and validator: ensures syntactic and semantic correctness of the user-defined graph workflow.
+- Parallelizer: applies task-level parallelism to BGOs, tagging them for concurrent execution where possible.
+- Hardware-aware optimizer: annotates each BGO with estimated runtime and resource metrics across multiple hardware profiles.
+- Energy-aware greenifier: selects execution configurations that minimize energy usage while maintaining performance thresholds.
+- Scheduler: assigns optimized tasks to Task Managers using placement strategies aware of co-location constraints, hardware affinity, and data locality.
+- Deployer: publishes deployment descriptors to ZooKeeper, enabling a decoupled and event-driven execution model.
+- Execution controller: oversees real-time status updates from Task Managers and adapts the schedule in case of failure or resource fluctuation.
+
+Together, these modules turn abstract workflows into scheduled, optimized execution plans. ZooKeeper acts as the coordination bus where deployment instructions and task states are communicated asynchronously.
+
+## Task Manager
+Managers are lightweight agents deployed across the computing continuum (cloud servers, HPC nodes, edge devices). Each Task Manager executes the BGOs assigned by the Workload Manager. Their internal components are:
+- Deployment watcher: monitors ZooKeeper for execution descriptors and triggers task instantiation upon availability.
+- I/O interface: interacts with HDFS for reading inputs and persisting results using PyArrow's native bindings.
+- Execution engine: manages one or more BGOs in parallel based on available local resources.
+- Status reporter: transfers task progress, logs, and performance metrics to the Workload Manager.
+
+Each instance of Task Manager registers itself with ZooKeeper and encodes its machine descriptor, allowing the infrastructure manager in the Workload Manager to maintain a live view of available execution resources. BGOs are designed to be stateless and containerized, enabling fault-resilient retries and elastic scaling. The Task Manager also includes demo routines for interacting with HDFS, verifying storage availability, and supporting workload validation during test cycles. The full engine supports both simulation (via lifecycle emulation in Docker) and deployment in production clusters, making it suitable for prototyping, benchmarking, and real-world graph analytics pipelines.
+
 # Requirements
 This project is built with the python programming language and uses Docker containers. Both of these must be installed to develop with the toolkit.
 
