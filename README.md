@@ -1,8 +1,9 @@
 # Graph-Massivizer Toolkit
 The Graph-Massivizer Toolkit is an integrated platform that leverages the unique researched functionalities in each separate Graph-Massivizer tool. In the integrated toolkit, algorithms that perform basic graph operations (BGO) developed by Graph-Inceptor and Graph-Scrutinizer as well as other open source libraries are integrated so that they can be executed efficiently and in a green-aware fashion within diverse hardware environments according to the advanced techniques developed by Graph-Optimizer, Graph-Greenifier, and Graph-Choreographer.
 
-# Diagram
-https://docs.google.com/drawings/d/1FC5paw_2A3nFBcIW7s99Pk1I_bSUXy_2Uma1LtBmQ_c/edit?usp=sharing
+The architecture of the Graph-Massivizer distributed graph processing engine is designed for scalable execution across the compute continuum, including cloud, HPC and edge environments - leveraging both CPU and GPU resources. It follows a master--worker paradigm with two main roles: the centralized \textit{Workload Manager} to coordinate opimization and scheduling, and decentralized \textit{Task Managers} for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
+
+![Architecture]https://github.com/graph-massivizer/.github/figs/overview.png)
 
 # Requirements
 Developers must have a key in order to pull metaphactory Docker images. A key can be obtained by filling out [this form](https://metaphacts.com/get-started#docker-trial) and mentioning the project, which will send you an email in a short time containing the key and login command.
