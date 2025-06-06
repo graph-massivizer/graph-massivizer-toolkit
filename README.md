@@ -3,7 +3,7 @@ The Graph-Massivizer Toolkit is an integrated platform that leverages the unique
 
 The architecture of the Graph-Massivizer distributed graph processing engine is designed for scalable execution across the compute continuum, including cloud, HPC and edge environments - leveraging both CPU and GPU resources. It follows a master--worker paradigm with two main roles: the centralized \textit{Workload Manager} to coordinate opimization and scheduling, and decentralized \textit{Task Managers} for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
 
-![Architecture](https://github.com/graph-massivizer/.github/figs/overview.png)
+![Architecture](https://github.com/graph-massivizer/.github/blob/public-update/figs/overview.png)
 
 # Requirements
 This project is built with the python programming language and uses Docker containers. Both of these must be installed to develop with the toolkit.
