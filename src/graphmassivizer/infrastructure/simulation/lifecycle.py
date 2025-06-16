@@ -5,20 +5,19 @@ from types import TracebackType
 from typing import Any, Optional, Type
 from statemachine import Event, State, StateMachine
 import docker
-from functools import reduce
+from functools import reduce,partial
 import pyarrow.fs as pafs
 import pyarrow as pa
 import inspect
 import json
 import pickle
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 
 from graphmassivizer.core.descriptors.descriptors import (Machine, MachineDescriptor,SimulationMachineDescriptor)
 from graphmassivizer.infrastructure.simulation.cluster import Cluster
 from graphmassivizer.infrastructure.simulation.node import (TaskManagerNode, WorkflowManagerNode, ZookeeperNode, HDFSNode, HDFSDataNode, DashboardNode)
-from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
-from graphmassivizer.runtime.task_manager.input.userInputHandler import UserInputHandler
+from graphmassivizer.runtime.workload_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.workload_manager.input.userInputHandler import UserInputHandler
 from graphmassivizer.runtime.workload_manager.parallelizer import Parallelizer
 from graphmassivizer.runtime.workload_manager.optimization_1 import Optimizer_1
 from graphmassivizer.runtime.workload_manager.optimization_2 import Optimizer_2
