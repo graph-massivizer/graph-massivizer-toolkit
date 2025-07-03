@@ -128,12 +128,21 @@ class Scheduler:
         self.logger.info(f"GOT BGO DESCRIPTORS: {bgoDes}")
         maDesc = self.get_random_taskmanager()
         self.logger.info(f"GOT MACHINE DESCRIPTOR: {maDesc}")
-        deplDesc = DeploymentDescriptor(
-            bgo_descriptors=bgoDes,
-            machine_descriptor=maDesc,
-            zk_state_manager=self.zk
-        )
+        deplDesc = {
+            'bgo_descriptors': bgoDes,
+            'machine_descriptor': maDesc
+        }
+        self.workload_manager.firstTask = deplDesc # Assuming this is how you want to store the first task descriptor
+        
+        # DeploymentDescriptor(
+        #     bgo_descriptors=bgoDes,
+        #     machine_descriptor=maDesc,
+        #     zk_state_manager=self.zk
+        # )
         self.logger.info(f"GOT DEPLOYMENT DESCRIPTOR: {deplDesc}")
+        
+        
+
         
         
         

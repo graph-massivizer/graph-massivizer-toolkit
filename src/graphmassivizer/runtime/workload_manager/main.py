@@ -111,7 +111,7 @@ class WorkloadManager:
 		self.deployer = Deployer()
 		self.execution_manager = ExecutionController()
 		self.DAG = None  # Placeholder for the actual DAG
-  
+		self.firstTask = None  # Placeholder for the first task in the DAG
 	# --- Root
 	# ------- Infrastructure
 	# ------------ MASHINE I
@@ -254,7 +254,8 @@ class WorkloadManager:
   
 	def execute(self) -> None:
 		self.logger.info("Executing workload...")
-		self.execution_manager.execute(self.DAG)
+		# self.execution_manager.execute(self.DAG)
+		self.execution_manager.execute(self.firstTask)
 		self.state.start_execution()
   
 	def demo_hdfs_io(self) -> None:
