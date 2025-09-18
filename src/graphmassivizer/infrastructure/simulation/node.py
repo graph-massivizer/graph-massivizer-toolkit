@@ -99,7 +99,11 @@ class SimulatedNode(Node, Thread):
 			self.docker_container = self.docker_client.containers.get(self.__container_name) # first check for existing containers/images
 
 			self.docker_container.stop()
-			self.docker_container.remove()
+			try:
+				self.docker_container.remove()
+			except docker.errors.APIError:
+				# Container might already be removed due to auto_remove=True
+				pass
 
 		except docker.errors.NotFound:
 			pass

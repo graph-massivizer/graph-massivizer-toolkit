@@ -10,9 +10,8 @@ RUN apt-get update && \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 2) Set JAVA_HOME for Java 17 on Debian 12
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV LD_LIBRARY_PATH="${JAVA_HOME}/lib/server:${LD_LIBRARY_PATH}"
+# 2) Set JAVA_HOME for Java 17 (ARM64 architecture)
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
 
 # 3) Download & Install Hadoop 3.3.6
 ENV HADOOP_VERSION=3.4.1
@@ -23,6 +22,9 @@ RUN wget "https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/h
 
 ENV HADOOP_HOME=/usr/local/hadoop
 ENV HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+ENV HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+ENV HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+ENV LD_LIBRARY_PATH="${JAVA_HOME}/lib/server:${HADOOP_HOME}/lib/native:${LD_LIBRARY_PATH}"
 ENV PATH="$PATH:$HADOOP_HOME/bin"
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HADOOP_HOME/lib/native"
 

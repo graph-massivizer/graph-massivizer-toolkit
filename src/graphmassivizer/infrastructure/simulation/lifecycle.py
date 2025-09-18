@@ -41,7 +41,7 @@ class LifecycleState(StateMachine):
 	optimize = Event(PARALLELIZED.to(OPTIMIZED))
 	greenify = Event(OPTIMIZED.to(GREENIFIED))
 	run = Event(GREENIFIED.to(RUNNING))
-	fail = Event(RUNNING.to(FAILED))
+	fail = Event(CREATED.to(FAILED) | INITIALIZED.to(FAILED) | INPUT_RECEIVED.to(FAILED) | PARALLELIZED.to(FAILED) | OPTIMIZED.to(FAILED) | GREENIFIED.to(FAILED) | RUNNING.to(FAILED))
 	complete = Event(RUNNING.to(COMPLETED))
 
 

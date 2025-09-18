@@ -80,6 +80,10 @@ class WorkloadManagerState(StateMachine):
 	# ----------------------------------------
 	recover = Event(FAILED.to(RECOVER))
 	cancel = Event(FAILED.to(CANCELLED))
+	# TRANSITIONS: recovery
+	# ----------------------------------------
+	recovery_complete = Event(RECOVER.to(INITIALIZED))
+	recovery_failed = Event(RECOVER.to(FAILED))
 
 class LoggingListener:
 	def __init__(self, logger: logging.Logger) -> None:
@@ -320,7 +324,15 @@ def main() -> None:
 			raise ValueError(f"Could not parse HDFS_NAMENODE={hdfs_namenode}")
 		hdfs_host, hdfs_port = match.groups()
 		hdfs_port = int(hdfs_port)
-		fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
+		
+		# TODO: Fix native library issue on ARM64 - for now use LocalFileSystem as fallback
+		try:
+			fs = pafs.HadoopFileSystem(host=hdfs_host, port=hdfs_port)
+		except Exception as e:
+			logger.warning(f"Could not create HadoopFileSystem: {e}")
+			logger.warning("Falling back to LocalFileSystem for testing")
+			# Use LocalFileSystem as a fallback for now
+			fs = pafs.LocalFileSystem()
 
 		workload_manager = WorkloadManager(zookeeper_host, fs)
 		logger.info("I am Workload Manager " + str(workload_manager.machine.ID))
