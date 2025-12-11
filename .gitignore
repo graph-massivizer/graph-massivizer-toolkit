@@ -170,3 +170,6 @@ venv
 untitled.*
 .tar
 .tgz
+my-env/
+catboost_info/
+tests/welding_data/

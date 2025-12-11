@@ -1,0 +1,294 @@
+import pathlib
+import pickle
+import requests
+import json
+import sys
+import torch
+from torch_geometric.data import Data
+from torch_geometric.nn import GCNConv
+import pandas as pd
+import numpy as np
+from sklearn import preprocessing
+import torch
+from torch_geometric.data import Data
+import os
+
+from graphmassivizer.runtime.task_manager.task_execution_unit import BGO
+
+class anomaly_anticipation(torch.nn.Module):
+  def __init__(self, in_channels, out_channels):
+    super().__init__()
+    #encoder
+    self.conv1 = GCNConv(in_channels, 300)
+    self.conv2 = GCNConv(300, 100)
+    self.conv3 = GCNConv(100, out_channels)
+    
+    #dense layer
+    self.fc1 = torch.nn.Linear(out_channels,16)
+    self.fc2 = torch.nn.Linear(16,1)
+      
+  def forward(self, x, edge_index):
+    x = self.conv1(x, edge_index).relu()
+    x = self.conv2(x, edge_index).relu()
+    x = self.conv3(x, edge_index).relu()                
+    x = self.fc1(x)
+    x = self.fc2(x)
+    return x
+
+class LoadGNNModel(BGO):
+    """
+    Loads a GNN model configured for anomaly anticipation on a specific rack,
+    given the input feature size and desired prediction window.
+    
+    Required arguments in `args`:
+        - rack: Identifier for the target rack.
+        - future_window: Number of steps ahead to predict anomalies.
+        - in_channels: Number of input features for the GNN.
+
+    Returns:
+        The initialized GNN model, stored in `args['GNN_model']`.
+    """
+
+    implementationId = "LoadGNNModel-85e9929c-e09b-4372-b737-714a78feb1d9"
+
+    def run(args={}):
+      if 'rack' not in args or 'future_window' not in args or 'in_channels' not in args: return
+
+      gnn_model = anomaly_anticipation(args['in_channels'], 16)
+      gnn_model.load_state_dict(torch.load(args['modelFile'],map_location=torch.device('cpu')))
+
+      args['GNN_model'] = gnn_model
+
+      return args
+
+
+def read_file(node_dir):
+    node_data = pd.read_parquet(node_dir)
+    node_data = node_data.dropna()
+    node_data.reset_index(drop=True, inplace = True)
+    
+    return node_data
+        
+
+class LoadM100Data(BGO):
+    """
+    Load the 15-min aggregated M100 data for data center telemetry. 
+    External Function needed: read_file 
+    Assumptions: 
+        (1) As of this moment as load the M100 parquet files
+        (2) 15-min aggregated M100 data downlaoded at the data repository in the same folder as this file.
+    """
+
+    implementationId = "LoadM100Data-e4f7e091-56bb-4e6b-8c44-9c8c875ae4aa"
+
+    def run(args={}):
+      if 'rack' not in args: return
+      data_path = f"{args['dir']}/data/{args['rack']}/"
+
+      files = []
+      # loop over the contents of the directory
+      for filename in os.listdir(data_path):
+          # construct the full path of the file
+          file_path = os.path.join(data_path, filename)
+          # check if the file is a regular file (not a directory)
+          if os.path.isfile(file_path):
+              files.append(file_path)
+
+      def get_node_name(x):
+        tmp = x.split('/')
+        tmp = tmp[-1]
+        tmp = tmp.split('.')
+        return int(tmp[0])
+
+      files = sorted(files, key = lambda x:get_node_name(x))  # sortes the files list in ascending order
+
+      m100_data = [] 
+
+      all_columns = set()
+
+      # First pass: determine full set of columns
+      for file_name in files:
+        data = pd.read_parquet(file_name)
+        all_columns.update(data.columns)
+      
+      # Convert to sorted list for consistent column order
+      all_columns = sorted(list(all_columns))
+      
+      for file_name in files:
+        data = pd.read_parquet(file_name)
+
+        # Fill missing columns with 0
+        for col in all_columns:
+            if col not in data.columns:
+                data[col] = 0
+        
+        # Ensure correct order of columns
+        data = data[all_columns]
+        data['timestamp'] = data['timestamp'].values.astype(np.int64) // 10 ** 9
+
+        # Scale
+        scaler = preprocessing.MinMaxScaler()
+        names = data.columns
+        d = scaler.fit_transform(data)
+        data = pd.DataFrame(d, columns=names)
+        
+        m100_data.append(data)
+
+      args['loaded_m100_data'] = m100_data
+      args['in_channels'] = len(all_columns)-1 # Not sure why I'm getting off by one with the files I have
+
+      return args
+
+
+def get_common_timestamps(df_list, timestamp_col='timestamp'):
+  if not df_list:
+    return set()  # return empty set if list is empty
+
+  # Initialize with timestamps from the first DataFrame
+  common_timestamps = set(df_list[0][timestamp_col])
+
+  # Intersect with timestamps from remaining DataFrames
+  for df in df_list[1:]:
+    common_timestamps &= set(df[timestamp_col])
+
+  return common_timestamps
+
+def make_edge_index(num_nodes):
+  edges = []
+  for i in range(num_nodes):
+    temp = []
+    if i == 0:
+        temp.append([i,i+1])
+    elif i == num_nodes-1:
+        temp.append([i,i-1])
+    else:
+        temp.append([i,i-1])
+        temp.append([i,i+1])
+    edges = edges + temp
+  return edges
+
+def create_pyg_data_per_timestamp(df_list, edge_index, timestamp_col='timestamp'):
+  common_ts = get_common_timestamps(df_list, timestamp_col)
+  pyg_data_by_timestamp = []
+
+  for ts in sorted(common_ts):
+    node_features = []
+    for df in df_list:
+      row = df[df[timestamp_col] == ts]
+      # select feature columns
+      feature_cols = [col for col in df.columns if col != timestamp_col]
+      features = row[feature_cols].values[0]
+      node_features.append(features)
+
+    x = torch.tensor(np.array(node_features), dtype=torch.float)
+
+    data = Data(x=x, edge_index=edge_index)
+    data.timestamp = ts
+    pyg_data_by_timestamp.append(data)
+
+  return pyg_data_by_timestamp
+
+class ConvertToPyGTensor(BGO):
+    """
+    As of this moment, we take in as input the parquet files loaded from the BGO class of LoadM100Data, and then we convert it to pytorch
+    geometric tensors.
+
+    Required external functions: get_common_timestamps
+    """
+
+    implementationId = "ConvertToPyGTensor-731dbc8c-d32b-44de-bbf5-812db4b499a3"
+
+    def run(args={}):
+      if 'loaded_m100_data' not in args: return
+
+      print("\tedge index")
+      edges = make_edge_index(len(args['loaded_m100_data']))
+      edge_index = torch.tensor(edges, dtype=torch.long)
+      print("\t\t"+str(edge_index))
+
+      print("\tdata list")
+      args['pyG_data_list'] = create_pyg_data_per_timestamp(args['loaded_m100_data'],edge_index)
+
+      return args
+
+
+class GNNInference(BGO):
+    """The GNN inference BGO for anomaly prediction on the data center telemetry"""
+
+    implementationId = "GNNInference-047dd983-1a79-43f4-9dc2-0504c3b9fe89"
+
+    def run(args={}):
+      if 'GNN_model' not in args or 'pyG_data_list' not in args: return
+
+      predictions = []
+
+      for graph in args['pyG_data_list']:
+        print(args['GNN_model'])
+        print(graph)
+        out = args['GNN_model'](graph.x,graph.edge_index)
+        predictions.append({
+          "predition": torch.sigmoid(out),
+          "timestamp":graph.timestamp
+        })
+
+      args['predictions'] = predictions
+
+      return args
+
+
+if __name__ == "__main__":
+    RACK = 2
+    FUTURE_WINDOW = 4
+    dir = './tests/resources/GNN_models'
+
+    args = {
+        "rack": RACK,
+        "future_window": FUTURE_WINDOW,
+        "dir":dir,
+        "modelFile":f"{dir}/{FUTURE_WINDOW}/{RACK}_{FUTURE_WINDOW}.pth"
+    }
+
+    print("load data")
+    args = LoadM100Data.run(args)
+    print("load model")
+    args = LoadGNNModel.run(args)
+    print("convert tensor")
+    args = ConvertToPyGTensor.run(args)
+    print("inference")
+    args = GNNInference.run(args)
+
+    try:
+        print(f"Loading the M100 data for the Rack ID {RACK}.")
+        args = LoadM100Data.run(args)
+    except Exception as e:
+        print(f"Error loading M100 data: {e}")
+        args = {}
+
+    try:
+        print(f"Loading the GNN model for Rack ID {RACK} and Future Window {FUTURE_WINDOW}.")
+        args = LoadGNNModel.run(args)
+    except Exception as e:
+        print(f"Error loading GNN model: {e}")
+
+    try:
+        print("Converting the M100 data from parquet to PyTorch-Geometric tensors.")
+        args = ConvertToPyGTensor.run(args)
+    except Exception as e:
+        print(f"Error converting to PyG tensors: {e}")
+
+    try:
+        print("Running GNN inference to get anomaly prediction values.")
+        args = GNNInference.run(args)
+    except Exception as e:
+        print(f"Error during GNN inference: {e}")
+
+    # Safely print predictions one by one
+    if "predictions" in args and args["predictions"]:
+        for idx, pred in enumerate(args["predictions"], start=1):
+            try:
+                input(f"\nPress Enter to show prediction {idx}/{len(args['predictions'])}...")
+                print(pred)
+            except Exception as e:
+                print(f"Error printing prediction {idx}: {e}")
+    else:
+        print("No predictions available.")

@@ -9,7 +9,8 @@ import networkx as nx
 from graphmassivizer.runtime.task_manager.task_execution_unit import BGO
 
 class ToNetworkX(BGO):
-
+ '''
+ '''
  implementationId = "ToNetworkX-2098698b-d086-4a47-9b66-5242a86eabfd"
 
  def run(args={}):
@@ -19,7 +20,11 @@ class ToNetworkX(BGO):
   return args['graph']
 
 class BFS(BGO):
-
+ '''
+ Algorithm specifics: bfs_tree
+ Reference: networkx
+ Version: 
+ '''
  implementationId = "BreadthFirstSearch-3926ab10-2af0-4991-b400-0d9b760d004f"
 
  def run(args={}):

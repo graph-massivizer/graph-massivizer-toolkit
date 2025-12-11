@@ -9,7 +9,7 @@ def load_data():
 # tocheck
 def workflow_DAG_to_graph_elements():
 
-	metaphactoryAddress = os.environ["METAPHACTORY_EXTERNAL"]
+	metaphactoryAddress = os.environ["METAPHACTORY"]
 	data_dict = InputPipeline(metaphactoryAddress=metaphactoryAddress).getWorkflow()
 
 	nodes_ids_maps = {}

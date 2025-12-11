@@ -5,13 +5,13 @@ FROM python:3.10-slim
 # 1) Install OpenJDK 17 plus wget/ca-certificates
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        openjdk-17-jdk-headless \
+        openjdk-21-jdk-headless \
         wget \
-        ca-certificates \
+        ca-certificates \              
     && rm -rf /var/lib/apt/lists/*
 
 # 2) Set JAVA_HOME for Java 17 on Debian 12
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV LD_LIBRARY_PATH="${JAVA_HOME}/lib/server:${LD_LIBRARY_PATH}"
 
 # 3) Download & Install Hadoop 3.3.6

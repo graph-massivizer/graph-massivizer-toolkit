@@ -172,7 +172,7 @@ class Simulation:
 			self.logger.info("deploying all containers")
 			zookeeper.deploy()
 			self.logger.info("Zookeeper deployed")
-			zookeeper.wait_for_zookeeper(10)
+			zookeeper.wait_for_zookeeper(10000)
 			self.logger.info("Zookeeper ready")
 
 			# 3. Deploy the HDFS node
@@ -191,7 +191,7 @@ class Simulation:
 				task_manager.deploy()
 				self.logger.info(f"Task Manager started on Node {task_manager.node_id}")
 
-			dashboard.deploy()
+			#dashboard.deploy()
 			self.logger.info("Dashboard started")
 
 			hdfs_node.wait_for_hdfs(timeout=10000)
@@ -260,6 +260,11 @@ class Simulation:
 		self.greenify()
 		self.run()
 		self.complete()
+
+	def get_input_from_file(self) -> None:
+		self.DAG = InputPipeline().getWorkflowFromFile()
+		self.firstTask = reduce(lambda x,y: y if y[1]['first'] == True else x,self.DAG['nodes'].items(),None)[1]
+		self.state.get_input()
 
 	def get_input(self) -> None:
 		self.DAG = InputPipeline().getWorkflow()

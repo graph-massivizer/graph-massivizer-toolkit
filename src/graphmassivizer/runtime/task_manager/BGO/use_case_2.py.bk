@@ -1,0 +1,581 @@
+"""BGO-based script for Graph Massivizer.
+
+Contains:
+- Basic data loading
+- LSTM-based model for event prediction.
+"""
+
+from pathlib import Path
+
+import torch
+import torch.nn.functional as F
+from torch import nn
+from torch.nn import CrossEntropyLoss
+from transformers import PreTrainedTokenizerFast
+from transformers.modeling_outputs import CausalLMOutput
+
+
+from graphmassivizer.runtime.task_manager.task_execution_unit import BGO
+
+
+def load_from_tsv(file_path: str) -> str:
+    """Loads a sequence of events from the first column of a TSV."""
+    with Path(file_path).open() as f:
+        return "\n".join([line.split("\t")[0].strip() for line in f])
+
+
+def load_from_txt(file_path: str) -> str:
+    """Loads a sequence of events from a TXT."""
+    # read entire file
+    with Path(file_path).open() as f:
+        data = "\n".join(f.read().split())
+        return data
+
+
+def load_model_and_tokenizer(
+    model_dir: str,
+    device: str | None = None,
+) -> tuple["SeqModel", PreTrainedTokenizerFast]:
+    """Load a trained model and its tokenizer.
+
+    Args:
+        model_dir: Path to the model directory
+        device: Device to load the model on (e.g., 'cuda', 'cpu').
+                If None, uses 'cuda' if available, else 'cpu'.
+
+    Returns:
+        Tuple of (model, tokenizer)
+    """
+    print(f"Loading model from {model_dir}")
+    model = SeqModel.from_pretrained(model_dir)
+
+    # Determine device if not specified
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Move model to specified device
+    model = model.to(device)
+    print(f"Model moved to device: {device}")
+
+    # Load tokenizer (unified tokenizer saved in 'tokenizer' directory)
+    tokenizer_dir = Path(model_dir) / "tokenizer"
+    tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_dir)
+
+    print(f"Model loaded with vocabulary size {len(tokenizer)}")
+    # Calculate non-embedding parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    embedding_params = model.embedding.weight.numel()
+    non_embedding_params = total_params - embedding_params
+
+    print(
+        f"Model architecture: embedding_dim={model.embedding_dim}, "
+        f"hidden_dim={model.hidden_dim}, num_layers={model.num_layers}, "
+        f"non_embedding_params={non_embedding_params:,}"
+    )
+
+    return model, tokenizer
+
+
+class SeqModel(nn.Module):
+    """LSTM-based language model for sequence modelling.
+
+    This model processes the entire sequence in a single forward pass and
+    returns predictions for each position, using attention masks to handle
+    padding appropriately.
+    """
+
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int = 256,
+        hidden_dim: int = 512,
+        num_layers: int = 2,
+        dropout: float = 0.1,
+        pad_token_id: int = 0,
+    ) -> None:
+        """Initialize the LSTM language model.
+
+        Args:
+            vocab_size: Size of the vocabulary (unified for input and output)
+            embedding_dim: Dimension of the word embeddings
+            hidden_dim: Dimension of the LSTM hidden state
+            num_layers: Number of LSTM layers
+            dropout: Dropout probability
+            pad_token_id: ID of the padding token
+        """
+        super().__init__()
+
+        self.vocab_size = vocab_size
+        self.embedding_dim = embedding_dim
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.dropout_prob = dropout
+        self.pad_token_id = pad_token_id
+
+        # Word embeddings
+        self.embedding = nn.Embedding(
+            num_embeddings=vocab_size,
+            embedding_dim=embedding_dim,
+            padding_idx=pad_token_id,
+        )
+
+        # LSTM layers
+        self.lstm = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0,
+        )
+
+        # Output projection
+        self.output_projection = nn.Linear(hidden_dim, vocab_size)
+
+        # Dropout layer
+        self.dropout = nn.Dropout(dropout)
+
+        # Initialize weights
+        self.init_weights()
+
+    def init_weights(self) -> None:
+        """Initialize model weights."""
+        # Initialize embeddings
+        nn.init.normal_(self.embedding.weight, mean=0.0, std=0.02)
+        if self.embedding.padding_idx is not None:
+            nn.init.zeros_(self.embedding.weight[self.embedding.padding_idx])
+
+        # Initialize LSTM weights using Xavier/Glorot initialization
+        for name, param in self.lstm.named_parameters():
+            if "weight" in name:
+                nn.init.xavier_uniform_(param)
+            elif "bias" in name:
+                nn.init.zeros_(param)
+
+        # Initialize output projection
+        nn.init.xavier_uniform_(self.output_projection.weight)
+        nn.init.zeros_(self.output_projection.bias)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        labels: torch.Tensor | None = None,
+        *,
+        return_dict: bool = True,
+        **kwargs: object,
+    ) -> tuple | CausalLMOutput:
+        """Forward pass for the LSTM language model.
+
+        Args:
+            input_ids: Tensor of token IDs [batch_size, seq_len]
+            attention_mask: Mask to avoid processing padding tokens
+                            [batch_size, seq_len]
+            labels: Labels for language modeling [batch_size, seq_len]
+            return_dict: Whether to return a dictionary or tuple
+            kwargs: Additional keyword arguments
+
+        Returns:
+            CausalLMOutput with loss and logits if return_dict=True,
+            or tuple otherwise
+        """
+        _ = kwargs  # for compat
+        # Create embeddings
+        embeds = self.embedding(
+            input_ids
+        )  # [batch_size, seq_len, embedding_dim]
+
+        # Apply dropout to embeddings
+        embeds = self.dropout(embeds)
+
+        # Process through LSTM - returns output for each token
+        lstm_output, _ = self.lstm(embeds)  # [batch_size, seq_len, hidden_dim]
+
+        # Apply dropout to LSTM outputs
+        lstm_output = self.dropout(lstm_output)
+
+        # Project to vocabulary size for each position
+        lm_logits = self.output_projection(
+            lstm_output
+        )  # [batch_size, seq_len, vocab_size]
+
+        # Calculate loss if labels are provided
+        loss = None
+        if labels is not None:
+            # only using positions that are valid in the attention mask
+            active_loss = attention_mask.view(-1) == 1
+            active_logits = lm_logits.view(-1, self.vocab_size)[active_loss]
+            active_labels = labels.view(-1)[active_loss]
+
+            # Calculate cross entropy loss
+            loss_fct = CrossEntropyLoss(ignore_index=self.pad_token_id)
+            loss = loss_fct(active_logits, active_labels)
+
+        if return_dict:
+            return CausalLMOutput(
+                loss=loss,
+                logits=lm_logits,
+                hidden_states=None,
+                attentions=None,
+            )
+
+        return (loss, lm_logits) if loss is not None else lm_logits
+
+    def predict(
+        self,
+        tokenizer: PreTrainedTokenizerFast,
+        sequence: str,
+    ) -> str:
+        """Predict the next token given a sequence.
+
+        Args:
+            tokenizer: The unified tokenizer to encode/decode
+            sequence: The input sequence
+
+        Returns:
+            The predicted token
+        """
+        # Set model to evaluation mode
+        self.eval()
+
+        # Get device from model
+        device = next(self.parameters()).device
+
+        # Tokenize the sequence
+        inputs = tokenizer(sequence, return_tensors="pt")
+        input_ids = inputs["input_ids"].to(device)
+        attention_mask = inputs["attention_mask"].to(device)
+
+        # Forward pass (without computing loss)
+        with torch.no_grad():
+            outputs = self(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                return_dict=True,
+            )
+            logits = outputs.logits
+
+        # Get the logits for the next token (last position)
+        next_token_logits = logits[0, -1, :]
+
+        # Get the predicted token ID
+        predicted_token_id = torch.argmax(next_token_logits).item()
+        # cast to int
+        predicted_token_id = int(predicted_token_id)
+
+        # Convert the token ID to a string
+        predicted_token = tokenizer.convert_ids_to_tokens(predicted_token_id)
+
+        return predicted_token
+
+    def predict_proba(
+        self,
+        tokenizer: PreTrainedTokenizerFast,
+        sequence: str,
+        seq_len: int | None = None,
+        top_k: int | None = None,
+        rounding: int | None = None,
+    ) -> dict[str, float]:
+        """Predicts next token probability distribution.
+
+        Over the vocabulary for the next token given a sequence.
+
+        Args:
+            tokenizer: The unified tokenizer to encode/decode
+            sequence: The input sequence
+            seq_len: Optional target sequence length for padding
+            top_k: Optional number of top predictions to return
+            rounding: Optional number of decimal places to round probabilities
+
+        Returns:
+            A dictionary mapping token strings to their predicted probabilities
+        """
+        # Set model to evaluation mode
+        self.eval()
+
+        # Get device from model
+        device = next(self.parameters()).device
+
+        # Tokenize the sequence
+        # Tokenize the sequence with optional padding to specific length
+        inputs = tokenizer(
+            sequence,
+            return_tensors="pt",
+            padding="max_length" if seq_len is not None else False,
+            max_length=seq_len if seq_len is not None else None,
+            truncation=seq_len is not None,
+        )
+        input_ids = inputs["input_ids"].to(device)
+        attention_mask = inputs["attention_mask"].to(device)
+
+        # Forward pass (without computing loss)
+        with torch.no_grad():
+            outputs = self(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                return_dict=True,
+            )
+            logits = outputs.logits
+
+        # Get the logits for the next token (last position)
+        next_token_logits = logits[0, -1, :]
+
+        # Apply softmax to get probabilities
+        probabilities = F.softmax(next_token_logits, dim=0).cpu().numpy()
+
+        # Create a dictionary mapping tokens to probabilities
+        token_probs = {}
+        for token_id, prob in enumerate(probabilities):
+            if (
+                prob > 0.0
+            ):  # Only include non-zero probabilities for efficiency
+                token = tokenizer.convert_ids_to_tokens(token_id)
+                token_probs[token] = float(prob)
+                if rounding is not None and rounding > 0:
+                    token_probs[token] = round(token_probs[token], rounding)
+
+        # Sort the dictionary by probability values in descending order
+        token_probs = dict(
+            sorted(token_probs.items(), key=lambda item: item[1], reverse=True)
+        )
+        if top_k is not None:
+            token_probs = dict(list(token_probs.items())[:top_k])
+
+        return token_probs
+
+    def predict_top_k(
+        self,
+        tokenizer: PreTrainedTokenizerFast,
+        sequence: str,
+        k: int = 5,
+        *,
+        return_probs: bool = False,
+    ) -> list[str] | list[tuple[str, float]]:
+        """Predict the top-k next events given a sequence.
+
+        Args:
+            tokenizer: Unified tokenizer for input and output
+            sequence: Input text sequence
+            k: Number of top predictions to return
+            return_probs: Whether to return probabilities along with tokens
+
+        Returns:
+            List of top-k predicted event tokens, ordered by probability
+        """
+        self.eval()  # Set model to evaluation mode
+
+        # Get device from model
+        device = next(self.parameters()).device
+
+        # Tokenize input sequence
+        inputs = tokenizer(
+            sequence,
+            return_tensors="pt",
+            padding=False,
+            truncation=False,
+        )
+        input_ids = inputs["input_ids"].to(device)
+        attention_mask = inputs["attention_mask"].to(device)
+
+        # Get model predictions
+        with torch.no_grad():
+            outputs = self(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                return_dict=True,
+            )
+            logits = outputs.logits
+
+        # Get the logits for the next token (last position)
+        logits = logits[0, -1, :]
+
+        # Get probabilities for the last position
+        probabilities = torch.nn.functional.softmax(logits, dim=-1)
+
+        # Get top-k token indices and their probabilities
+        topk_probs, topk_indices = torch.topk(probabilities, k)
+
+        # Convert token indices to event tokens
+        topk_tokens = [tokenizer.decode([idx.item()]) for idx in topk_indices]
+        if return_probs:
+            topk_probs = topk_probs.cpu().numpy().tolist()
+            topk_tokens = [
+                (token, float(prob))
+                for token, prob in zip(topk_tokens, topk_probs, strict=False)
+            ]
+
+        return topk_tokens
+
+    @classmethod
+    def from_pretrained(
+        cls, model_path: str, device: str | None = "cpu"
+    ) -> "SeqModel":
+        """Load a pre-trained model from disk.
+
+        Args:
+            model_path: Path to the saved model
+            device: Device to load the model on (e.g., 'cuda', 'cpu').
+                    If None, uses 'cuda' if available, else 'cpu'.
+
+        Returns:
+            Loaded LSTMLM
+        """
+        # Determine device if not specified
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Determine map_location for loading tensors
+        map_location = torch.device(device)
+
+        # Load the model configuration and state dict
+        config = torch.load(
+            Path(model_path) / "config.pt", map_location=map_location
+        )
+        state_dict = torch.load(
+            Path(model_path) / "pytorch_model.bin",
+            map_location=map_location,
+        )
+
+        # Create a new model with the loaded configuration
+        model = cls(**config)
+
+        # Load the state dict
+        model.load_state_dict(state_dict)
+
+        # Move model to specified device
+        model = model.to(device)
+
+        # Calculate non-embedding parameters
+        total_params = sum(p.numel() for p in model.parameters())
+        embedding_params = model.embedding.weight.numel()
+        non_embedding_params = total_params - embedding_params
+
+        # Log model architecture information
+        print(
+            f"Loaded model architecture: embedding_dim={model.embedding_dim}, "
+            f"hidden_dim={model.hidden_dim}, num_layers={model.num_layers}, "
+            f"non_embedding_params={non_embedding_params:,}"
+        )
+
+        return model
+
+
+class PredictNextEvent(BGO):
+    """Predict the next event in a sequence."""
+
+    @staticmethod
+    def run(args: dict) -> dict:
+        """Load the model and predict the next event."""
+        if "model_dir" not in args or "previous_events" not in args:
+            msg = "Required data not provided in arguments."
+            raise ValueError(msg)
+
+        # lets load the model
+        model, tokenizer = load_model_and_tokenizer(
+            args["model_dir"], device=args["device"]
+        )
+
+        # lets predict the next event
+        next_event = model.predict(
+            tokenizer=tokenizer, sequence=args["previous_events"]
+        )
+
+        # lets return the next event
+        args["next_event"] = next_event
+        return args
+
+
+class PredictNextEventWithProba(BGO):
+    """Predict the next event in a sequence with probability."""
+
+    @staticmethod
+    def run(args: dict) -> dict:
+        """Load the model and predict the next event with probability."""
+        if "model_dir" not in args or "previous_events" not in args:
+            msg = "Required data not provided in arguments."
+            raise ValueError(msg)
+
+        topk = args.get("topk", 20)
+
+        # lets load the model
+        model, tokenizer = load_model_and_tokenizer(
+            args["model_dir"], device=args["device"]
+        )
+
+        # lets predict the next event with probability
+        next_event_with_proba = model.predict_proba(
+            tokenizer=tokenizer,
+            sequence=args["previous_events"],
+            top_k=topk,
+            rounding=2,
+        )
+
+        # lets return the next event with probability
+        args["next_event_with_proba"] = next_event_with_proba
+        return args
+
+
+class LoadDataFromFile(BGO):
+    """Load data from a file."""
+
+    @staticmethod
+    def run(args: dict) -> dict:
+        """Load data from a file."""
+        if "file_path" not in args:
+            msg = "Required data not provided in arguments."
+            raise ValueError(msg)
+
+        if args["file_path"].endswith(".tsv"):
+            # handle TSV
+            data = load_from_tsv(args["file_path"])
+        else:
+            data = load_from_txt(args["file_path"])
+        args["previous_events"] = data
+        return args
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="BGO-based script for Graph Massivizer"
+    )
+    parser.add_argument(
+        "--model_dir",
+        type=str,
+        default="./tests/resources/model",
+        help="Path to the model directory",
+    )
+    parser.add_argument(
+        "--topk",
+        type=int,
+        default=20,
+        help="Number of top predictions to return",
+    )
+    parser.add_argument(
+        "--file_path",
+        type=str,
+        default="./tests/resources/testfile.txt",
+        help="Path to the input file",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="Device to load the model on (e.g., 'cuda', 'cpu').",
+    )
+
+    args = parser.parse_args()
+
+    # Convert argparse namespace to dict
+    args_dict = {
+        "model_dir": args.model_dir,
+        "topk": args.topk,
+        "file_path": args.file_path,
+        "device": args.device,
+    }
+
+    # Run the pipeline
+    args_dict = LoadDataFromFile.run(args_dict)
+    args_dict = PredictNextEvent.run(args_dict)
+    args_dict = PredictNextEventWithProba.run(args_dict)
+    print(args_dict)
