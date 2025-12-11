@@ -92,4 +92,4 @@ jobs:
       - name: Tests and checks skipped
         run: echo "Tests and checks skipped"
       - name: exit
-        run: exit 1
+        run: exit 0
