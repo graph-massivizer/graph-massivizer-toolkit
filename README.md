@@ -3,8 +3,6 @@ The Graph-Massivizer Toolkit is a loosely integrated toolkit that leverages the 
 
 The architecture of the Graph-Massivizer distributed graph processing engine is designed for scalable execution across the compute continuum, including cloud, HPC and edge environments - leveraging both CPU and GPU resources. 
 
-![Architecture](https://github.com/graph-massivizer/.github/blob/public-update/figs/overview.png)
-
 ## Graph-Massivizer Tools
 
 ### Graph-Inceptor
@@ -28,6 +26,8 @@ The [Graph-Inceptor](https://github.com/graph-massivizer/graph-inceptor) tool is
 
 # Graph-Massivizer Toolkit Simulation
 For local testing and development of BGO functionalities, a simulation is provided by the project. This simulation was initially created for validation and testing purposes to ensure compatibility of the separate tool funtionalities. It follows a master--worker paradigm with two main roles: the centralized Workload Manager to coordinate opimization and scheduling, and decentralized Task Managers for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
+
+![Architecture](https://github.com/graph-massivizer/.github/blob/public-update/figs/overview.png)
 
 ## Workload Manager
 The Workload Manager is a centralized component running on the master node, acting as the global orchestrator of graph workflows submitted by users. Upon receiving a workflow (as a DAG), it validates its structure and decomposes it into BGOs, such as filtering, traversal, or PageRank. Its internal modules are:
