@@ -55,7 +55,7 @@ Each instance of Task Manager registers itself with ZooKeeper and encodes its ma
 This project is built with the python programming language and uses Docker containers. Both of these must be installed to develop with the toolkit. Other packages and dependencies should be installed automatically when building and executing the simulation.
 
 ## Using metaphactory
-The simulated platform also uses [metaphactory](https://metaphacts.com/) as a default frontend. Developers must have a key in order to pull metaphactory Docker images. A key can be obtained by filling out [this form](https://metaphacts.com/get-started#docker-trial) and mentioning the project, which will send you an email in a short time containing the key and login command.
+The simulated toolkit also uses [metaphactory](https://metaphacts.com/) as a default frontend. Developers must have a key in order to pull metaphactory Docker images. A key can be obtained by filling out [this form](https://metaphacts.com/get-started#docker-trial) and mentioning the project, which will send you an email in a short time containing the key and login command.
 
 Before running the project, use the script provided called `./start_metaphactory.sh` to run a metaphactory docker image, and then `./stop_metaphactory.sh` to close it. These images are independent of the project so they should be running in the background during different executions and not reloaded until you want to stop working with them.
 
