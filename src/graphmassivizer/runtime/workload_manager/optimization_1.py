@@ -49,6 +49,7 @@ class Optimizer_1:
 						 "A5003105325": 0.000032, "A5043437297": 0.000025, "A5100392487": 0.000030 }}
 
 	def get_optimization_result(alg,algorithmDict,hardwareID):
+		if alg not in Optimizer_1.benchmarks: return
 		valForAlg = Optimizer_1.benchmarks[alg]
 		if 'optimized' not in algorithmDict: algorithmDict['optimized'] = {}
 		algorithmDict['optimized'][hardwareID] = valForAlg

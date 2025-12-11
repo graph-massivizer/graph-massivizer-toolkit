@@ -500,9 +500,9 @@ class TaskManagerNode(SimulatedNode):
 		self.status.ready()
 
 	def run(self,alg,args): # TEMP RUN FOR VALIDATING WHILE FINISHING EXECUTION CONTROLLER AND DATA MANAGER
-		self.logger.info(f"Pretending to run {alg} in {self}")
+		self.logger.info(f"Simulated run of {alg} in {self}")
 		out = alg(args)
-		self.logger.info(f"Pretend result: {out}")
+		self.logger.info(f"Simulated result: {out}")
 
 	def _get_docker_environment(self) -> dict[str, str]:
 		return self.__task_manager_environment

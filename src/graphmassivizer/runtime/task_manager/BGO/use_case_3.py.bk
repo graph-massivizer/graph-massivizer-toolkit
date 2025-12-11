@@ -1,0 +1,583 @@
+import pathlib
+import sys
+from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
+import networkx as nx
+
+from graphmassivizer.runtime.task_manager.task_execution_unit import BGO
+from typing import List
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+from sklearn.model_selection import train_test_split
+from catboost import CatBoostRegressor
+
+class LoadWeldingData(BGO):
+
+    implementationId = "LoadWeldingData"
+
+    def run(args={}):
+        """
+        Loads welding data from CSV files.
+        Assumes files: 'weld_spot_info.csv' and time-series data files.
+        """
+        data_dir = args.get("data_dir")  #  Directory where data files are located
+        if not data_dir:
+            raise ValueError("Data directory not provided in arguments.")
+
+        data_dir = pathlib.Path(data_dir)
+
+        weld_info_path = data_dir / "weld_spot_info.csv"
+        weld_info = pd.read_csv(weld_info_path)  #  Load welding spot info
+
+        time_series_data = {}
+        for file_path in (data_dir / "curves").glob("*.csv"):
+            spot_id = file_path.stem.split(".")[0]  #  Extract spot ID from filename
+            time_series_data[spot_id] = pd.read_csv(file_path)
+
+        args["weld_info"] = weld_info
+        args["time_series_data"] = time_series_data
+        return args
+
+
+class TimeSeriesToGraph(BGO):
+
+    implementationId = "TimeSeriesToGraph"
+
+    def run(args={}):
+        """
+        Converts time-series welding data into Natural Visibility Graphs (NVGs).
+        Creates separate NVGs for voltage and combined resistance/current,
+        and a welding info graph. Combines these into a larger graph.
+        """
+
+        if "weld_info" not in args or "time_series_data" not in args:
+            raise ValueError("Required data not provided in arguments.")
+
+        weld_info = args["weld_info"]
+        time_series_data = args["time_series_data"]
+        graphs = {}
+
+        def discretize_to_quantiles(time_series, num_quantiles):
+            """Discretizes a time series into quantiles."""
+            quantiles = np.linspace(0, 1, num_quantiles + 1)
+            quantile_bins = np.quantile(time_series, quantiles)
+            quantile_bins[0] -= 1e-9
+            quantile_indices = np.digitize(time_series, quantile_bins, right=True) - 1
+            return quantile_bins, quantile_indices
+
+        def create_nvg(time_series: List[float], num_quantiles=5, prefix="") -> nx.Graph:
+            """Helper function to create a quantile graph from a time series."""
+            quantile_bins, quantile_indices = discretize_to_quantiles(
+                time_series, num_quantiles
+            )
+            G = nx.DiGraph()
+            G.add_nodes_from([f"{prefix}{i+1}" for i in range(num_quantiles)])
+            for t in range(len(quantile_indices) - 1):
+                q1 = f"{prefix}{quantile_indices[t] + 1}"
+                q2 = f"{prefix}{quantile_indices[t + 1] + 1}"
+                if G.has_edge(q1, q2):
+                    G[q1][q2]["weight"] += 1
+                else:
+                    G.add_edge(q1, q2, weight=1)
+            for i in range(1, num_quantiles + 1):
+                node = f"{prefix}{i}"
+                total_weight = sum(
+                    [
+                        G[node][f"{prefix}{j}"]["weight"]
+                        for j in range(1, num_quantiles + 1)
+                        if G.has_edge(node, f"{prefix}{j}")
+                    ]
+                )
+                if total_weight > 0:
+                    for j in range(1, num_quantiles + 1):
+                        target_node = f"{prefix}{j}"
+                        if G.has_edge(node, target_node):
+                            G[node][target_node]["weight"] /= total_weight
+            return G
+
+        #  2. Voltage, Resistance, and Current Curve Analysis
+        for spot_id, data in time_series_data.items():
+            voltage_curve = data["VoltageCurve"].tolist()
+            resistance_curve = data["ResistanceCurve"].tolist()
+            current_curve = data["CurrentCurve"].tolist()
+            voltage_nvg = create_nvg(voltage_curve, prefix="V")
+            resistance_nvg = create_nvg(resistance_curve, prefix="R")
+            current_nvg = create_nvg(current_curve, prefix="C")
+            combined_graph = nx.compose(
+                voltage_nvg, resistance_nvg
+            )  #  Combine V, and R graphs
+            combined_graph = nx.compose(combined_graph, current_nvg)  # Compose with C
+            graphs[spot_id] = combined_graph
+
+        #  3. Welding Info Graph
+        welding_info_graph = nx.DiGraph()
+        for _, row in weld_info.iterrows():
+            welding_info_graph.add_node(
+                row["ID"],
+                spot_name=row["spotname"],
+                material_id=row["material_id"],
+            )
+
+        #  4. Combine Graphs for Each Spot (Example: Combine one voltage and one combined)
+        combined_spot_graphs = {}
+        for spot_id in time_series_data.keys():
+            if spot_id in graphs:
+                # Get the specific spot info from the welding_info_graph
+                spot_info_graph = nx.DiGraph()
+                spot_id_numeric = int(spot_id)
+                if spot_id_numeric in welding_info_graph:
+                    spot_info_graph.add_node(
+                        spot_id_numeric, **welding_info_graph.nodes[spot_id_numeric]
+                    )
+
+                # Combine the nvg with the spot's info
+                combined_spot_graphs[spot_id] = nx.compose(
+                    graphs[spot_id], spot_info_graph
+                )  #  Include welding info
+
+        args["graphs"] = graphs
+        args["combined_spot_graphs"] = combined_spot_graphs
+        args["welding_info_graph"] = welding_info_graph
+        return args
+
+
+class TrainGraphEmbedding(BGO):
+
+    implementationId = "TrainGraphEmbedding"
+
+    def run(args={}):
+        """
+        Trains Graph2Vec embeddings on the generated graphs.
+        Generates embeddings for both individual voltage NVGs and combined graphs.
+        """
+        if (
+            "graphs" not in args
+            or "combined_spot_graphs" not in args
+            or "welding_info_graph" not in args
+        ):
+            raise ValueError("Required graphs not provided in arguments.")
+
+        combined_spot_graphs = args["combined_spot_graphs"]
+
+        def get_random_walks_for_graph(G):
+            # Check if graph has edges, if not return empty walks
+            if G.number_of_edges() == 0:
+                return []
+            
+            # Filter nodes that have outgoing edges for random walks
+            nodes_with_edges = [n for n in G.nodes() if G.out_degree(n) > 0]
+            
+            if not nodes_with_edges:
+                # If no nodes have outgoing edges, create simple node sequences
+                return [[str(n)] for n in list(G.nodes())[:10]]
+            
+            try:
+                sample_size = min(10, len(nodes_with_edges))
+                walks = nx.generate_random_paths(
+                    G, sample_size=sample_size, path_length=5
+                )
+                return [[str(n) for n in walk] for walk in walks]
+            except (ValueError, ZeroDivisionError):
+                # Fallback: create simple node sequences if random walks fail
+                return [[str(n)] for n in list(G.nodes())[:10]]
+
+        documents = []
+        filenames = []
+        for spot_id, graph in combined_spot_graphs.items():
+            random_walks = get_random_walks_for_graph(graph)
+            documents.extend([TaggedDocument(walk, [spot_id]) for walk in random_walks])
+            filenames.append(spot_id)
+
+        embedding_size = 15
+        model = Doc2Vec(
+            documents, vector_size=embedding_size, window=3, min_count=1, workers=4
+        )
+        model.train(documents, total_examples=model.corpus_count, epochs=model.epochs)
+
+        embeddings = {}
+        for spot_id in filenames:
+            embeddings[f"emb_{spot_id}"] = model.dv[spot_id]
+
+        args["embeddings"] = embeddings
+        return args
+
+
+class GenerateWeldQualityPredictions(BGO):
+    """Generates weld quality predictions using Random Forest Regressors."""
+
+    implementationId = "GenerateWeldQualityPredictions"
+
+    def run(args={}):
+        """
+        Trains and uses regressors to predict ultrasonic and optical
+        weld sizes based on graph embeddings and welding data features.
+        """
+        if "embeddings" not in args or "weld_info" not in args:
+            raise ValueError("Embeddings and welding info not provided.")
+
+        embeddings = args["embeddings"]
+        weld_info = args["weld_info"]
+        predictions = {}
+
+        #  1. Prepare Data
+        embedding_df = pd.DataFrame.from_dict(
+            embeddings, orient="index", columns=[f"embedding_{i}" for i in range(15)]
+        )
+        embedding_df["ID"] = embedding_df.index.str.replace("emb_", "").astype(int)
+
+        weld_info_filtered = weld_info[weld_info["ID"].isin(embedding_df["ID"])]
+
+        combined_df = pd.merge(embedding_df, weld_info_filtered, on="ID")
+
+        features = combined_df.drop(
+            [
+                "spot_diameter_ultrasonic",
+                "spot_diameter_optical",
+                "ID",
+                "spotname",
+                "material_id",
+            ],
+            axis=1,
+        )
+        targets_ultrasonic = combined_df["spot_diameter_ultrasonic"]
+        targets_optical = combined_df["spot_diameter_optical"]
+
+        X_train_ultrasonic, X_test_ultrasonic, y_train_ultrasonic, y_test_ultrasonic = (
+            train_test_split(
+                features, targets_ultrasonic, test_size=0.2, random_state=42
+            )
+        )
+        X_train_optical, X_test_optical, y_train_optical, y_test_optical = (
+            train_test_split(features, targets_optical, test_size=0.2, random_state=42)
+        )
+
+        # Train and predict for ultrasonic
+        model_ultrasonic = CatBoostRegressor(random_seed=42, verbose=0)
+        model_ultrasonic.fit(X_train_ultrasonic, y_train_ultrasonic)
+        ultrasonic_predictions = model_ultrasonic.predict(X_test_ultrasonic)
+
+        # Train and predict for optical
+        model_optical = CatBoostRegressor(random_seed=42, verbose=0)
+        model_optical.fit(X_train_optical, y_train_optical)
+        optical_predictions = model_optical.predict(X_test_optical)
+
+        test_ids = X_test_ultrasonic.index
+
+        predictions = {}
+        for i, idx in enumerate(test_ids):
+            original_id = combined_df.loc[idx, "ID"]
+            predictions[original_id] = {
+                "ultrasonic_prediction": ultrasonic_predictions[i],
+                "optical_prediction": optical_predictions[i],
+                "ultrasonic_true": y_test_ultrasonic.iloc[i],
+                "optical_true": y_test_optical.iloc[i],
+            }
+
+        args["weld_quality_predictions"] = predictions
+        return args
+
+
+class ReturnWeldQualityPredictions(BGO):
+
+    implementationId = "ReturnWeldQualityPredictions"
+
+    def run(args={}):
+        """
+        Returns the generated weld quality predictions.
+        This might involve formatting the output, storing it in a database,
+        or sending it to another system.
+        """
+        if "weld_quality_predictions" not in args:
+            raise ValueError("Weld quality predictions not provided.")
+
+        predictions = args["weld_quality_predictions"]
+
+        args["output"] = predictions
+        return args
+
+
+if __name__ == "__main__":
+    data_directory_path = "./welding_data/"
+
+    args = {"data_dir": data_directory_path}
+
+    print("\n--- Starting Weld Quality Prediction Flow ---")
+
+    # 1. Load Welding Data
+    print("\n[Step 1/5]: Loading Welding Data...")
+    try:
+        args_load_bgo = LoadWeldingData.run(args)
+        print("   Data Loading Confirmed: weld_info and time_series_data loaded.")
+        print(
+            f"   Loaded {len(args_load_bgo['weld_info'])} weld spots and {len(args_load_bgo['time_series_data'])} time series files."
+        )
+    except (FileNotFoundError, ValueError) as e:
+        print(f"   Error during data loading: {e}")
+        print(
+            "   Please ensure 'welding_data' directory and its contents are correctly set up."
+        )
+        sys.exit(1)  # Exit if data loading fails
+
+    # 2. Time Series to Graph
+    print(
+        "\n[Step 2/5]: Transforming Time Series Data to Graphs (Quantile Graphs & NVG Visualization)..."
+    )
+    try:
+        args = TimeSeriesToGraph.run(args_load_bgo)
+        print(
+            "   Conceptual Transformation: Raw time-series sensor data converted into graph structures."
+        )
+        print(
+            f"   Generated {len(args['combined_spot_graphs'])} combined graphs for welding spots."
+        )
+
+        # --- NVG Interconnected Graph Visualization ---
+
+        sample_spot_id = list(args["graphs"].keys())[0]
+        sample_nvg_graph = args["graphs"][sample_spot_id]
+        sample_data = args_load_bgo["time_series_data"][sample_spot_id]
+        sample_voltage_curve = sample_data["VoltageCurve"]
+        sample_resistance_curve = sample_data["ResistanceCurve"]
+        sample_current_curve = sample_data["CurrentCurve"]
+
+        # Calculate quantile values for labeling
+        def get_quantile_values(time_series, num_quantiles=5):
+            quantiles = np.linspace(0, 1, num_quantiles + 1)
+            quantile_bins = np.quantile(time_series, quantiles)
+            return quantile_bins[1:]  # Skip the first bin edge
+
+        voltage_quantiles = get_quantile_values(sample_voltage_curve)
+        resistance_quantiles = get_quantile_values(sample_resistance_curve)
+        current_quantiles = get_quantile_values(sample_current_curve)
+
+        plt.figure(figsize=(18, 8))
+
+        # Subplot 1: Original Time Series
+        plt.subplot(131)
+        plt.plot(sample_voltage_curve, marker="o", linestyle="-", color="blue")
+        plt.title(f"Original Voltage Time Series (Spot {sample_spot_id})")
+        plt.xlabel("Time Step")
+        plt.ylabel("Voltage Value")
+        plt.grid(True)
+
+        # Subplot 2: Interconnected NVG (V, R, C nodes with edges)
+        plt.subplot(132)
+
+        # Use spring layout to show interconnections naturally
+        pos = nx.spring_layout(sample_nvg_graph, k=2.0, iterations=100, seed=42)
+
+        # Create node colors and labels based on type
+        node_colors = []
+        node_labels = {}
+        color_map = {"V": "lightcoral", "R": "lightgreen", "C": "lightblue"}
+
+        for node in sample_nvg_graph.nodes():
+            node_type = node[0]  # V, R, or C
+            node_num = int(node[1:])  # 1, 2, 3, 4, 5
+            node_colors.append(color_map[node_type])
+
+            # Get the actual quantile value for this node
+            if node_type == "V":
+                value = voltage_quantiles[node_num - 1]
+                node_labels[node] = f"{node}\n{value:.2f}V"
+            elif node_type == "R":
+                value = resistance_quantiles[node_num - 1]
+                node_labels[node] = f"{node}\n{value:.2f}Ω"
+            elif node_type == "C":
+                value = current_quantiles[node_num - 1]
+                node_labels[node] = f"{node}\n{value:.2f}A"
+
+        # Draw the directed graph with edges to show interconnections
+        nx.draw_networkx_nodes(
+            sample_nvg_graph, pos, node_color=node_colors, node_size=1200, alpha=0.8
+        )
+
+        nx.draw_networkx_labels(
+            sample_nvg_graph, pos, labels=node_labels, font_size=8, font_weight="bold"
+        )
+
+        # Draw directed edges with varying thickness based on weight
+        edges = sample_nvg_graph.edges(data=True)
+        # Filter out self-loops (cyclic edges)
+        filtered_edges = [(u, v, d) for u, v, d in edges if u != v]
+
+        if filtered_edges:
+            edge_weights = [edge[2].get("weight", 1) for edge in filtered_edges]
+            max_weight = max(edge_weights) if edge_weights else 1
+            edge_widths = [3 * (w / max_weight) for w in edge_weights]
+
+            # Create edge list without data for drawing
+            edge_list = [(u, v) for u, v, d in filtered_edges]
+
+            nx.draw_networkx_edges(
+                sample_nvg_graph,
+                pos,
+                edgelist=edge_list,
+                width=edge_widths,
+                edge_color="gray",
+                alpha=0.7,
+                arrows=True,
+                arrowsize=20,
+                arrowstyle="->",
+            )
+
+        plt.title(f"Natural Visibility Graph (NVG) for Spot {sample_spot_id}")
+        plt.xlabel("Quantile-based Graph Layout")
+        plt.ylabel("(Shows quantile thresholds for each signal)")
+
+        # Remove axes for cleaner look
+        plt.axis("off")
+
+        # Subplot 3: Legend and explanation
+        plt.subplot(133)
+        plt.text(0.1, 0.9, "NVG Node Legend:", fontsize=14, fontweight="bold")
+        plt.text(0.1, 0.8, "• V1-V5: Voltage quantiles", fontsize=10, color="red")
+        plt.text(0.1, 0.75, "• R1-R5: Resistance quantiles", fontsize=10, color="green")
+        plt.text(0.1, 0.7, "• C1-C5: Current quantiles", fontsize=10, color="blue")
+
+        plt.text(0.1, 0.6, "Node Values:", fontsize=12, fontweight="bold")
+        plt.text(0.1, 0.55, "Each node shows the", fontsize=10)
+        plt.text(0.1, 0.5, "quantile threshold value", fontsize=10)
+
+        plt.text(0.1, 0.4, "Edges:", fontsize=12, fontweight="bold")
+        plt.text(0.1, 0.35, "• Directed arrows show", fontsize=10)
+        plt.text(0.1, 0.3, "  temporal transitions", fontsize=10)
+        plt.text(0.1, 0.25, "• Thickness = transition", fontsize=10)
+        plt.text(0.1, 0.2, "  frequency", fontsize=10)
+
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        plt.axis("off")
+
+        plt.tight_layout()
+        viz_path = pathlib.Path("./nvg_visualization.png")
+        plt.savefig(viz_path)
+        plt.close()  # Close plot to free memory
+        
+        # Create separate voltage curve plot
+        plt.figure(figsize=(10, 6))
+        plt.plot(sample_voltage_curve, marker="o", linestyle="-", color="blue")
+        plt.title(f"Voltage Time Series for Welding Spot {sample_spot_id}")
+        plt.xlabel("Time Step")
+        plt.ylabel("Voltage Value")
+        plt.grid(True)
+        plt.tight_layout()
+        voltage_path = pathlib.Path("./voltage_curve.png")
+        plt.savefig(voltage_path)
+        plt.close()
+        
+        # Create separate NVG plot
+        plt.figure(figsize=(8, 8))
+        
+        # Draw the directed graph with edges to show interconnections
+        nx.draw_networkx_nodes(
+            sample_nvg_graph, pos, node_color=node_colors,
+            node_size=1200, alpha=0.8
+        )
+
+        nx.draw_networkx_labels(
+            sample_nvg_graph, pos, labels=node_labels,
+            font_size=10, font_weight="bold"
+        )
+
+        if filtered_edges:
+            nx.draw_networkx_edges(
+                sample_nvg_graph,
+                pos,
+                edgelist=edge_list,
+                width=edge_widths,
+                edge_color="gray",
+                alpha=0.7,
+                arrows=True,
+                arrowsize=20,
+                arrowstyle="->",
+            )
+
+        plt.title(f"Natural Visibility Graph (NVG) for Welding Spot "
+                  f"{sample_spot_id}", fontsize=16, fontweight="bold")
+        plt.axis("off")
+        plt.tight_layout()
+        nvg_path = pathlib.Path("./nvg_only.png")
+        plt.savefig(nvg_path)
+        plt.close()
+        
+        args["nvg_visualization_path"] = str(viz_path)  # Store path in args
+        args["voltage_curve_path"] = str(voltage_path)
+        args["nvg_only_path"] = str(nvg_path)
+        
+        print(
+            f"   A sample NVG visualization is saved at: "
+            f"{args['nvg_visualization_path']}"
+        )
+        print(f"   Voltage curve plot saved at: {args['voltage_curve_path']}")
+        print(f"   NVG-only plot saved at: {args['nvg_only_path']}")
+        print("   You can open these PNG files to see the graphs.")
+
+    except Exception as e:
+        print(f"   Error during graph transformation: {e}")
+        sys.exit(1)
+
+    # 3. Train Graph Embedding Model
+    print("\n[Step 3/5]: Training Graph Embedding Model...")
+    try:
+        args = TrainGraphEmbedding.run(args)
+        print("   Graph Embeddings Generated.")
+        if args["embeddings"]:
+            sample_emb_key = list(args["embeddings"].keys())[0]
+            print(
+                f"   Sample Embedding Vector (for {sample_emb_key}): "
+                f"{args['embeddings'][sample_emb_key][:5]}... (first 5)"
+            )
+        else:
+            print("   No embeddings were generated. Check previous steps.")
+            sys.exit(1)
+    except Exception as e:
+        print(f"   Error during embedding training: {e}")
+        sys.exit(1)
+
+    # 4. Generate Weld Quality Predictions
+    print("\n[Step 4/5]: Generating Weld Quality Predictions...")
+    try:
+        args = GenerateWeldQualityPredictions.run(args)
+        print("   Weld Quality Predictions Computed.")
+    except Exception as e:
+        print(f"   Error during prediction generation: {e}")
+        sys.exit(1)
+
+    # 5. Return Weld Quality Predictions
+    print("\n[Step 5/5]: Returning Final Weld Quality Predictions...")
+    try:
+        args = ReturnWeldQualityPredictions.run(args)
+    except Exception as e:
+        print(f"   Error during returning predictions: {e}")
+        sys.exit(1)
+
+    print("\n--- Results ---")
+    if args["output"]:
+        print("Final Weld Quality Predictions vs True Values (Sample):")
+        output_count = 0
+        for spot_id, prediction_data in args["output"].items():
+            print(f"  Spot ID: {spot_id}")
+            ultrasonic_pred = prediction_data["ultrasonic_prediction"]
+            optical_pred = prediction_data["optical_prediction"]
+            ultrasonic_true = prediction_data["ultrasonic_true"]
+            optical_true = prediction_data["optical_true"]
+            
+            print(f"    Ultrasonic - Predicted: {ultrasonic_pred:.2f}, "
+                  f"True: {ultrasonic_true:.2f}")
+            print(f"    Optical - Predicted: {optical_pred:.2f}, "
+                  f"True: {optical_true:.2f}")
+            
+            # Calculate errors
+            ultrasonic_error = abs(ultrasonic_pred - ultrasonic_true)
+            optical_error = abs(optical_pred - optical_true)
+            print(f"    Errors - Ultrasonic: {ultrasonic_error:.2f}, "
+                  f"Optical: {optical_error:.2f}")
+            print()
+            
+            output_count += 1
+            if output_count >= 3:  # Show only first 3 for brevity in demo
+                print("  ...")
+                break
+    else:
+        print("No predictions generated.")

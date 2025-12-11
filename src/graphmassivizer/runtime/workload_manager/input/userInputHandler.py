@@ -13,10 +13,21 @@ class UserInputHandler:
 				 bgoArgs={'inputNode':'https://semopenalex.org/author/A5006947708','topic':'https://semopenalex.org/concept/C41008148','author':'https://semopenalex.org/author/A5006947708'}):
 		self.metaphactory = MetaphactoryConnector(metaphactoryAddress=metaphactoryAddress)
 		self.DAG = {"args":bgoArgs, "directed": False, "multigraph": False, "nodes":{}, "edges":{}}
-		if 'graph' not in self.DAG['args']:
-			self.DAG['args']['graph'] = self.defaultGraph()
+
+	def getWorkflowFromFile(self,file,availableBGOs):
+		with open(file) as f:
+			DAG = eval(f.read())
+			for node in DAG['nodes'].values():
+				for imp,dat in node['implementations'].items():
+					dat['class'] = availableBGOs[imp]["class"]
+			open('test.txt',"w").write(str(DAG))
+			for key in DAG.keys():
+				self.DAG[key] = DAG[key]
+			return self.DAG
 
 	def getWorkflow(self,workflowIRI,availableBGOs):
+		if 'graph' not in self.DAG['args']:
+			self.DAG['args']['graph'] = self.defaultGraph()
 		return self.formatWorkflow(json.loads(self.metaphactory.workflowQuery(workflowIRI)),workflowIRI,availableBGOs)
 
 	def defaultGraph(self):
@@ -65,6 +76,6 @@ class UserInputHandler:
 			 node["next"] = {self.formatIRI(queryItem["next"]['value'])}
 			 self.DAG['edges'][id] = node["next"]
 
-		self.convertUserWorkflowToExecutable()
+		#self.convertUserWorkflowToExecutable()
 
 		return self.DAG
