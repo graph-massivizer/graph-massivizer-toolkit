@@ -25,7 +25,7 @@ The [Graph-Inceptor](https://github.com/graph-massivizer/graph-inceptor) tool is
 [Graph-Choreographer](https://github.com/graph-massivizer/graph-choreographer) is a serverless orchestration tool for executing single, ensemble and batch graph applications on the computing continuum, scheduled using performance and energy tradeoffs.
 
 # Graph-Massivizer Toolkit Simulation
-For local testing and development of BGO functionalities, a simulation is provided by the project. This simulation was initially created for validation and testing purposes to ensure compatibility of the separate tool funtionalities. It follows a master--worker paradigm with two main roles: the centralized Workload Manager to coordinate opimization and scheduling, and decentralized Task Managers for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
+For local testing and development of BGO functionalities as well as validation of use case workflows and infrastructure configurations, a simulation is provided by the project. This simulation was initially created for validation and testing purposes to ensure compatibility of the separate tool funtionalities. It follows a master--worker paradigm with two main roles: the centralized Workload Manager to coordinate opimization and scheduling, and decentralized Task Managers for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
 
 ![Architecture](https://github.com/graph-massivizer/.github/blob/public-update/figs/overview.png)
 
