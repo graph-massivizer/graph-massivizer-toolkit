@@ -59,8 +59,11 @@ The simulated toolkit also uses [metaphactory](https://metaphacts.com/) as a def
 
 Before running the project, use the script provided called `./start_metaphactory.sh` to run a metaphactory docker image, and then `./stop_metaphactory.sh` to close it. These images are independent of the project so they should be running in the background during different executions and not reloaded until you want to stop working with them.
 
+## Using a custom frontend
+If a user wishes to develop their own frontend, it must submit workflows in the same format as the toolkit would expect from metaphactory. An example of the required format can be found in [this](https://github.com/graph-massivizer/graph-massivizer-toolkit/blob/main/tests/resources/workflow.json) test file.
+
 # Development
-After cloning the project, create a virtual environment to work on this project. It is strongly recommended to inoreitialize a virtual environment before installing or building the simulation. For detailed instructions see [the documentation](https://docs.python.org/3/library/venv.html) for how to configure a virtual environment.
+After cloning the repository, create a virtual environment to develop using this project. It is strongly recommended to initialize a virtual environment before installing or building the simulation. For detailed instructions see [the documentation](https://docs.python.org/3/library/venv.html) for how to configure a Python virtual environment.
 
 Once this is set up, install the dependencies using
 
