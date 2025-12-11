@@ -10,7 +10,7 @@ import pathlib
 import requests
 import pickle
 
-from graphmassivizer.runtime.task_manager.input.preprocessing import InputPipeline
+from graphmassivizer.runtime.workload_manager.input.preprocessing import InputPipeline
 
 class DAGTest(TestCase):
 
