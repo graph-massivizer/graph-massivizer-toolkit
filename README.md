@@ -1,9 +1,33 @@
 # Graph-Massivizer Toolkit
-The Graph-Massivizer Toolkit is an integrated platform that leverages the unique researched functionalities in each separate Graph-Massivizer tool. In the integrated toolkit, algorithms that perform basic graph operations (BGO) developed by Graph-Inceptor and Graph-Scrutinizer as well as other open source libraries are integrated so that they can be executed efficiently and in a green-aware fashion within diverse hardware environments according to the advanced techniques developed by Graph-Optimizer, Graph-Greenifier, and Graph-Choreographer.
+The Graph-Massivizer Toolkit is a loosely integrated toolkit that leverages the unique researched functionalities in each separate Graph-Massivizer tool. In the toolkit, algorithms that perform basic graph operations (BGO) developed by Graph-Inceptor and Graph-Scrutinizer as well as other open source libraries are integrated so that they can be executed efficiently and in a green-aware fashion within diverse hardware environments according to the advanced techniques developed by Graph-Optimizer, Graph-Greenifier, and Graph-Choreographer.
 
-The architecture of the Graph-Massivizer distributed graph processing engine is designed for scalable execution across the compute continuum, including cloud, HPC and edge environments - leveraging both CPU and GPU resources. It follows a master--worker paradigm with two main roles: the centralized Workload Manager to coordinate opimization and scheduling, and decentralized Task Managers for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
+The architecture of the Graph-Massivizer distributed graph processing engine is designed for scalable execution across the compute continuum, including cloud, HPC and edge environments - leveraging both CPU and GPU resources. 
 
 ![Architecture](https://github.com/graph-massivizer/.github/blob/public-update/figs/overview.png)
+
+## Graph-Massivizer Tools
+
+### Graph-Inceptor
+The [Graph-Inceptor](https://github.com/graph-massivizer/graph-inceptor) tool is comprised of two distinct tools serving different use cases for ingesting and processing massive graphs.
+
+- [GraphMa](https://github.com/graph-massivizer/graph-inceptor-graphma), a component of the Graph-Inceptor tool, integrates principles of pipeline computation using modular, composable functions to provide structured graph data analysis and processing using computational abstractions such as computation as type, higher-order traversal abstraction, and directed data-transfer protocol.
+
+- The [ETL Pipeline](https://github.com/graph-massivizer/graph-inceptor-etl-pipeline) creates KGs and stores them in batches from large data sources using semantic mappings deployed on a scalable IT cloud infrastructure consisting of servers and storage systems.
+
+### Graph-Scrutinizer
+[Graph-Scrutinizer](https://github.com/graph-massivizer/graph-scrutinizer) provides various BGO analytics, such as sampling, summarisation, traversal, or ML (e.g., GNN) algorithms, translated into optimised implementations for heterogeneous hardware (HPC, edge, cloud). Examples of the Graph-Scrutinizer algorithms that can be used in BGOs include [TS2G2](https://github.com/graph-massivizer/ts2g2) and [Go Network](https://github.com/graph-massivizer/go-network).
+
+### Graph-Optimizer
+[Graph-Optimizer](https://github.com/graph-massivizer/graph-optimizer) combines analytical models, micro-benchmarking, graph sampling, simulation, and automated validation, to predict the performance and energy footprint of a given graph processing workload.
+
+### Graph-Greenifier
+[Graph-Greenifier](https://github.com/graph-massivizer/graph-greenifier) is a simulation tool for data centre operators and application developers to create scenarios that quantify the carbon impact of workloads on different locations and hardware, making informed decisions.
+
+### Graph-Choreographer
+[Graph-Choreographer](https://github.com/graph-massivizer/graph-choreographer) is a serverless orchestration tool for executing single, ensemble and batch graph applications on the computing continuum, scheduled using performance and energy tradeoffs.
+
+# Graph-Massivizer Toolkit Simulation
+For local testing and development of BGO functionalities, a simulation is provided by the project. This simulation was initially created for validation and testing purposes to ensure compatibility of the separate tool funtionalities. It follows a master--worker paradigm with two main roles: the centralized Workload Manager to coordinate opimization and scheduling, and decentralized Task Managers for executing BGOs. These components, supported by Docker-based container orchestration, monitoring services, and a ZooKeeper-based coordination layer, ensure fault-tolerance and system observability.
 
 ## Workload Manager
 The Workload Manager is a centralized component running on the master node, acting as the global orchestrator of graph workflows submitted by users. Upon receiving a workflow (as a DAG), it validates its structure and decomposes it into BGOs, such as filtering, traversal, or PageRank. Its internal modules are:
@@ -28,28 +52,20 @@ Managers are lightweight agents deployed across the computing continuum (cloud s
 Each instance of Task Manager registers itself with ZooKeeper and encodes its machine descriptor, allowing the infrastructure manager in the Workload Manager to maintain a live view of available execution resources. BGOs are designed to be stateless and containerized, enabling fault-resilient retries and elastic scaling. The Task Manager also includes demo routines for interacting with HDFS, verifying storage availability, and supporting workload validation during test cycles. The full engine supports both simulation (via lifecycle emulation in Docker) and deployment in production clusters, making it suitable for prototyping, benchmarking, and real-world graph analytics pipelines.
 
 # Requirements
-This project is built with the python programming language and uses Docker containers. Both of these must be installed to develop with the toolkit.
+This project is built with the python programming language and uses Docker containers. Both of these must be installed to develop with the toolkit. Other packages and dependencies should be installed automatically when building and executing the simulation.
 
-The platform also uses [metaphactory](https://metaphacts.com/) as a frontend. Developers must have a key in order to pull metaphactory Docker images. A key can be obtained by filling out [this form](https://metaphacts.com/get-started#docker-trial) and mentioning the project, which will send you an email in a short time containing the key and login command.
+## Using metaphactory
+The simulated platform also uses [metaphactory](https://metaphacts.com/) as a default frontend. Developers must have a key in order to pull metaphactory Docker images. A key can be obtained by filling out [this form](https://metaphacts.com/get-started#docker-trial) and mentioning the project, which will send you an email in a short time containing the key and login command.
 
-## Running metaphactory
 Before running the project, use the script provided called `./start_metaphactory.sh` to run a metaphactory docker image, and then `./stop_metaphactory.sh` to close it. These images are independent of the project so they should be running in the background during different executions and not reloaded until you want to stop working with them.
 
 # Development
-After cloning the project, create a virtual environment to work on this project.
-Then, install the dependencies using
+After cloning the project, create a virtual environment to work on this project. It is strongly recommended to inoreitialize a virtual environment before installing or building the simulation. For detailed instructions see [the documentation](https://docs.python.org/3/library/venv.html) for how to configure a virtual environment.
+
+Once this is set up, install the dependencies using
 
 ```bash
 pip install -e .
-```
-
-For the state machine visualizations, we make use of pydot, which in turn requires graphviz to be installed natively on you machine.
-Follow instructions from https://graphviz.org/download/
-
-After that is installed, you can install the dependencies for visualizations using:
-
-```bash
-pip install -e '.[visualization]'
 ```
 
 To be able to run tests, also install test dependencies
